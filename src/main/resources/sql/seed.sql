@@ -18,8 +18,18 @@ INSERT OR IGNORE INTO electronic_types (name) VALUES
 INSERT OR IGNORE INTO narcotics_types (name) VALUES
     ('Marijuana'), ('Cocaine'), ('Methamphetamine'), ('Heroin'), ('Fentanyl'), ('MDMA'), ('Prescription Pills');
 
-INSERT OR IGNORE INTO persons (full_name) VALUES
-    ('Unknown Person'), ('John Johnson'), ('Jane Doe'), ('BEST PERSON EVER');
+INSERT INTO persons (full_name)
+SELECT 'Unknown Person'
+WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='Unknown Person');
+INSERT INTO persons (full_name)
+SELECT 'John Johnson'
+WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='John Johnson');
+INSERT INTO persons (full_name)
+SELECT 'Jane Doe'
+WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='Jane Doe');
+INSERT INTO persons (full_name)
+SELECT 'BEST PERSON EVER'
+WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='BEST PERSON EVER');
 
 INSERT OR IGNORE INTO cases (case_number, incident_date, officer_id)
 VALUES ('20250401-0001', '2026-01-28', (SELECT id FROM officers WHERE name='Casey Mcgraw'));
@@ -54,11 +64,11 @@ INSERT OR IGNORE INTO case_persons (case_id, person_id, role) VALUES (
     (SELECT id FROM persons WHERE full_name='John Johnson'), 'Suspect');
 
 INSERT OR IGNORE INTO evidence (
-    barcode, case_id, collected_by, collected_at,
+    barcode, case_id, collected_by_officer_id, collection_date,
     evidence_type, description, status, storage_location, currency_amount
 ) VALUES (
     '2026-CURRENCY-0004',
     (SELECT id FROM cases WHERE case_number='20250401-0001'),
     (SELECT id FROM officers WHERE name='Casey Mcgraw'),
-    '2026-01-28 14:30:00',
-    'Currency/Money', '2500Currency all 100''s', 'Deposited', 'Bank Deposit', 2500.00);
+    '2026-01-28',
+    'Currency', '2500Currency all 100''s', 'In Storage', 'Bank Deposit', '2500.00');

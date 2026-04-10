@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.stream.Collectors;
@@ -16,6 +18,7 @@ public class DatabaseManager {
 
     private static final String DB_DIR  = System.getProperty("user.home") + "/EvidenceHarbor";
     private static final String DB_FILE = DB_DIR + "/evidence_harbor.db";
+    private static final String SEED_VERSION = "1";
     private static DatabaseManager instance;
     private Connection connection;
 
@@ -27,7 +30,11 @@ public class DatabaseManager {
             stmt.execute("PRAGMA journal_mode = WAL");
         }
         runScript("/sql/schema.sql");
-        runScript("/sql/seed.sql");
+        ensureMetaTable();
+        if (!isSeedApplied(SEED_VERSION)) {
+            runScript("/sql/seed.sql");
+            markSeedApplied(SEED_VERSION);
+        }
     }
 
     public static synchronized DatabaseManager getInstance() {
@@ -56,6 +63,29 @@ public class DatabaseManager {
                     } catch (SQLException ignored) {}
                 }
             }
+        }
+    }
+
+    private void ensureMetaTable() throws SQLException {
+        try (Statement s = connection.createStatement()) {
+            s.execute("CREATE TABLE IF NOT EXISTS app_meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
+        }
+    }
+
+    private boolean isSeedApplied(String version) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT v FROM app_meta WHERE k='seed_version'")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && version.equals(rs.getString("v"));
+            }
+        }
+    }
+
+    private void markSeedApplied(String version) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO app_meta (k, v) VALUES ('seed_version', ?) " +
+                "ON CONFLICT(k) DO UPDATE SET v=excluded.v")) {
+            ps.setString(1, version);
+            ps.executeUpdate();
         }
     }
 
