@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.people.PeopleController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People" styleClass="nav-tab active" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <HBox spacing="12">
+                <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="People Directory" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="Search people..." styleClass="search-field" prefWidth="260"/>
+            </HBox>
+
+            <Label text="Select a person to view their details, associated cases, and evidence." styleClass="subtitle"/>
+
+            <VBox styleClass="card" spacing="0">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <TableView fx:id="peopleTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colName" text="NAME" prefWidth="220"/>
+                        <TableColumn fx:id="colType" text="TYPE" prefWidth="110"/>
+                        <TableColumn fx:id="colDob" text="DATE OF BIRTH" prefWidth="150"/>
+                        <TableColumn fx:id="colSsn" text="SSN" prefWidth="140"/>
+                        <TableColumn fx:id="colAddress" text="ADDRESS" prefWidth="300"/>
+                        <TableColumn fx:id="colContact" text="CONTACT INFO" prefWidth="180"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.inventory.InventoryController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab active" onAction="#onInventory"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <HBox spacing="12">
+                <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="Evidence Inventory" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="Search inventory..." styleClass="search-field" prefWidth="280"/>
+            </HBox>
+
+            <VBox styleClass="card" spacing="0">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <TableView fx:id="inventoryTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colBarcode" text="BARCODE" prefWidth="200"/>
+                        <TableColumn fx:id="colCase" text="CASE #" prefWidth="160"/>
+                        <TableColumn fx:id="colDescription" text="DESCRIPTION" prefWidth="260"/>
+                        <TableColumn fx:id="colType" text="TYPE" prefWidth="150"/>
+                        <TableColumn fx:id="colLocation" text="LOCATION" prefWidth="170"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

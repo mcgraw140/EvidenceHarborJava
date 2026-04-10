@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.evidence.AddEvidenceController"
+            styleClass="root-pane">
+
+    <top>
+        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="12">
+            <padding><Insets top="12" right="24" bottom="12" left="24"/></padding>
+            <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+            <Button text="⌂  Dashboard"     styleClass="btn-secondary" onAction="#onDashboard"/>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+            <VBox spacing="16">
+                <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+                <!-- Breadcrumb -->
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="Cases" styleClass="breadcrumb-link" onMouseClicked="#onDashboard"/>
+                    <Label text="›" styleClass="breadcrumb-sep"/>
+                    <Label fx:id="breadcrumbCase" styleClass="breadcrumb-link" onMouseClicked="#onBack"/>
+                    <Label text="›" styleClass="breadcrumb-sep"/>
+                    <Label text="Add Evidence" styleClass="breadcrumb-current"/>
+                </HBox>
+
+                <!-- Header card -->
+                <VBox styleClass="card" spacing="12">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <Label text="Add Evidence" styleClass="case-title"/>
+
+                    <GridPane hgap="24" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="33"/>
+                            <ColumnConstraints percentWidth="33"/>
+                            <ColumnConstraints percentWidth="34"/>
+                        </columnConstraints>
+                        <VBox spacing="4" GridPane.columnIndex="0">
+                            <Label text="Case Number" styleClass="field-label"/>
+                            <Label fx:id="caseNumberLabel" styleClass="field-value"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <Label text="Date/Time" styleClass="field-label"/>
+                            <DatePicker fx:id="collectionDate" styleClass="date-picker-default"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="2">
+                            <Label text="Collected By" styleClass="field-label"/>
+                            <ComboBox fx:id="collectedByCombo" styleClass="combo-box-default" maxWidth="Infinity"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- Collection Location card -->
+                <VBox styleClass="card" spacing="12">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <Label text="Collection Location" styleClass="section-title"/>
+
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <CheckBox fx:id="collectedFromPersonCheck" text="Evidence collected from a person"
+                                  styleClass="check-box-default" onAction="#onCollectedFromPersonToggle"/>
+                    </HBox>
+
+                    <VBox fx:id="collectedFromPersonBox" spacing="8" managed="false" visible="false">
+                        <Label text="Person" styleClass="field-label"/>
+                        <ComboBox fx:id="collectedFromPersonCombo" styleClass="combo-box-default"
+                                  promptText="Select person..." maxWidth="Infinity"/>
+                    </VBox>
+
+                    <GridPane hgap="24" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50"/>
+                        </columnConstraints>
+                        <VBox spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <Label text="Specific Location / Details" styleClass="field-label"/>
+                            <TextField fx:id="specificLocationField" styleClass="text-field-default"
+                                       promptText="e.g. drawer, shelf, glove compartment"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <Label text="Address" styleClass="field-label"/>
+                            <TextField fx:id="addressField" styleClass="text-field-default"
+                                       promptText="Street address"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <Label text="City" styleClass="field-label"/>
+                            <TextField fx:id="cityField" styleClass="text-field-default"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label text="State / ZIP" styleClass="field-label"/>
+                            <HBox spacing="8">
+                                <TextField fx:id="stateField" styleClass="text-field-default"
+                                           promptText="State" prefWidth="120"/>
+                                <TextField fx:id="zipField" styleClass="text-field-default"
+                                           promptText="ZIP" prefWidth="120"/>
+                            </HBox>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- Item Details card -->
+                <VBox styleClass="card" spacing="12">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <Label text="Item Details" styleClass="section-title"/>
+
+                    <GridPane hgap="24" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50"/>
+                        </columnConstraints>
+                        <VBox spacing="4" GridPane.columnIndex="0">
+                            <Label text="Evidence Type" styleClass="field-label"/>
+                            <ComboBox fx:id="evidenceTypeCombo" styleClass="combo-box-default"
+                                      maxWidth="Infinity" onAction="#onEvidenceTypeChanged"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <Label text="Description" styleClass="field-label"/>
+                            <TextField fx:id="descriptionField" styleClass="text-field-default"
+                                       promptText="Brief description of item"/>
+                        </VBox>
+                    </GridPane>
+
+                    <!-- Dynamic type-specific panel inserted here at runtime -->
+                    <VBox fx:id="dynamicPanel" spacing="12"/>
+                </VBox>
+
+                <!-- Metadata card -->
+                <VBox styleClass="card" spacing="12">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <Label text="Storage &amp; Status" styleClass="section-title"/>
+
+                    <GridPane hgap="24" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50"/>
+                            <ColumnConstraints percentWidth="50"/>
+                        </columnConstraints>
+                        <VBox spacing="4" GridPane.columnIndex="0">
+                            <Label text="Storage Location" styleClass="field-label"/>
+                            <TextField fx:id="storageLocationField" styleClass="text-field-default"
+                                       promptText="e.g. Evidence Room, Locker 12"/>
+                        </VBox>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <Label text="Status" styleClass="field-label"/>
+                            <ComboBox fx:id="statusCombo" styleClass="combo-box-default" maxWidth="Infinity"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- Action buttons -->
+                <HBox spacing="12" alignment="CENTER_RIGHT">
+                    <Button text="Cancel" styleClass="btn-secondary" onAction="#onBack"/>
+                    <Button text="Save Evidence" styleClass="btn-primary" onAction="#onSave"/>
+                </HBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

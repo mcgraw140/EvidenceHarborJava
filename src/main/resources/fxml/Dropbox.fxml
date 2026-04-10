@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.dropbox.DropboxController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab active" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <Label text="Dropbox Check-In" styleClass="page-title"/>
+
+            <VBox styleClass="card" spacing="16" alignment="CENTER">
+                <padding><Insets top="36" right="24" bottom="36" left="24"/></padding>
+                <Label text="Dropbox Check-In" styleClass="section-title"/>
+                <Label fx:id="dropboxCountLabel" styleClass="metric-number"/>
+                <Label text="items are currently in the dropbox waiting to be processed." styleClass="subtitle"/>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button text="Start Session" styleClass="btn-primary" disable="true"/>
+                    <Button text="View Missing Items" styleClass="btn-secondary"/>
+                    <Button text="Session History" styleClass="btn-secondary"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

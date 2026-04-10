@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.reports.ReportsController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab active" onAction="#onReports"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <Label text="Reports" styleClass="page-title"/>
+            <VBox styleClass="card" spacing="10">
+                <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+                <Label text="Reports module is ready for report templates and export actions." styleClass="subtitle"/>
+                <Label text="Dashboard was intentionally not changed per your request." styleClass="subtitle"/>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>
