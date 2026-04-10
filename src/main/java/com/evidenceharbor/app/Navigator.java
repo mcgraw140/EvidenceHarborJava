@@ -2,12 +2,7 @@ package com.evidenceharbor.app;
 
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.ui.cases.CaseDetailController;
-import com.evidenceharbor.ui.cases.CaseListController;
-import com.evidenceharbor.ui.dropbox.DropboxController;
 import com.evidenceharbor.ui.evidence.AddEvidenceController;
-import com.evidenceharbor.ui.inventory.InventoryController;
-import com.evidenceharbor.ui.people.PeopleController;
-import com.evidenceharbor.ui.reports.ReportsController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;

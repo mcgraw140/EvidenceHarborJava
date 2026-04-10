@@ -172,13 +172,88 @@ public class EvidenceRepository {
     private Evidence map(ResultSet rs) throws SQLException {
         Evidence e = new Evidence();
         e.setId(rs.getInt("id"));
+        e.setBarcode(rs.getString("barcode"));
         e.setCaseId(rs.getInt("case_id"));
-        e.setItemMake(rs.getString("item_make")); e.setItemModel(rs.getString("item_model")); e.setItemSerial(rs.getString("item_serial"));
-        int fcalId = rs.getInt("firearm_caliber_id"); if (!rs.wasNull()) { var cals = lookupRepo.getCaliberList(); cals.stream().filter(l->l.getId()==fcalId).findFirst().ifPresent(e::setFirearmCaliber); }
-        int narcId = rs.getInt("narc_type_id"); if (!rs.wasNull()) { var types = lookupRepo.getNarcoticsTypes(); types.stream().filter(l->l.getId()==narcId).findFirst().ifPresent(e::setNarcType); }
-        e.setNarcUnit(rs.getString("narc_unit")); double nq = rs.getDouble("narc_quantity"); if (!rs.wasNull()) e.setNarcQuantity(nq);
-        e.setVehYear(rs.getString("veh_year")); e.setVehPlate(rs.getString("veh_plate")); e.setVehVin(rs.getString("veh_vin"));
+        int collectedBy = rs.getInt("collected_by_officer_id");
+        if (!rs.wasNull()) e.setCollectedByOfficerId(collectedBy);
+        int collectedFrom = rs.getInt("collected_from_person_id");
+        if (!rs.wasNull()) e.setCollectedFromPersonId(collectedFrom);
+        e.setCollectionDate(rs.getString("collection_date"));
+        e.setSpecificLocation(rs.getString("specific_location"));
+        e.setAddress(rs.getString("address"));
+        e.setCity(rs.getString("city"));
+        e.setState(rs.getString("state"));
+        e.setZip(rs.getString("zip"));
+        e.setEvidenceType(rs.getString("evidence_type"));
+        e.setDescription(rs.getString("description"));
+        e.setStatus(rs.getString("status"));
+        e.setStorageLocation(rs.getString("storage_location"));
+
+        e.setAmmoCallber(rs.getString("ammo_caliber"));
+        e.setAmmoQuantity(rs.getString("ammo_quantity"));
+        e.setAmmoGrainWeight(rs.getString("ammo_grain_weight"));
+        e.setAmmoBulletType(rs.getString("ammo_bullet_type"));
+        e.setAmmoBrand(rs.getString("ammo_brand"));
+
+        e.setBioSampleType(rs.getString("bio_sample_type"));
+        e.setBioCollectionMethod(rs.getString("bio_collection_method"));
+        e.setBioStorageTemp(rs.getString("bio_storage_temp"));
+        e.setBioSuspectName(rs.getString("bio_suspect_name"));
+        e.setBioDnaAnalysisRequested(rs.getInt("bio_dna_analysis_requested") == 1);
+
+        e.setCurrencyAmount(rs.getString("currency_amount"));
+        e.setCurrencyDenominations(rs.getString("currency_denominations"));
+        e.setCurrencySerialNumbers(rs.getString("currency_serial_numbers"));
+        e.setCurrencySuspectedCounterfeit(rs.getInt("currency_suspected_counterfeit") == 1);
+
+        e.setElecDeviceType(rs.getString("elec_device_type"));
+        e.setElecMake(rs.getString("elec_make"));
+        e.setElecModel(rs.getString("elec_model"));
+        e.setElecSerialNumber(rs.getString("elec_serial_number"));
+        e.setElecPasswordProtected(rs.getInt("elec_password_protected") == 1);
+        e.setElecDataExtractionRequested(rs.getInt("elec_data_extraction_requested") == 1);
+
+        e.setFirearmMake(rs.getString("firearm_make"));
+        e.setFirearmModel(rs.getString("firearm_model"));
+        e.setFirearmSerialNumber(rs.getString("firearm_serial_number"));
+        e.setFirearmType(rs.getString("firearm_type"));
+        e.setFirearmCaliber(rs.getString("firearm_caliber"));
+        e.setFirearmReportedStolen(rs.getInt("firearm_reported_stolen") == 1);
+        e.setFirearmLoadedWhenRecovered(rs.getInt("firearm_loaded_when_recovered") == 1);
+
+        e.setJewelryType(rs.getString("jewelry_type"));
+        e.setJewelryMaterial(rs.getString("jewelry_material"));
+        e.setJewelryEstimatedValue(rs.getString("jewelry_estimated_value"));
+        e.setJewelryEngravingOrId(rs.getString("jewelry_engraving_or_id"));
+
+        e.setNarcEquipType(rs.getString("narc_equip_type"));
+        e.setNarcEquipDescription(rs.getString("narc_equip_description"));
+        e.setNarcEquipSuspectedResidue(rs.getString("narc_equip_suspected_residue"));
+        e.setNarcEquipFieldTestKitUsed(rs.getInt("narc_equip_field_test_kit_used") == 1);
+
+        e.setNarcDrugType(rs.getString("narc_drug_type"));
+        e.setNarcNetWeight(rs.getString("narc_net_weight"));
+        e.setNarcForm(rs.getString("narc_form"));
+        e.setNarcPackaging(rs.getString("narc_packaging"));
+        e.setNarcFieldTestPerformed(rs.getInt("narc_field_test_performed") == 1);
+        e.setNarcFieldTestResult(rs.getString("narc_field_test_result"));
+
+        e.setVehicleMake(rs.getString("vehicle_make"));
+        e.setVehicleModel(rs.getString("vehicle_model"));
+        e.setVehicleYear(rs.getString("vehicle_year"));
+        e.setVehicleColor(rs.getString("vehicle_color"));
+        e.setVehicleVin(rs.getString("vehicle_vin"));
+        e.setVehicleLicensePlate(rs.getString("vehicle_license_plate"));
+        e.setVehicleLicenseState(rs.getString("vehicle_license_state"));
+        e.setVehicleReportedStolen(rs.getInt("vehicle_reported_stolen") == 1);
+        e.setVehicleImpounded(rs.getInt("vehicle_impounded") == 1);
+
         e.setWeaponType(rs.getString("weapon_type"));
+        e.setWeaponMake(rs.getString("weapon_make"));
+        e.setWeaponModel(rs.getString("weapon_model"));
+        e.setWeaponSerialNumber(rs.getString("weapon_serial_number"));
+        e.setWeaponLength(rs.getString("weapon_length"));
+        e.setWeaponReportedStolen(rs.getInt("weapon_reported_stolen") == 1);
         return e;
     }
 }

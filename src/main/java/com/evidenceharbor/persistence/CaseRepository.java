@@ -8,14 +8,10 @@ import java.util.List;
 
 public class CaseRepository {
     private final Connection conn;
-    private final OfficerRepository officerRepo;
-    private final PersonRepository personRepo;
     private final ChargeRepository chargeRepo;
 
     public CaseRepository() {
         this.conn = DatabaseManager.getInstance().getConnection();
-        this.officerRepo = new OfficerRepository();
-        this.personRepo = new PersonRepository();
         this.chargeRepo = new ChargeRepository();
     }
 

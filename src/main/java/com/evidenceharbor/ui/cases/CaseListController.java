@@ -4,7 +4,6 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.CasePerson;
 import com.evidenceharbor.persistence.CaseRepository;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
