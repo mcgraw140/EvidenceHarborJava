@@ -23,21 +23,14 @@ public class QmDashboardController {
     @FXML private void onImpound()        { Navigator.get().showImpoundLot(); }
 
     @FXML private void onEquipment() {
-        onComingSoon("Equipment");
+        Navigator.get().showQmEquipment();
     }
 
     @FXML private void onWeapons() {
-        onComingSoon("Weapons");
+        Navigator.get().showQmWeapons();
     }
 
     @FXML private void onUniforms() {
-        onComingSoon("Uniforms");
-    }
-
-    private void onComingSoon(String feature) {
-        javafx.scene.control.Alert a = new javafx.scene.control.Alert(
-                javafx.scene.control.Alert.AlertType.INFORMATION,
-                feature + " workspace is not configured yet.");
-        a.showAndWait();
+        Navigator.get().showQmUniforms();
     }
 }

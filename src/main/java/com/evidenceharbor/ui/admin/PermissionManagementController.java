@@ -181,6 +181,7 @@ public class PermissionManagementController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
+    @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
     @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {

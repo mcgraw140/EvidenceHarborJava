@@ -107,9 +107,9 @@ public class QmOfficerLoadoutsController implements Initializable {
     @FXML private void onInventoryAudit()  { Navigator.get().showQmInventoryAudit(); }
     @FXML private void onOfficerLoadouts() { Navigator.get().showQmOfficerLoadouts(); }
 
-    @FXML private void onEquipment() { showInfo("Equipment workspace is not configured yet."); }
-    @FXML private void onWeapons()   { showInfo("Weapons workspace is not configured yet."); }
-    @FXML private void onUniforms()  { showInfo("Uniforms workspace is not configured yet."); }
+    @FXML private void onEquipment() { Navigator.get().showQmEquipment(); }
+    @FXML private void onWeapons()   { Navigator.get().showQmWeapons(); }
+    @FXML private void onUniforms()  { Navigator.get().showQmUniforms(); }
 
     private void showInfo(String msg) { new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK).showAndWait(); }
     private String nvl(String s) { return s == null ? "" : s; }

@@ -17,6 +17,7 @@
                     <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
                     <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
                     <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
                     <Button text="Narcotics" styleClass="nav-tab"/>
                 </HBox>
             </HBox>
@@ -24,12 +25,8 @@
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
                 <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
                 <Button text="Inventory" styleClass="nav-tab active" onAction="#onInventory"/>
-                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
                 <Button text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
                 <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
-                <Button text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
-                <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
-                <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
             </HBox>
         </VBox>
     </top>

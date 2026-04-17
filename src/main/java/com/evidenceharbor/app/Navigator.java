@@ -93,6 +93,18 @@ public class Navigator {
         loadScene("/fxml/QmAssignEquipment.fxml", null);
     }
 
+    public void showQmEquipment() {
+        loadScene("/fxml/QmEquipment.fxml", null);
+    }
+
+    public void showQmWeapons() {
+        loadScene("/fxml/QmWeapons.fxml", null);
+    }
+
+    public void showQmUniforms() {
+        loadScene("/fxml/QmUniforms.fxml", null);
+    }
+
     public void showQmAmmunition() {
         loadScene("/fxml/QmAmmunition.fxml", null);
     }

@@ -17,6 +17,7 @@
                     <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
                     <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
                     <Button text="Quartermaster" styleClass="nav-tab active" onAction="#onQuartermaster"/>
+                    <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
                     <Button text="Narcotics" styleClass="nav-tab"/>
                 </HBox>
             </HBox>
@@ -36,7 +37,7 @@
     </top>
 
     <center>
-        <VBox spacing="16">
+        <VBox spacing="16" style="-fx-background-color: #1a2235;">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
             <Label text="Quartermaster  /  Vehicle Impound" styleClass="breadcrumb-text"/>
             <Label text="Vehicle Impound" styleClass="page-title"/>
@@ -46,7 +47,7 @@
                 <ComboBox fx:id="cbStatusFilter" prefWidth="130"/>
                 <Button text="+ Impound Vehicle" styleClass="btn-primary" onAction="#onAddVehicle"/>
             </HBox>
-            <TableView fx:id="vehicleTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="vehicleTable" VBox.vgrow="ALWAYS" styleClass="data-table">
                 <columns>
                     <TableColumn fx:id="colMake"        text="Make"         prefWidth="100"/>
                     <TableColumn fx:id="colModel"       text="Model"        prefWidth="100"/>

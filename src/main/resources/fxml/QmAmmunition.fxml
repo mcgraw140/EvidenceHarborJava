@@ -17,6 +17,7 @@
                     <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
                     <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
                     <Button text="Quartermaster" styleClass="nav-tab active" onAction="#onQuartermaster"/>
+                    <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
                     <Button text="Narcotics" styleClass="nav-tab"/>
                 </HBox>
             </HBox>
@@ -36,7 +37,7 @@
     </top>
 
     <center>
-        <VBox spacing="16">
+        <VBox spacing="16" style="-fx-background-color: #1a2235;">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
             <Label text="Quartermaster  /  Ammunition" styleClass="breadcrumb-text"/>
             <Label text="Ammunition Stock" styleClass="page-title"/>
@@ -44,7 +45,7 @@
             <HBox alignment="CENTER_LEFT">
                 <Button text="+ Add Ammunition" styleClass="btn-primary" onAction="#onAdd"/>
             </HBox>
-            <TableView fx:id="ammoTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="ammoTable" VBox.vgrow="ALWAYS" styleClass="data-table">
                 <columns>
                     <TableColumn fx:id="colCaliber"  text="Caliber"      prefWidth="140"/>
                     <TableColumn fx:id="colQuantity" text="Quantity"      prefWidth="100"/>

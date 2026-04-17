@@ -16,6 +16,7 @@
                     <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
                     <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
                     <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
                     <Button text="Narcotics" styleClass="nav-tab"/>
                 </HBox>
             </HBox>

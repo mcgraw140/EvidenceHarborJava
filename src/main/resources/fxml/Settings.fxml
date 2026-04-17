@@ -14,15 +14,19 @@
                 <Label text="Evidence Harbor" styleClass="brand-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
-                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
                     <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
                     <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Admin" styleClass="nav-tab active" onAction="#onAdmin"/>
                     <Button text="Narcotics" styleClass="nav-tab"/>
                 </HBox>
             </HBox>
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
-                <Button text="Cases"            styleClass="nav-tab"        onAction="#onCases"/>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onAdmin"/>
+                <Button text="Settings" styleClass="nav-tab active" onAction="#onSettings"/>
+                <Button text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
+            </HBox>
                 <Button text="Inventory"        styleClass="nav-tab"        onAction="#onInventory"/>
                 <Button text="People"           styleClass="nav-tab"        onAction="#onPeople"/>
                 <Button text="Dropbox Check-in" styleClass="nav-tab"        onAction="#onDropbox"/>

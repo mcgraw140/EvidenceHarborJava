@@ -4,7 +4,7 @@
 <?import javafx.geometry.Insets?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.evidenceharbor.ui.qm.QmInventoryLevelsController"
+            fx:controller="com.evidenceharbor.ui.qm.QmWeaponsController"
             styleClass="root-pane">
 
     <top>
@@ -26,10 +26,10 @@
                 <Button text="Dashboard"          styleClass="nav-tab" onAction="#onQuartermaster"/>
                 <Button text="Assign Equipment"   styleClass="nav-tab" onAction="#onAssignEquipment"/>
                 <Button text="Equipment"          styleClass="nav-tab" onAction="#onEquipment"/>
-                <Button text="Weapons"            styleClass="nav-tab" onAction="#onWeapons"/>
+                <Button text="Weapons"            styleClass="nav-tab active" onAction="#onWeapons"/>
                 <Button text="Uniforms"           styleClass="nav-tab" onAction="#onUniforms"/>
                 <Button text="Ammunition"         styleClass="nav-tab" onAction="#onAmmunition"/>
-                <Button text="Inventory Levels"   styleClass="nav-tab active" onAction="#onInventoryLevels"/>
+                <Button text="Inventory Levels"   styleClass="nav-tab" onAction="#onInventoryLevels"/>
                 <Button text="Inventory Audit"    styleClass="nav-tab" onAction="#onInventoryAudit"/>
                 <Button text="Loadout Reports"    styleClass="nav-tab" onAction="#onOfficerLoadouts"/>
             </HBox>
@@ -39,19 +39,32 @@
     <center>
         <VBox spacing="16" style="-fx-background-color: #1a2235;">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
-            <Label text="Quartermaster  /  Inventory Levels" styleClass="breadcrumb-text"/>
-            <Label text="Inventory Levels" styleClass="page-title"/>
+            <Label text="Quartermaster  /  Weapons" styleClass="breadcrumb-text"/>
+            <Label text="Weapons Inventory" styleClass="page-title"/>
             <Separator/>
-            <HBox alignment="CENTER_LEFT">
-                <Button text="Refresh" styleClass="btn-secondary" onAction="#onRefresh"/>
+
+            <!-- Filter bar -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="tfSearch" promptText="Search weapons…" prefWidth="220"/>
+                <ComboBox fx:id="cbTypeFilter" prefWidth="130"/>
+                <ComboBox fx:id="cbCaliber" prefWidth="130"/>
+                <Button text="+ Add Weapon" styleClass="btn-primary" onAction="#onAddWeapon"/>
             </HBox>
-            <TableView fx:id="summaryTable" VBox.vgrow="ALWAYS" styleClass="data-table">
+
+            <!-- Weapons table -->
+            <Label text="Weapons List" styleClass="section-title"/>
+            <TableView fx:id="weaponsTable" VBox.vgrow="ALWAYS" styleClass="data-table">
                 <columns>
-                    <TableColumn fx:id="colSummaryCategory" text="Category" prefWidth="200"/>
-                    <TableColumn fx:id="colSummaryStatus"   text="Status"   prefWidth="160"/>
-                    <TableColumn fx:id="colSummaryCount"    text="Count"    prefWidth="100"/>
+                    <TableColumn fx:id="colName"       text="Weapon Name"   prefWidth="180"/>
+                    <TableColumn fx:id="colType"       text="Type"          prefWidth="100"/>
+                    <TableColumn fx:id="colCalibur"    text="Caliber"       prefWidth="100"/>
+                    <TableColumn fx:id="colMake"       text="Make"          prefWidth="100"/>
+                    <TableColumn fx:id="colModel"      text="Model"         prefWidth="100"/>
+                    <TableColumn fx:id="colSerial"     text="Serial #"      prefWidth="140"/>
+                    <TableColumn fx:id="colStatus"     text="Status"        prefWidth="100"/>
+                    <TableColumn fx:id="colAction"     text=""              prefWidth="80"/>
                 </columns>
-                <placeholder><Label text="No equipment in inventory"/></placeholder>
+                <placeholder><Label text="No weapons found"/></placeholder>
             </TableView>
         </VBox>
     </center>
