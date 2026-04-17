@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.qm.QmVehicleImpoundController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab active" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard"          styleClass="nav-tab" onAction="#onQuartermaster"/>
+                <Button text="Assign Equipment"   styleClass="nav-tab" onAction="#onAssignEquipment"/>
+                <Button text="Equipment"          styleClass="nav-tab" onAction="#onEquipment"/>
+                <Button text="Weapons"            styleClass="nav-tab" onAction="#onWeapons"/>
+                <Button text="Uniforms"           styleClass="nav-tab" onAction="#onUniforms"/>
+                <Button text="Ammunition"         styleClass="nav-tab" onAction="#onAmmunition"/>
+                <Button text="Inventory Levels"   styleClass="nav-tab" onAction="#onInventoryLevels"/>
+                <Button text="Inventory Audit"    styleClass="nav-tab" onAction="#onInventoryAudit"/>
+                <Button text="Loadout Reports"    styleClass="nav-tab" onAction="#onOfficerLoadouts"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <Label text="Quartermaster  /  Vehicle Impound" styleClass="breadcrumb-text"/>
+            <Label text="Vehicle Impound" styleClass="page-title"/>
+            <Separator/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="tfSearch" promptText="Search plate / make / model / VIN…" prefWidth="280"/>
+                <ComboBox fx:id="cbStatusFilter" prefWidth="130"/>
+                <Button text="+ Impound Vehicle" styleClass="btn-primary" onAction="#onAddVehicle"/>
+            </HBox>
+            <TableView fx:id="vehicleTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colMake"        text="Make"         prefWidth="100"/>
+                    <TableColumn fx:id="colModel"       text="Model"        prefWidth="100"/>
+                    <TableColumn fx:id="colYear"        text="Year"         prefWidth="70"/>
+                    <TableColumn fx:id="colPlate"       text="Plate"        prefWidth="100"/>
+                    <TableColumn fx:id="colVin"         text="VIN"          prefWidth="160"/>
+                    <TableColumn fx:id="colColor"       text="Color"        prefWidth="90"/>
+                    <TableColumn fx:id="colImpoundDate" text="Impound Date" prefWidth="120"/>
+                    <TableColumn fx:id="colVStatus"     text="Status"       prefWidth="100"/>
+                    <TableColumn fx:id="colReason"      text="Reason"       prefWidth="160"/>
+                    <TableColumn fx:id="colVAction"     text=""             prefWidth="140"/>
+                </columns>
+                <placeholder><Label text="No vehicles impounded"/></placeholder>
+            </TableView>
+        </VBox>
+    </center>
+
+</BorderPane>

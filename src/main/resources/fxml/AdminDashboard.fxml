@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.admin.AdminDashboardController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases"              styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory"          styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People"             styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in"   styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports"            styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings"           styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin"              styleClass="nav-tab active" onAction="#onAdmin"/>
+                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="20">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <!-- Breadcrumb -->
+            <Label text="Admin" styleClass="breadcrumb-text"/>
+
+            <!-- Page header -->
+            <Label text="Administration" styleClass="page-title"/>
+
+            <Separator/>
+
+            <!-- Navigation cards grid -->
+            <HBox spacing="16">
+                <!-- User &amp; Officer Management card -->
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onUserManagement" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F465;" style="-fx-font-size:28;"/>
+                    <Label text="User &amp; Officer Management" styleClass="admin-card-title"/>
+                    <Label text="Add, edit, or deactivate officers and system users."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+
+                <!-- Lookup Administration card -->
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onLookupAdministration" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F4CB;" style="-fx-font-size:28;"/>
+                    <Label text="Lookup Administration" styleClass="admin-card-title"/>
+                    <Label text="Manage dropdown lists for evidence types, locations, and more."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+
+                <!-- Evidence Storage Audit card -->
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onEvidenceAudit" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F50D;" style="-fx-font-size:28;"/>
+                    <Label text="Evidence Storage Audit" styleClass="admin-card-title"/>
+                    <Label text="Run full, random, or location-based evidence audits."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+
+                <!-- Audit Trail card -->
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onAuditTrail" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F4DC;" style="-fx-font-size:28;"/>
+                    <Label text="Audit Trail" styleClass="admin-card-title"/>
+                    <Label text="View immutable system activity logs for all modules."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+            </HBox>
+
+            <!-- Second row of cards -->
+            <HBox spacing="16">
+                <!-- Bank Account Ledger card -->
+                <VBox styleClass="card admin-nav-card" spacing="10"
+                      onMouseClicked="#onBankAccountLedger" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F4B0;" style="-fx-font-size:28;"/>
+                    <Label text="Bank Account Ledger" styleClass="admin-card-title"/>
+                    <Label text="Track fund accounts, deposits, and withdrawals."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+            </HBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>
+

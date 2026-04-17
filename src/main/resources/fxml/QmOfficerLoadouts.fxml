@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.qm.QmOfficerLoadoutsController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab active" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard"          styleClass="nav-tab" onAction="#onQuartermaster"/>
+                <Button text="Assign Equipment"   styleClass="nav-tab" onAction="#onAssignEquipment"/>
+                <Button text="Equipment"          styleClass="nav-tab" onAction="#onEquipment"/>
+                <Button text="Weapons"            styleClass="nav-tab" onAction="#onWeapons"/>
+                <Button text="Uniforms"           styleClass="nav-tab" onAction="#onUniforms"/>
+                <Button text="Ammunition"         styleClass="nav-tab" onAction="#onAmmunition"/>
+                <Button text="Inventory Levels"   styleClass="nav-tab" onAction="#onInventoryLevels"/>
+                <Button text="Inventory Audit"    styleClass="nav-tab" onAction="#onInventoryAudit"/>
+                <Button text="Loadout Reports"    styleClass="nav-tab active" onAction="#onOfficerLoadouts"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <HBox spacing="0">
+            <!-- Officer list -->
+            <VBox spacing="0" prefWidth="240" style="-fx-border-color:#e2e8f0; -fx-border-width:0 1 0 0;">
+                <HBox alignment="CENTER_LEFT" style="-fx-background-color:#f7fafc; -fx-padding:14 16 14 16;">
+                    <Label text="Officers" styleClass="section-title"/>
+                </HBox>
+                <ListView fx:id="officerList" VBox.vgrow="ALWAYS"/>
+            </VBox>
+
+            <!-- Loadout detail -->
+            <VBox spacing="16" HBox.hgrow="ALWAYS">
+                <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+                <Label text="Quartermaster  /  Officer Loadouts" styleClass="breadcrumb-text"/>
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblOfficerName" text="No officer selected"
+                               style="-fx-font-size:18;-fx-font-weight:bold;"/>
+                        <Label fx:id="lblItemCount" text="" styleClass="muted-text"/>
+                    </VBox>
+                </HBox>
+                <Separator/>
+                <TableView fx:id="loadoutTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colItem"         text="Item"          prefWidth="180"/>
+                        <TableColumn fx:id="colCategory"     text="Category"      prefWidth="120"/>
+                        <TableColumn fx:id="colSerial"       text="Serial #"      prefWidth="130"/>
+                        <TableColumn fx:id="colAssignedDate" text="Assigned Date" prefWidth="140"/>
+                        <TableColumn fx:id="colLoadoutAction" text=""             prefWidth="90"/>
+                    </columns>
+                    <placeholder><Label text="No items assigned to this officer"/></placeholder>
+                </TableView>
+            </VBox>
+        </HBox>
+    </center>
+
+</BorderPane>

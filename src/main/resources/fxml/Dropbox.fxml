@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.dropbox.DropboxController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab active" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
+                <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Dropbox Check-In" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="sessionStateLabel" styleClass="subtitle" style="-fx-font-weight: bold;"/>
+            </HBox>
+
+            <!-- Idle panel -->
+            <VBox fx:id="idlePane" styleClass="card" spacing="14" alignment="CENTER">
+                <padding><Insets top="32" right="24" bottom="32" left="24"/></padding>
+                <Label styleClass="section-title" text="No Active Session"/>
+                <HBox spacing="8" alignment="CENTER">
+                    <Label text="Items currently in dropbox:" styleClass="subtitle"/>
+                    <Label fx:id="dropboxCountLabel" styleClass="metric-number"/>
+                </HBox>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button text="▶  Start Check-In Session" styleClass="btn-primary" onAction="#onStartSession"/>
+                    <Button text="📋  Session History" styleClass="btn-secondary" onAction="#onViewHistory"/>
+                </HBox>
+            </VBox>
+
+            <!-- Active session panel -->
+            <VBox fx:id="activePane" styleClass="card" spacing="12">
+                <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Active Session" styleClass="section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="officerNameField" promptText="Officer name (optional)" prefWidth="220"/>
+                    <Button text="✔  Finish Session" styleClass="btn-primary" onAction="#onFinishSession"/>
+                    <Button text="✖  Cancel Session" styleClass="btn-secondary" onAction="#onCancelSession"/>
+                </HBox>
+                <Label fx:id="activeSummaryLabel" styleClass="subtitle"/>
+                <TableView fx:id="dropboxTable" styleClass="data-table" prefHeight="280">
+                    <columns>
+                        <TableColumn fx:id="dbColBarcode" text="BARCODE" prefWidth="180"/>
+                        <TableColumn fx:id="dbColCase" text="CASE #" prefWidth="130"/>
+                        <TableColumn fx:id="dbColDescription" text="DESCRIPTION" prefWidth="230"/>
+                        <TableColumn fx:id="dbColType" text="TYPE" prefWidth="120"/>
+                        <TableColumn fx:id="dbColAction" text="ACTION" prefWidth="180"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- History panel -->
+            <VBox fx:id="historyPane" styleClass="card" spacing="8">
+                <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Session History" styleClass="section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="◀  Back" styleClass="btn-secondary" onAction="#onBackFromHistory"/>
+                </HBox>
+                <TableView fx:id="historyTable" styleClass="data-table" prefHeight="300">
+                    <columns>
+                        <TableColumn fx:id="histColDate" text="DATE" prefWidth="160"/>
+                        <TableColumn fx:id="histColOfficer" text="OFFICER" prefWidth="160"/>
+                        <TableColumn fx:id="histColItems" text="# ITEMS" prefWidth="80"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.admin.UserManagementController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases"              styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory"          styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People"             styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in"   styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports"            styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings"           styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin"              styleClass="nav-tab active" onAction="#onAdmin"/>
+                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <!-- Breadcrumb -->
+            <Label text="Admin" styleClass="breadcrumb-text"/>
+
+            <!-- Header row -->
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="User &amp; Officer Management" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="Search users..."
+                           styleClass="search-field" prefWidth="280"
+                           onKeyReleased="#onSearch"/>
+                <Button text="+ Add User" styleClass="btn-primary" onAction="#onAddUser"/>
+            </HBox>
+
+            <Separator/>
+
+            <!-- Table card -->
+            <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <TableView fx:id="userTable" VBox.vgrow="ALWAYS" styleClass="data-table">
+                    <columns>
+                        <TableColumn fx:id="colName"     text="NAME"     prefWidth="280"/>
+                        <TableColumn fx:id="colBadge"    text="BADGE #"  prefWidth="120"/>
+                        <TableColumn fx:id="colUsername" text="USERNAME" prefWidth="160"/>
+                        <TableColumn fx:id="colRole"     text="ROLE"     prefWidth="160"/>
+                        <TableColumn fx:id="colStatus"   text="STATUS"   prefWidth="120"/>
+                        <TableColumn fx:id="colActions"  text=""         prefWidth="120"/>
+                    </columns>
+                    <placeholder><Label text="No users found." styleClass="empty-label"/></placeholder>
+                </TableView>
+            </VBox>
+
+        </VBox>
+    </center>
+</BorderPane>

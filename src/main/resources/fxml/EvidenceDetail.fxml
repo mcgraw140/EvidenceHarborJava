@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.inventory.EvidenceDetailController"
+            styleClass="root-pane">
+
+    <top>
+        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+            <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+            <Label text="Evidence Harbor" styleClass="brand-title"/>
+            <Label text=" — Evidence Detail" styleClass="subtitle"/>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="14">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <!-- Header row -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label fx:id="labelBarcode" styleClass="page-title"/>
+                <Label fx:id="labelStatusBadge" styleClass="subtitle"
+                       style="-fx-font-weight: bold; -fx-padding: 4 10 4 10; -fx-background-radius: 6;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Add Transfer / CoC Entry" styleClass="btn-primary" onAction="#onAddTransfer"/>
+                <Button text="Close" styleClass="btn-secondary" onAction="#onClose"/>
+            </HBox>
+
+            <!-- Info grid -->
+            <VBox styleClass="card" spacing="8">
+                <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+                <Label text="Evidence Information" styleClass="section-title"/>
+                <GridPane hgap="16" vgap="6">
+                    <columnConstraints>
+                        <ColumnConstraints prefWidth="130"/>
+                        <ColumnConstraints prefWidth="220" hgrow="ALWAYS"/>
+                        <ColumnConstraints prefWidth="130"/>
+                        <ColumnConstraints prefWidth="220" hgrow="ALWAYS"/>
+                    </columnConstraints>
+                    <Label text="Case #:" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label fx:id="infoCase" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label text="Type:" styleClass="label-key" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                    <Label fx:id="infoType" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+
+                    <Label text="Collection Date:" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <Label fx:id="infoDate" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <Label text="Location:" styleClass="label-key" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                    <Label fx:id="infoLocation" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+
+                    <Label text="Description:" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <Label fx:id="infoDescription" styleClass="label-value" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="3"/>
+                </GridPane>
+            </VBox>
+
+            <!-- Chain of Custody log -->
+            <VBox styleClass="card" spacing="8" VBox.vgrow="ALWAYS">
+                <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Chain of Custody Log" styleClass="section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="cocCountLabel" styleClass="subtitle"/>
+                </HBox>
+                <TableView fx:id="cocTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="cocColTimestamp" text="DATE / TIME" prefWidth="160"/>
+                        <TableColumn fx:id="cocColAction" text="ACTION" prefWidth="160"/>
+                        <TableColumn fx:id="cocColPerformedBy" text="PERFORMED BY" prefWidth="150"/>
+                        <TableColumn fx:id="cocColFrom" text="FROM" prefWidth="130"/>
+                        <TableColumn fx:id="cocColTo" text="TO LOCATION" prefWidth="130"/>
+                        <TableColumn fx:id="cocColToPerson" text="TO PERSON" prefWidth="120"/>
+                        <TableColumn fx:id="cocColNotes" text="NOTES" prefWidth="180"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.admin.LookupAdminController"
+            styleClass="root-pane">
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases"              styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory"          styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People"             styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in"   styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports"            styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings"           styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin"              styleClass="nav-tab active" onAction="#onAdmin"/>
+                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <Label text="Admin &gt; Lookup Administration" styleClass="breadcrumb-text"/>
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="Lookup Administration" styleClass="page-title"/>
+            </HBox>
+            <Separator/>
+
+            <!-- Two-column: category sidebar + list editor -->
+            <HBox spacing="16" VBox.vgrow="ALWAYS">
+                <!-- Category list -->
+                <VBox styleClass="card" spacing="0" prefWidth="240" minWidth="200">
+                    <padding><Insets top="12" right="0" bottom="12" left="0"/></padding>
+                    <Label text="Categories" styleClass="section-title" style="-fx-padding: 0 16 8 16;"/>
+                    <Separator/>
+                    <ListView fx:id="categoryList" VBox.vgrow="ALWAYS" prefHeight="500"
+                              styleClass="lookup-category-list"/>
+                </VBox>
+                <!-- Editor panel -->
+                <VBox styleClass="card" spacing="12" HBox.hgrow="ALWAYS">
+                    <padding><Insets top="18" right="20" bottom="18" left="20"/></padding>
+                    <Label fx:id="editorTitle" text="Select a category" styleClass="section-title"/>
+                    <Separator/>
+                    <!-- Add row -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <TextField fx:id="newItemField" promptText="New item..." HBox.hgrow="ALWAYS"/>
+                        <Button text="+ Add" styleClass="btn-primary" onAction="#onAddItem"/>
+                    </HBox>
+                    <!-- Items list -->
+                    <ListView fx:id="itemList" VBox.vgrow="ALWAYS" prefHeight="400"
+                              styleClass="lookup-item-list">
+                        <placeholder><Label text="No items. Select a category." styleClass="empty-placeholder"/></placeholder>
+                    </ListView>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.evidenceharbor.ui.inventory.CocTransferController"
+      styleClass="root-pane"
+      spacing="16">
+    <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+
+    <Label text="Add Chain of Custody Entry" styleClass="page-title"/>
+
+    <GridPane hgap="14" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints prefWidth="130"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="Action *" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <ComboBox fx:id="actionCombo" prefWidth="340" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+        <Label text="Performed By" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="performedByField" promptText="Officer name" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+        <Label text="From Location" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <TextField fx:id="fromLocationField" promptText="Current location" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+        <!-- Conditional: storage location (Check In / Move) -->
+        <Label fx:id="toLocationLabel" text="To Location" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+        <ComboBox fx:id="toLocationCombo" prefWidth="340" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+        <!-- Conditional: person (Check Out to Person) -->
+        <Label fx:id="toPersonLabel" text="To Person" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+        <TextField fx:id="toPersonField" promptText="Recipient name (officer / person)" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+
+        <Label text="Reason" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+        <TextField fx:id="reasonField" promptText="Brief reason for transfer" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+
+        <Label text="Notes" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+        <TextArea fx:id="notesArea" prefRowCount="3" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+    </GridPane>
+
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel" styleClass="btn-secondary" onAction="#onCancel"/>
+        <Button text="Save Entry" styleClass="btn-primary" onAction="#onSave"/>
+    </HBox>
+</VBox>

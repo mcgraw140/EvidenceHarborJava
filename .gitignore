@@ -1,0 +1,14 @@
+# Build outputs
+/target/
+
+# Local runtime files
+*.db
+*.db-wal
+*.db-shm
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

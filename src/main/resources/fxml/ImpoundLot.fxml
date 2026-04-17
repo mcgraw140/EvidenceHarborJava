@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.inventory.ImpoundLotController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab active" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Impound Lot" styleClass="nav-tab active" onAction="#onImpound"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <HBox spacing="12">
+                <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="Vehicle Impound Lot (Evidence)" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="Search vehicles..." styleClass="search-field" prefWidth="240"/>
+            </HBox>
+
+            <!-- Stat tiles -->
+            <HBox spacing="16">
+                <VBox styleClass="card" prefWidth="160" spacing="4" alignment="CENTER">
+                    <padding><Insets top="14" right="12" bottom="14" left="12"/></padding>
+                    <Label fx:id="statTotal" styleClass="metric-number" text="0"/>
+                    <Label text="Total Vehicles" styleClass="subtitle"/>
+                </VBox>
+                <VBox styleClass="card" prefWidth="160" spacing="4" alignment="CENTER">
+                    <padding><Insets top="14" right="12" bottom="14" left="12"/></padding>
+                    <Label fx:id="statImpounded" styleClass="metric-number" text="0"/>
+                    <Label text="Currently Impounded" styleClass="subtitle"/>
+                </VBox>
+                <VBox styleClass="card" prefWidth="160" spacing="4" alignment="CENTER">
+                    <padding><Insets top="14" right="12" bottom="14" left="12"/></padding>
+                    <Label fx:id="statStolen" styleClass="metric-number" text="0"/>
+                    <Label text="Reported Stolen" styleClass="subtitle"/>
+                </VBox>
+            </HBox>
+
+            <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <TableView fx:id="vehicleTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colBarcode" text="BARCODE" prefWidth="160"/>
+                        <TableColumn fx:id="colCase" text="CASE #" prefWidth="120"/>
+                        <TableColumn fx:id="colMakeModel" text="MAKE / MODEL" prefWidth="180"/>
+                        <TableColumn fx:id="colYear" text="YEAR" prefWidth="70"/>
+                        <TableColumn fx:id="colColor" text="COLOR" prefWidth="90"/>
+                        <TableColumn fx:id="colVin" text="VIN" prefWidth="160"/>
+                        <TableColumn fx:id="colPlate" text="PLATE" prefWidth="100"/>
+                        <TableColumn fx:id="colStatus" text="STATUS" prefWidth="120"/>
+                        <TableColumn fx:id="colImpounded" text="IMPOUNDED" prefWidth="100"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

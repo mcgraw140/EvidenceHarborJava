@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.admin.AuditTrailController"
+            styleClass="root-pane">
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases"              styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory"          styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People"             styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in"   styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports"            styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings"           styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin"              styleClass="nav-tab active" onAction="#onAdmin"/>
+                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <Label text="Admin &gt; Audit Trail" styleClass="breadcrumb-text"/>
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="Audit Trail" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Export CSV" styleClass="btn-secondary" onAction="#onExportCsv"/>
+            </HBox>
+            <Separator/>
+
+            <!-- Filter bar -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="Search logs..." prefWidth="220"
+                           styleClass="search-field" onKeyReleased="#onSearch"/>
+                <ComboBox fx:id="moduleFilter" promptText="Module" prefWidth="140"/>
+                <ComboBox fx:id="actionFilter" promptText="Action type" prefWidth="140"/>
+                <DatePicker fx:id="dateFrom" promptText="From" prefWidth="140"/>
+                <DatePicker fx:id="dateTo" promptText="To" prefWidth="140"/>
+                <Button text="Clear" styleClass="btn-secondary" onAction="#onClearFilters"/>
+            </HBox>
+
+            <!-- Module tabs -->
+            <HBox spacing="6">
+                <ToggleButton fx:id="tabAll"          text="All"          styleClass="filter-tab" onAction="#onTabAll"          selected="true"/>
+                <ToggleButton fx:id="tabEvidence"     text="Evidence"     styleClass="filter-tab" onAction="#onTabEvidence"/>
+                <ToggleButton fx:id="tabCases"        text="Cases"        styleClass="filter-tab" onAction="#onTabCases"/>
+                <ToggleButton fx:id="tabUsers"        text="Users"        styleClass="filter-tab" onAction="#onTabUsers"/>
+                <ToggleButton fx:id="tabSystem"       text="System"       styleClass="filter-tab" onAction="#onTabSystem"/>
+            </HBox>
+
+            <!-- Log table -->
+            <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
+                <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
+                <TableView fx:id="logTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colTimestamp" text="TIMESTAMP"      prefWidth="160"/>
+                        <TableColumn fx:id="colUser"      text="USER"           prefWidth="160"/>
+                        <TableColumn fx:id="colAction"    text="ACTION"         prefWidth="120"/>
+                        <TableColumn fx:id="colModule"    text="MODULE"         prefWidth="120"/>
+                        <TableColumn fx:id="colRecord"    text="RECORD"         prefWidth="160"/>
+                        <TableColumn fx:id="colDetails"   text="CHANGE DETAILS" prefWidth="300"/>
+                    </columns>
+                    <placeholder><Label text="No audit log entries." styleClass="empty-placeholder"/></placeholder>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

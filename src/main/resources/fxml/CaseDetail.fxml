@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.cases.CaseDetailController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases" styleClass="nav-tab active" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
+                <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+            <VBox spacing="16">
+                <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+                <!-- Breadcrumb -->
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="Cases" styleClass="breadcrumb-link" onMouseClicked="#onDashboard"/>
+                    <Label text="›" styleClass="breadcrumb-sep"/>
+                    <Label fx:id="breadcrumbCase" styleClass="breadcrumb-current"/>
+                </HBox>
+
+                <!-- Header card -->
+                <VBox styleClass="card" spacing="12">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label fx:id="caseNumberLabel" styleClass="case-title" HBox.hgrow="ALWAYS"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Print Case Report" styleClass="btn-secondary" onAction="#onPrint"/>
+                    </HBox>
+                    <HBox spacing="60">
+                        <VBox spacing="4">
+                            <Label text="Case Officer" styleClass="field-label"/>
+                            <Label fx:id="officerLabel" styleClass="field-value"/>
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label text="Assisting Officers" styleClass="field-label"/>
+                            <Label fx:id="assistingLabel" text="None" styleClass="field-value"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <!-- Charges card -->
+                <VBox styleClass="card" spacing="10">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <Label text="Charges" styleClass="section-title"/>
+                    <VBox fx:id="chargesList" spacing="6"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <ComboBox fx:id="chargeCombo" promptText="Select a charge to add..."
+                                  styleClass="combo-box-default" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="+ Add Charge" styleClass="btn-primary" onAction="#onAddCharge"/>
+                    </HBox>
+                    <Label text="+ Add New Charge to System" styleClass="link-label" onMouseClicked="#onAddNewCharge"/>
+                </VBox>
+
+                <!-- Bottom two-column section -->
+                <HBox spacing="16" alignment="TOP_LEFT">
+
+                    <!-- Associated People -->
+                    <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Associated People" styleClass="section-title" HBox.hgrow="ALWAYS"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button text="+ Associate Person" styleClass="btn-primary" onAction="#onAssociatePerson"/>
+                        </HBox>
+                        <TableView fx:id="peopleTable" prefHeight="200" styleClass="data-table">
+                            <columns>
+                                <TableColumn fx:id="colPersonName" text="NAME"    prefWidth="180"/>
+                                <TableColumn fx:id="colPersonRole" text="ROLE"    prefWidth="120"/>
+                                <TableColumn fx:id="colPersonAction" text="ACTIONS" prefWidth="100"/>
+                            </columns>
+                            <placeholder><Label text="No people associated." styleClass="placeholder-label"/></placeholder>
+                        </TableView>
+                    </VBox>
+
+                    <!-- Evidence -->
+                    <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label text="Evidence" styleClass="section-title" HBox.hgrow="ALWAYS"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button text="+ Add Evidence" styleClass="btn-primary" onAction="#onAddEvidence"/>
+                        </HBox>
+                        <TableView fx:id="evidenceTable" prefHeight="200" styleClass="data-table">
+                            <columns>
+                                <TableColumn fx:id="colBarcode"     text="BARCODE"     prefWidth="170"/>
+                                <TableColumn fx:id="colEvidDesc"    text="DESCRIPTION" prefWidth="200"/>
+                                <TableColumn fx:id="colEvidType"    text="TYPE"        prefWidth="120"/>
+                                <TableColumn fx:id="colEvidLoc"     text="LOCATION"    prefWidth="120"/>
+                                <TableColumn fx:id="colEvidStatus"  text="STATUS"      prefWidth="100"/>
+                            </columns>
+                            <placeholder><Label text="No evidence logged." styleClass="placeholder-label"/></placeholder>
+                        </TableView>
+                    </VBox>
+                </HBox>
+
+                <!-- Vehicles -->
+                <VBox styleClass="card" spacing="10">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Vehicles" styleClass="section-title" HBox.hgrow="ALWAYS"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="+ Impound Vehicle" styleClass="btn-primary" onAction="#onImpoundVehicle"/>
+                    </HBox>
+                    <TableView fx:id="vehicleTable" prefHeight="180" styleClass="data-table">
+                        <columns>
+                            <TableColumn fx:id="colVehicleYear"   text="YEAR"          prefWidth="90"/>
+                            <TableColumn fx:id="colVehicleMake"   text="MAKE"          prefWidth="140"/>
+                            <TableColumn fx:id="colVehicleModel"  text="MODEL"         prefWidth="150"/>
+                            <TableColumn fx:id="colVehiclePlate"  text="PLATE"         prefWidth="140"/>
+                            <TableColumn fx:id="colVehicleVin"    text="VIN"           prefWidth="220"/>
+                            <TableColumn fx:id="colVehicleStatus" text="STATUS"        prefWidth="120"/>
+                            <TableColumn fx:id="colVehicleDate"   text="IMPOUND DATE"  prefWidth="140"/>
+                        </columns>
+                        <placeholder><Label text="No vehicles impounded for this case." styleClass="placeholder-label"/></placeholder>
+                    </TableView>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

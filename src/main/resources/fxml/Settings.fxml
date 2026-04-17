@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.settings.SettingsController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases"            styleClass="nav-tab"        onAction="#onCases"/>
+                <Button text="Inventory"        styleClass="nav-tab"        onAction="#onInventory"/>
+                <Button text="People"           styleClass="nav-tab"        onAction="#onPeople"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab"        onAction="#onDropbox"/>
+                <Button text="Reports"          styleClass="nav-tab"        onAction="#onReports"/>
+                <Button text="Settings"         styleClass="nav-tab active" onAction="#onSettings"/>
+                <Button text="Admin"             styleClass="nav-tab"        onAction="#onAdmin"/>                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <Label text="System Settings" styleClass="page-title"/>
+
+            <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+
+                <!-- ── AGENCY INFO TAB ── -->
+                <Tab text="Agency Info">
+                    <ScrollPane fitToWidth="true" styleClass="card">
+                        <VBox spacing="18">
+                            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+
+                            <Label text="Agency Information" styleClass="section-header"/>
+
+                            <GridPane hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="180" hgrow="NEVER"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Label text="Agency Name"   GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="agencyNameField" promptText="e.g. Riverside Police Department"
+                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                <Label text="Street Address" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="agencyAddressField" promptText="e.g. 123 Main Street"
+                                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                <Label text="City"          GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="agencyCityField" promptText="e.g. Riverside"
+                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                <Label text="State"         GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="agencyStateField" promptText="e.g. CA"
+                                           GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                                <Label text="ZIP"           GridPane.rowIndex="4" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="agencyZipField" promptText="e.g. 92501"
+                                           GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                            </GridPane>
+
+                            <Separator/>
+
+                            <Label text="Number Formats" styleClass="section-header"/>
+                            <Label text="Use regex patterns to validate Case and Evidence numbers. Leave blank to skip validation."
+                                   styleClass="subtitle" wrapText="true"/>
+
+                            <GridPane hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="180" hgrow="NEVER"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                    <ColumnConstraints prefWidth="200" hgrow="NEVER"/>
+                                </columnConstraints>
+
+                                <Label text="Case # Pattern"   GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="casePatternField" promptText="e.g. ^d{2}-d{5}$"
+                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                                <Label fx:id="casePatternStatus" text="" GridPane.rowIndex="0" GridPane.columnIndex="2" styleClass="subtitle"/>
+
+                                <Label text="Case # Example"   GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="caseExampleField" promptText="e.g. 26-00001"
+                                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                <Label fx:id="caseValidationLabel" text="" GridPane.rowIndex="1" GridPane.columnIndex="2" styleClass="subtitle"/>
+
+                                <Label text="Evidence # Pattern" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="evidencePatternField" promptText="e.g. ^EV-d{4}-d{5}$"
+                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                <Label fx:id="evidencePatternStatus" text="" GridPane.rowIndex="2" GridPane.columnIndex="2" styleClass="subtitle"/>
+
+                                <Label text="Evidence # Example" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="evidenceExampleField" promptText="e.g. EV-2026-00001"
+                                           GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                                <Label fx:id="evidenceValidationLabel" text="" GridPane.rowIndex="3" GridPane.columnIndex="2" styleClass="subtitle"/>
+                            </GridPane>
+
+                            <Separator/>
+
+                            <Label text="Barcode Settings (Code 128)" styleClass="section-header"/>
+                            <Label text="Code 128 barcodes are auto-generated using: PREFIX + YYYYMMDD + sequential number."
+                                   styleClass="subtitle" wrapText="true"/>
+
+                            <GridPane hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="180" hgrow="NEVER"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                    <ColumnConstraints prefWidth="200" hgrow="NEVER"/>
+                                </columnConstraints>
+
+                                <Label text="Barcode Prefix" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="barcodePrefixField" promptText="e.g. EV or RPD"
+                                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                                <Label fx:id="barcodePreviewLabel" text="" GridPane.rowIndex="0" GridPane.columnIndex="2" styleClass="subtitle"/>
+                            </GridPane>
+
+                            <HBox spacing="12" alignment="CENTER_RIGHT">
+                                <Button text="Save Agency Settings" styleClass="btn-primary" onAction="#onSaveAgency"/>
+                            </HBox>
+
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- ── LOOKUP LISTS TAB ── -->
+                <Tab text="Lookup Lists">
+                    <ScrollPane fitToWidth="true">
+                        <VBox spacing="24">
+                            <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+                            <!-- Evidence Section Header -->
+                            <Label text="Evidence" styleClass="page-title"/>
+                            <HBox spacing="16">
+                                <!-- Ammunition Calibers -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Ammunition Calibers" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="caliberInput" promptText="Add caliber..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddCaliber"/>
+                                    </HBox>
+                                    <ListView fx:id="caliberList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveCaliber"/>
+                                </VBox>
+                                <!-- Electronic Device Types -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Electronic Device Types" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="electronicInput" promptText="Add device type..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddElectronic"/>
+                                    </HBox>
+                                    <ListView fx:id="electronicList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveElectronic"/>
+                                </VBox>
+                                <!-- Weapon Types -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Weapon Types" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="weaponTypeInput" promptText="Add weapon type..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddWeaponType"/>
+                                    </HBox>
+                                    <ListView fx:id="weaponTypeList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveWeaponType"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="16">
+                                <!-- Biological Sources -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Biological Sources" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="bioSourceInput" promptText="Add source..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddBioSource"/>
+                                    </HBox>
+                                    <ListView fx:id="bioSourceList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveBioSource"/>
+                                </VBox>
+                                <!-- Evidence Storage Locations -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Evidence Storage Locations" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="storageLocationInput" promptText="Add location..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddStorageLocation"/>
+                                    </HBox>
+                                    <ListView fx:id="storageLocationList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveStorageLocation"/>
+                                </VBox>
+                                <!-- Intake Locations -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Intake Locations" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="intakeLocationInput" promptText="Add location..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddIntakeLocation"/>
+                                    </HBox>
+                                    <ListView fx:id="intakeLocationList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveIntakeLocation"/>
+                                </VBox>
+                            </HBox>
+
+                            <!-- Case Management Section Header -->
+                            <Label text="Case Management" styleClass="page-title"/>
+                            <HBox spacing="16">
+                                <!-- Person Roles -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Person Roles" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="personRoleInput" promptText="Add role..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddPersonRole"/>
+                                    </HBox>
+                                    <ListView fx:id="personRoleList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemovePersonRole"/>
+                                </VBox>
+                                <!-- Case Statuses -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Case Statuses" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="caseStatusInput" promptText="Add status..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddCaseStatus"/>
+                                    </HBox>
+                                    <ListView fx:id="caseStatusList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveCaseStatus"/>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS"/>
+                            </HBox>
+
+                            <!-- Operations Section Header -->
+                            <Label text="Operations" styleClass="page-title"/>
+                            <HBox spacing="16">
+                                <!-- Transfer Actions -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Transfer Actions" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="transferActionInput" promptText="Add action..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddTransferAction"/>
+                                    </HBox>
+                                    <ListView fx:id="transferActionList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveTransferAction"/>
+                                </VBox>
+                                <!-- Analysis Labs -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Analysis Labs" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="analysisLabInput" promptText="Add lab..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddAnalysisLab"/>
+                                    </HBox>
+                                    <ListView fx:id="analysisLabList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveAnalysisLab"/>
+                                </VBox>
+                                <!-- Other Agencies -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Other Agencies" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="otherAgencyInput" promptText="Add agency..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddOtherAgency"/>
+                                    </HBox>
+                                    <ListView fx:id="otherAgencyList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveOtherAgency"/>
+                                </VBox>
+                            </HBox>
+
+                            <!-- Narcotics Section Header -->
+                            <Label text="Narcotics" styleClass="page-title"/>
+                            <HBox spacing="16">
+                                <!-- Narcotics Types -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Narcotics Types" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="narcoticsInput" promptText="Add narcotics type..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddNarcotics"/>
+                                    </HBox>
+                                    <ListView fx:id="narcoticsList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveNarcotics"/>
+                                </VBox>
+                                <!-- Narcotics Unit Types -->
+                                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                                    <Label text="Unit Types" styleClass="section-header"/>
+                                    <HBox spacing="8">
+                                        <TextField fx:id="narcUnitTypeInput" promptText="Add unit type..." HBox.hgrow="ALWAYS"/>
+                                        <Button text="Add" styleClass="btn-primary" onAction="#onAddNarcUnitType"/>
+                                    </HBox>
+                                    <ListView fx:id="narcUnitTypeList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+                                    <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveNarcUnitType"/>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS"/>
+                            </HBox>
+
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+            </TabPane>
+        </VBox>
+    </center>
+</BorderPane>

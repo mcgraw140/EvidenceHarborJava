@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.qm.QmDashboardController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab active" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard"          styleClass="nav-tab active" onAction="#onQuartermaster"/>
+                <Button text="Assign Equipment"   styleClass="nav-tab" onAction="#onAssignEquipment"/>
+                <Button text="Equipment"          styleClass="nav-tab" onAction="#onEquipment"/>
+                <Button text="Weapons"            styleClass="nav-tab" onAction="#onWeapons"/>
+                <Button text="Uniforms"           styleClass="nav-tab" onAction="#onUniforms"/>
+                <Button text="Ammunition"         styleClass="nav-tab" onAction="#onAmmunition"/>
+                <Button text="Inventory Levels"   styleClass="nav-tab" onAction="#onInventoryLevels"/>
+                <Button text="Inventory Audit"    styleClass="nav-tab" onAction="#onInventoryAudit"/>
+                <Button text="Loadout Reports"    styleClass="nav-tab" onAction="#onOfficerLoadouts"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="20">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <Label text="Quartermaster" styleClass="breadcrumb-text"/>
+            <Label text="Quartermaster Module" styleClass="page-title"/>
+            <Separator/>
+
+            <!-- Row 1 -->
+            <HBox spacing="16">
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onAssignEquipment" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F527;" style="-fx-font-size:28;"/>
+                    <Label text="Assign Equipment" styleClass="admin-card-title"/>
+                    <Label text="Assign weapons, uniforms, and gear to officers. Track returns."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onAmmunition" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F4A5;" style="-fx-font-size:28;"/>
+                    <Label text="Ammunition" styleClass="admin-card-title"/>
+                    <Label text="Track ammunition stock levels by caliber and location."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onInventoryLevels" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F4CA;" style="-fx-font-size:28;"/>
+                    <Label text="Inventory Levels" styleClass="admin-card-title"/>
+                    <Label text="View equipment count by category and status."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+            </HBox>
+
+            <!-- Row 2 -->
+            <HBox spacing="16">
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onOfficerLoadouts" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F46E;" style="-fx-font-size:28;"/>
+                    <Label text="Officer Loadouts" styleClass="admin-card-title"/>
+                    <Label text="View all currently assigned items per officer."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onVehicleImpound" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x1F697;" style="-fx-font-size:28;"/>
+                    <Label text="Vehicle Impound" styleClass="admin-card-title"/>
+                    <Label text="Log, track, and release impounded vehicles."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+                <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                      onMouseClicked="#onInventoryAudit" style="-fx-cursor: hand;">
+                    <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                    <Label text="&#x2705;" style="-fx-font-size:28;"/>
+                    <Label text="Inventory Audit" styleClass="admin-card-title"/>
+                    <Label text="Conduct and track QM inventory audits."
+                           styleClass="admin-card-desc" wrapText="true"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>
+

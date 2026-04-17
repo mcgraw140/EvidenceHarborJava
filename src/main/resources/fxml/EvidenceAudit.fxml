@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.admin.EvidenceAuditController"
+            styleClass="root-pane">
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
+                    <Button text="Narcotics" styleClass="nav-tab"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Cases"              styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory"          styleClass="nav-tab" onAction="#onInventory"/>
+                <Button text="People"             styleClass="nav-tab" onAction="#onPeople"/>
+                <Button text="Dropbox Check-in"   styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports"            styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="Settings"           styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Admin"              styleClass="nav-tab active" onAction="#onAdmin"/>
+                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <Label text="Admin &gt; Evidence Storage Audit" styleClass="breadcrumb-text"/>
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label text="Evidence Storage Audit" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="+ New Audit" styleClass="btn-primary" onAction="#onNewAudit"/>
+            </HBox>
+            <Separator/>
+
+            <!-- In-progress audits -->
+            <Label text="In Progress" styleClass="section-title"/>
+            <VBox styleClass="card" spacing="0">
+                <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
+                <TableView fx:id="inProgressTable" prefHeight="180">
+                    <columns>
+                        <TableColumn fx:id="colIPDate"   text="STARTED"   prefWidth="160"/>
+                        <TableColumn fx:id="colIPType"   text="TYPE"       prefWidth="130"/>
+                        <TableColumn fx:id="colIPScope"  text="SCOPE"      prefWidth="200"/>
+                        <TableColumn fx:id="colIPBy"     text="CREATED BY" prefWidth="170"/>
+                        <TableColumn fx:id="colIPStatus" text="STATUS"     prefWidth="120"/>
+                        <TableColumn fx:id="colIPAction" text=""           prefWidth="100"/>
+                    </columns>
+                    <placeholder><Label text="No audits in progress." styleClass="empty-placeholder"/></placeholder>
+                </TableView>
+            </VBox>
+
+            <!-- Completed audits -->
+            <Label text="Completed" styleClass="section-title"/>
+            <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
+                <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
+                <TableView fx:id="completedTable" VBox.vgrow="ALWAYS" prefHeight="200">
+                    <columns>
+                        <TableColumn fx:id="colCDate"   text="COMPLETED"  prefWidth="160"/>
+                        <TableColumn fx:id="colCType"   text="TYPE"        prefWidth="130"/>
+                        <TableColumn fx:id="colCScope"  text="SCOPE"       prefWidth="200"/>
+                        <TableColumn fx:id="colCBy"     text="CREATED BY"  prefWidth="170"/>
+                        <TableColumn fx:id="colCStatus" text="STATUS"      prefWidth="120"/>
+                        <TableColumn fx:id="colCAction" text=""            prefWidth="100"/>
+                    </columns>
+                    <placeholder><Label text="No completed audits." styleClass="empty-placeholder"/></placeholder>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>
