@@ -6,11 +6,12 @@ This project is free to use and is still in active development. It is intended f
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Evidence Harbor Free Use, No Resale License.
 
-- Free to use in personal, commercial, and government projects
-- Allowed to modify and redistribute
-- Allowed to use in proprietary/internal systems
+- Free to use by police departments and other public safety/government users
+- Allowed to modify for internal use
+- Redistribution is allowed only on a non-commercial basis
+- Selling or commercial resale is not allowed without written permission
 - No warranty (provided as-is)
 
 See the LICENSE file for full terms.
