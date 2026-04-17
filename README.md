@@ -2,6 +2,19 @@
 
 Evidence Harbor is a JavaFX desktop application for evidence, impound, and quartermaster workflows.
 
+This project is free to use and is still in active development. It is intended for any police department looking for a simple system.
+
+## License
+
+This project is licensed under the MIT License.
+
+- Free to use in personal, commercial, and government projects
+- Allowed to modify and redistribute
+- Allowed to use in proprietary/internal systems
+- No warranty (provided as-is)
+
+See the LICENSE file for full terms.
+
 ## Tech Stack
 
 - Java 21
