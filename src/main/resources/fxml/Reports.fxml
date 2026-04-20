@@ -32,13 +32,83 @@
     <center>
         <VBox spacing="16">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
             <Label text="Reports" styleClass="page-title"/>
-            <VBox styleClass="card" spacing="10">
-                <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
-                <Label text="Reports module is ready for report templates and export actions." styleClass="subtitle"/>
-                <Label text="Dashboard was intentionally not changed per your request." styleClass="subtitle"/>
-            </VBox>
+
+            <!-- Summary stat cards -->
+            <HBox spacing="12">
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                    <Label fx:id="statTotalEvidence" text="—"
+                           style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#3b82f6;"/>
+                    <Label text="Total Evidence" styleClass="subtitle"/>
+                </VBox>
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                    <Label fx:id="statInCustody" text="—"
+                           style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#22c55e;"/>
+                    <Label text="Active / In Custody" styleClass="subtitle"/>
+                </VBox>
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                    <Label fx:id="statTotalCases" text="—"
+                           style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#a78bfa;"/>
+                    <Label text="Total Cases" styleClass="subtitle"/>
+                </VBox>
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                    <Label fx:id="statDisposed" text="—"
+                           style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#f59e0b;"/>
+                    <Label text="Disposed" styleClass="subtitle"/>
+                </VBox>
+            </HBox>
+
+            <!-- Report selector + content -->
+            <HBox spacing="16" VBox.vgrow="ALWAYS">
+
+                <!-- Left: report type selector -->
+                <VBox styleClass="card" prefWidth="210" spacing="6">
+                    <padding><Insets top="16" right="12" bottom="16" left="12"/></padding>
+                    <Label text="REPORT TYPE" styleClass="subtitle"
+                           style="-fx-font-size:11px; -fx-font-weight:bold; -fx-padding: 0 0 6 4; -fx-text-fill:#64748b;"/>
+                    <Button fx:id="btnStatusReport"   text="Evidence by Status"   styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectStatusReport"/>
+                    <Button fx:id="btnTypeReport"     text="Evidence by Type"     styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectTypeReport"/>
+                    <Button fx:id="btnOfficerReport"  text="Evidence by Officer"  styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectOfficerReport"/>
+                    <Button fx:id="btnLocationReport" text="Evidence by Location" styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectLocationReport"/>
+                    <Button fx:id="btnCasesReport"    text="Cases Summary"        styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectCasesReport"/>
+                </VBox>
+
+                <!-- Right: filter + table -->
+                <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="10" VBox.vgrow="ALWAYS">
+                    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+
+                    <!-- Header row: title + date filters + action buttons -->
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label fx:id="reportTitleLabel" text="Select a report"
+                               style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#e2e8f0;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox fx:id="dateFilterBox" spacing="8" alignment="CENTER_RIGHT"
+                              visible="false" managed="false">
+                            <Label text="From:" styleClass="subtitle"/>
+                            <DatePicker fx:id="fromDatePicker" prefWidth="150"/>
+                            <Label text="To:" styleClass="subtitle"/>
+                            <DatePicker fx:id="toDatePicker" prefWidth="150"/>
+                        </HBox>
+                        <Button text="Run" styleClass="btn-primary" onAction="#onRunReport"/>
+                        <Button text="Export CSV" styleClass="btn-secondary" onAction="#onExportCsv"/>
+                    </HBox>
+
+                    <Label fx:id="reportCountLabel" styleClass="subtitle" text=""/>
+
+                    <VBox VBox.vgrow="ALWAYS">
+                        <TableView fx:id="reportTable" styleClass="data-table"
+                                   VBox.vgrow="ALWAYS" minHeight="280"/>
+                    </VBox>
+                </VBox>
+
+            </HBox>
         </VBox>
     </center>
+
     <bottom><fx:include source="DbStatusBar.fxml"/></bottom>
 </BorderPane>
