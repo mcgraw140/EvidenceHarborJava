@@ -117,6 +117,15 @@ Schema and seed data are auto-applied at startup by `DatabaseManager`.
 - Schema: `src/main/resources/sql/schema-mariadb.sql`
 - Seed data: `src/main/resources/sql/seed-mariadb.sql`
 
+### Required Downloads
+
+These are not included in the repository. Download and install before running:
+
+| Software | Version | Download |
+|----------|---------|----------|
+| MariaDB | 12.2.2 | https://mariadb.org/download/ |
+| Tailscale | 1.96.3 | https://tailscale.com/download/windows |
+
 ## Build and Run
 
 ```powershell
