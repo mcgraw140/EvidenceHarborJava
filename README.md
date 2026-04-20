@@ -112,19 +112,139 @@ Sessions only activate when at least one evidence item has status `In Dropbox` a
 
 ## Database
 
-Schema and seed data are auto-applied at startup by `DatabaseManager`.
+Schema and seed data are applied automatically at startup by `DatabaseManager` using the MariaDB scripts in `src/main/resources/sql/`.
 
-- Schema: `src/main/resources/sql/schema-mariadb.sql`
-- Seed data: `src/main/resources/sql/seed-mariadb.sql`
+## Dependencies & Installation
 
-### Required Downloads
+This section covers everything needed to build and run Evidence Harbor from source on Windows.
 
-These are not included in the repository. Download and install before running:
+---
 
-| Software | Version | Download |
-|----------|---------|----------|
-| MariaDB | 12.2.2 | https://mariadb.org/download/ |
-| Tailscale | 1.96.3 | https://tailscale.com/download/windows |
+### 1. Java Development Kit (JDK) 21
+
+Evidence Harbor requires **Java 21**. The Microsoft Build of OpenJDK is recommended.
+
+**Download:** https://learn.microsoft.com/en-us/java/openjdk/download#openjdk-21
+
+**Install:**
+1. Run the installer (`.msi`)
+2. Note the install path (e.g. `C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot`)
+3. Set `JAVA_HOME` before running Maven:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
+```
+
+To make this permanent, add it to your system environment variables.
+
+**Verify:**
+```powershell
+java -version
+# should output: openjdk version "21.x.x"
+```
+
+---
+
+### 2. Apache Maven
+
+Maven handles compilation, dependency resolution, and running the app.
+
+**Download:** https://maven.apache.org/download.cgi — download the binary zip (e.g. `apache-maven-3.9.9-bin.zip`)
+
+**Install:**
+1. Extract to a stable location (e.g. `C:\Users\<you>\Maven\apache-maven-3.9.9`)
+2. Add `bin\` to your PATH, or call it directly:
+
+```powershell
+& "C:\Users\<you>\Maven\apache-maven-3.9.9\bin\mvn.cmd" --version
+```
+
+**Verify:**
+```powershell
+mvn --version
+# should output: Apache Maven 3.9.x
+```
+
+---
+
+### 3. MariaDB 12.2.2
+
+Evidence Harbor connects to a local or networked MariaDB instance.
+
+**Download:** https://mariadb.org/download/ — select version 12.2.2, Windows x64 MSI
+
+**Install:**
+1. Run the `.msi` installer
+2. During setup, set a root password (or leave blank for local dev)
+3. Default port is `3306` — leave as-is unless you have a conflict
+4. Enable the **MariaDB** Windows service so it starts automatically
+
+**After install, create the database:**
+```sql
+CREATE DATABASE evidence_harbor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+You can run this in the MariaDB command-line client:
+```powershell
+mysql -u root -p
+# then paste the CREATE DATABASE statement above
+```
+
+The schema and seed data are applied automatically by the app on first launch — you do not need to run SQL scripts manually.
+
+**Default connection settings** (configured via the first-time setup wizard on first launch):
+
+| Setting | Default |
+|---------|---------|
+| Host | `127.0.0.1` |
+| Port | `3306` |
+| Database | `evidence_harbor` |
+| User | `root` |
+| Password | *(blank or whatever you set during MariaDB install)* |
+
+Connection settings are saved to `%USERPROFILE%\EvidenceHarbor\db.properties` after first setup.
+
+---
+
+### 4. Tailscale (Optional — for remote/multi-site access)
+
+Tailscale is used to securely connect officers at remote sites to a central MariaDB server over a private VPN without opening firewall ports.
+
+**Download:** https://tailscale.com/download/windows — version 1.96.3
+
+**Install:**
+1. Run the installer
+2. Log in with a Tailscale account (free tier supports small teams)
+3. On the server machine running MariaDB, note the Tailscale IP (e.g. `100.x.x.x`)
+4. On client machines, set the MariaDB host in the Evidence Harbor setup wizard to that Tailscale IP
+
+This is optional — if all machines are on the same local network, Tailscale is not needed.
+
+---
+
+### 5. Maven Dependencies (auto-resolved)
+
+These are declared in `pom.xml` and downloaded automatically by Maven on first build. No manual installation required.
+
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| `org.openjfx:javafx-controls` | 21.0.5 | JavaFX UI controls |
+| `org.openjfx:javafx-fxml` | 21.0.5 | JavaFX FXML layout loading |
+| `org.mariadb.jdbc:mariadb-java-client` | 3.4.1 | MariaDB JDBC driver |
+| `org.junit.jupiter:junit-jupiter` | 5.10.2 | Unit testing (test scope only) |
+
+---
+
+### 6. Required Downloads Summary
+
+| Software | Version | Required | Download |
+|----------|---------|----------|----------|
+| JDK 21 | 21.x | Yes | https://learn.microsoft.com/en-us/java/openjdk/download#openjdk-21 |
+| Apache Maven | 3.9.x | Yes | https://maven.apache.org/download.cgi |
+| MariaDB | 12.2.2 | Yes | https://mariadb.org/download/ |
+| Tailscale | 1.96.3 | No | https://tailscale.com/download/windows |
+
+---
 
 ## Build and Run
 
