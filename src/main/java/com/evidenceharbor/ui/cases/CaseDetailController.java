@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.cases;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.*;
 import com.evidenceharbor.persistence.*;
@@ -23,6 +24,13 @@ import java.util.ResourceBundle;
 import java.util.function.Function;
 
 public class CaseDetailController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
 
     @FXML private Label breadcrumbCase;
     @FXML private Label caseNumberLabel;
@@ -59,6 +67,7 @@ public class CaseDetailController implements Initializable {
     private final EvidenceRepository evidenceRepo = new EvidenceRepository();
     private final PersonRepository personRepo = new PersonRepository();
     private final QmRepository qmRepo = new QmRepository();
+    private final LookupRepository lookupRepo = new LookupRepository();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -90,6 +99,32 @@ public class CaseDetailController implements Initializable {
         colVehicleVin.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getVin())));
         colVehicleStatus.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getStatus())));
         colVehicleDate.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getImpoundDate())));
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
+
+        // Make chargeCombo type-searchable
+        chargeCombo.setEditable(true);
+        chargeCombo.setConverter(new StringConverter<>() {
+            @Override public String toString(Charge c) { return c == null ? "" : c.toString(); }
+            @Override public Charge fromString(String s) {
+                return chargeCombo.getItems().stream()
+                        .filter(c -> c.toString().equalsIgnoreCase(s))
+                        .findFirst().orElse(null);
+            }
+        });
+        chargeCombo.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+            Charge current = chargeCombo.getValue();
+            // Don't filter when a real selection was just made
+            if (current != null && current.toString().equals(newVal)) return;
+            String lower = newVal == null ? "" : newVal.toLowerCase();
+            ObservableList<Charge> base = (ObservableList<Charge>) chargeCombo.getUserData();
+            if (base != null) {
+                chargeCombo.hide();
+                chargeCombo.getItems().setAll(
+                    base.filtered(c -> c.toString().toLowerCase().contains(lower))
+                );
+                if (!newVal.isBlank()) chargeCombo.show();
+            }
+        });
     }
 
     public void setCase(Case c) {
@@ -126,7 +161,11 @@ public class CaseDetailController implements Initializable {
         try {
             List<Charge> all = chargeRepo.findAll();
             all.removeIf(ch -> currentCase.getCharges().stream().anyMatch(c -> c.getId() == ch.getId()));
-            chargeCombo.setItems(FXCollections.observableArrayList(all));
+            ObservableList<Charge> chargeItems = FXCollections.observableArrayList(all);
+            chargeCombo.setUserData(chargeItems);
+            chargeCombo.setItems(chargeItems);
+            chargeCombo.setValue(null);
+            chargeCombo.getEditor().clear();
         } catch (Exception e) { showError(e); }
 
         // People table
@@ -265,27 +304,37 @@ public class CaseDetailController implements Initializable {
     @FXML
     private void onAssociatePerson() {
         Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Associate Person");
+        dialog.setTitle("Associate Person with Case #" + currentCase.getCaseNumber());
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(16));
 
         ComboBox<Person> personBox = new ComboBox<>();
         ComboBox<String> roleBox = new ComboBox<>();
-        TextField newPersonField = new TextField(); newPersonField.setPromptText("Or type new person name");
+        Button createPersonBtn = new Button("+ Create New Person");
 
         List<Person> people = new ArrayList<>();
         try { people = personRepo.findAll(); } catch (Exception e) { showError(e); }
         makeSearchableComboBox(personBox, people, Person::getFullName);
 
-        List<String> roles = Arrays.asList(
-            "Victim", "Suspect", "Witness", "Owner", "Reporting Party",
-            "Complainant", "Driver", "Passenger", "Other");
+        List<String> roles = getPersonRolesForDropdown();
         makeSearchableComboBox(roleBox, roles, Function.identity());
         roleBox.setPromptText("Select role...");
+        createPersonBtn.setOnAction(evt -> {
+            NewPersonSelection created = showCreatePersonDialog(roles);
+            if (created == null || created.person() == null) {
+                return;
+            }
+            personBox.getItems().add(created.person());
+            personBox.getSelectionModel().select(created.person());
+            if (created.role() != null && !created.role().isBlank()) {
+                roleBox.getSelectionModel().select(created.role());
+                roleBox.getEditor().setText(created.role());
+            }
+        });
 
-        grid.add(new Label("Existing Person:"), 0, 0); grid.add(personBox, 1, 0);
-        grid.add(new Label("New Person Name:"), 0, 1); grid.add(newPersonField, 1, 1);
+        grid.add(new Label("Person:"), 0, 0); grid.add(personBox, 1, 0);
+        grid.add(new Label(""), 0, 1); grid.add(createPersonBtn, 1, 1);
         grid.add(new Label("Role:"), 0, 2); grid.add(roleBox, 1, 2);
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -297,18 +346,117 @@ public class CaseDetailController implements Initializable {
             String role = roleBox.getEditor().getText().trim();
                 if (role.isEmpty()) { new Alert(Alert.AlertType.WARNING, "Role is required.").showAndWait(); e.consume(); return; }
                 Person p = personBox.getValue();
-                if (p == null) {
-                    String name = newPersonField.getText().trim();
-                    if (name.isEmpty()) { new Alert(Alert.AlertType.WARNING, "Select or enter a person.").showAndWait(); e.consume(); return; }
-                    p = new Person(); p.setFullName(name);
-                    personRepo.save(p);
-                }
+                if (p == null) { new Alert(Alert.AlertType.WARNING, "Select a person.").showAndWait(); e.consume(); return; }
                 caseRepo.associatePerson(currentCase.getId(), p.getId(), role);
                 refresh();
             } catch (Exception ex) { showError(ex); e.consume(); }
         });
         dialog.showAndWait();
     }
+
+    private NewPersonSelection showCreatePersonDialog(List<String> roles) {
+        Dialog<NewPersonSelection> dialog = new Dialog<>();
+        dialog.setTitle("Add New Person");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(16));
+
+        TextField fullNameField = new TextField();
+        fullNameField.setPromptText("Full Name");
+
+        DatePicker dobPicker = new DatePicker();
+        dobPicker.setPromptText("mm/dd/yyyy");
+
+        TextField ssnField = new TextField();
+        ssnField.setPromptText("SSN (XXX-XX-XXXX) - Optional");
+
+        TextField streetField = new TextField();
+        streetField.setPromptText("Street");
+        TextField cityField = new TextField();
+        cityField.setPromptText("City");
+        TextField zipField = new TextField();
+        zipField.setPromptText("Zip Code");
+
+        ComboBox<String> stateBox = new ComboBox<>();
+        makeSearchableComboBox(stateBox, Arrays.asList(
+                "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","IA","ID","IL","IN","KS","KY","LA",
+                "MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH","OK",
+                "OR","PA","RI","SC","SD","TN","TX","UT","VA","VT","WA","WI","WV","WY"
+        ), Function.identity());
+        stateBox.setPromptText("Select...");
+
+        TextField contactField = new TextField();
+        contactField.setPromptText("Contact Info (Phone/Email) - Optional");
+
+        ComboBox<String> roleBox = new ComboBox<>();
+        makeSearchableComboBox(roleBox, roles, Function.identity());
+        roleBox.setPromptText("Select...");
+
+        grid.add(new Label("Full Name"), 0, 0); grid.add(fullNameField, 1, 0);
+        grid.add(new Label("Date of Birth"), 0, 1); grid.add(dobPicker, 1, 1);
+        grid.add(new Label("SSN"), 0, 2); grid.add(ssnField, 1, 2);
+        grid.add(new Label("Street"), 0, 3); grid.add(streetField, 1, 3);
+        grid.add(new Label("City"), 0, 4); grid.add(cityField, 1, 4);
+        grid.add(new Label("Zip Code"), 0, 5); grid.add(zipField, 1, 5);
+        grid.add(new Label("State"), 0, 6); grid.add(stateBox, 1, 6);
+        grid.add(new Label("Contact"), 0, 7); grid.add(contactField, 1, 7);
+        grid.add(new Label("Role *"), 0, 8); grid.add(roleBox, 1, 8);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().getStylesheets().add(
+                getClass().getResource("/styles/theme.css").toExternalForm());
+
+        Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        ok.setOnAction(e -> {
+            String fullName = fullNameField.getText().trim();
+            String role = roleBox.getEditor().getText().trim();
+            if (fullName.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING, "Full name is required.").showAndWait();
+                e.consume();
+                return;
+            }
+            if (role.isEmpty()) {
+                new Alert(Alert.AlertType.WARNING, "Role is required.").showAndWait();
+                e.consume();
+            }
+        });
+
+        dialog.setResultConverter(bt -> {
+            if (bt != ButtonType.OK) {
+                return null;
+            }
+            try {
+                Person p = new Person();
+                p.setFullName(fullNameField.getText().trim());
+                personRepo.save(p);
+                return new NewPersonSelection(p, roleBox.getEditor().getText().trim());
+            } catch (Exception ex) {
+                showError(ex);
+                return null;
+            }
+        });
+
+        return dialog.showAndWait().orElse(null);
+    }
+
+    private List<String> getPersonRolesForDropdown() {
+        try {
+            List<String> roles = lookupRepo.getPersonRoles();
+            if (roles != null && !roles.isEmpty()) {
+                return roles;
+            }
+        } catch (Exception ignored) {
+            // Fallback keeps dialog usable if lookup load fails.
+        }
+        return Arrays.asList(
+                "Victim", "Suspect", "Witness", "Owner", "Reporting Party",
+                "Complainant", "Driver", "Passenger", "Other");
+    }
+
+    private record NewPersonSelection(Person person, String role) {}
 
     private <T> void makeSearchableComboBox(ComboBox<T> comboBox, List<T> sourceItems, Function<T, String> labelMapper) {
         ObservableList<T> originalItems = FXCollections.observableArrayList(sourceItems);

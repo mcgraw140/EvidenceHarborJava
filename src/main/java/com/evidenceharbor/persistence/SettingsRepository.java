@@ -6,15 +6,13 @@ import java.sql.*;
 
 public class SettingsRepository {
 
-    private final Connection conn;
-
-    public SettingsRepository() {
-        this.conn = DatabaseManager.getInstance().getConnection();
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
     }
 
     public AgencySettings load() throws SQLException {
         AgencySettings s = new AgencySettings();
-        try (Statement st = conn.createStatement();
+        try (Statement st = conn().createStatement();
              ResultSet rs = st.executeQuery("SELECT k, v FROM agency_settings")) {
             while (rs.next()) {
                 String key = rs.getString("k");
@@ -50,18 +48,27 @@ public class SettingsRepository {
     }
 
     private void set(String key, String value) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO agency_settings (k, v) VALUES (?, ?) " +
-                "ON CONFLICT(k) DO UPDATE SET v = excluded.v")) {
-            ps.setString(1, key);
-            ps.setString(2, value == null ? "" : value);
-            ps.executeUpdate();
+        int updated;
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE agency_settings SET v=? WHERE k=?")) {
+            ps.setString(1, value == null ? "" : value);
+            ps.setString(2, key);
+            updated = ps.executeUpdate();
+        }
+
+        if (updated == 0) {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "INSERT INTO agency_settings (k, v) VALUES (?, ?)")) {
+                ps.setString(1, key);
+                ps.setString(2, value == null ? "" : value);
+                ps.executeUpdate();
+            }
         }
     }
 
     /** Convenience: get a single setting value, returns "" if not set. */
     public String get(String key) {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT v FROM agency_settings WHERE k=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT v FROM agency_settings WHERE k=?")) {
             ps.setString(1, key);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getString("v") : "";

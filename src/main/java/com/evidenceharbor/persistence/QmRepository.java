@@ -119,7 +119,7 @@ public class QmRepository {
     }
 
     public void returnEquipment(int assignmentId, int equipmentId) {
-        String sql = "UPDATE qm_assignments SET returned_date = datetime('now') WHERE id=?";
+        String sql = "UPDATE qm_assignments SET returned_date = CURRENT_TIMESTAMP WHERE id=?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, assignmentId); ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
@@ -162,7 +162,7 @@ public class QmRepository {
     }
 
     public void updateAmmunition(int id, String caliber, int quantity, String location, String notes) {
-        String sql = "UPDATE qm_ammunition SET caliber=?, quantity=?, location=?, notes=?, updated_at=datetime('now') WHERE id=?";
+        String sql = "UPDATE qm_ammunition SET caliber=?, quantity=?, location=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, caliber); ps.setInt(2, quantity);
             ps.setString(3, location); ps.setString(4, notes); ps.setInt(5, id);
@@ -226,7 +226,7 @@ public class QmRepository {
     }
 
     public void releaseVehicle(int id) {
-        String sql = "UPDATE qm_vehicle_impound SET status='Released', release_date=date('now') WHERE id=?";
+        String sql = "UPDATE qm_vehicle_impound SET status='Released', release_date=CURRENT_DATE WHERE id=?";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, id); ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
@@ -261,7 +261,7 @@ public class QmRepository {
 
     public void completeAudit(int id) {
         try (PreparedStatement ps = conn().prepareStatement(
-                "UPDATE qm_inventory_audits SET status='Completed', completed_at=datetime('now') WHERE id=?")) {
+                "UPDATE qm_inventory_audits SET status='Completed', completed_at=CURRENT_TIMESTAMP WHERE id=?")) {
             ps.setInt(1, id); ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }

@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.inventory;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.Evidence;
@@ -16,6 +17,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ImpoundLotController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
 
     @FXML private TextField searchField;
     @FXML private Label statTotal;
@@ -56,6 +63,7 @@ public class ImpoundLotController implements Initializable {
 
         searchField.textProperty().addListener((obs, o, n) -> applySearch(n));
         loadData();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     private void loadData() {

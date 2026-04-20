@@ -1,10 +1,23 @@
 package com.evidenceharbor.ui.reports;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 
 public class ReportsController {
 
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
+
+    @FXML
+    void initialize() {
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
+    }
     @FXML private void onCases() { Navigator.get().showCaseList(); }
     @FXML private void onInventory() { Navigator.get().showInventory(); }
     @FXML private void onPeople() { Navigator.get().showPeople(); }

@@ -1,14 +1,16 @@
 package com.evidenceharbor.persistence;
 
 import com.evidenceharbor.domain.LookupItem;
+import java.util.Arrays;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LookupRepository {
-    private final Connection conn;
 
-    public LookupRepository() { this.conn = DatabaseManager.getInstance().getConnection(); }
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
+    }
 
     // ── Ammunition Calibers ───────────────────────────────────────────────────
     public List<LookupItem> getCaliberList()         throws SQLException { return getAll("ammunition_calibers"); }
@@ -88,11 +90,75 @@ public class LookupRepository {
     public LookupItem       addIntakeLocation(String name)    throws SQLException { return addTo("intake_locations", name); }
     public void             deleteIntakeLocation(int id)      throws SQLException { deleteFrom("intake_locations", id); }
 
+    // ── Evidence Types / Statuses ────────────────────────────────────────────
+    public List<String> getEvidenceTypes() throws SQLException {
+        return getNamesSeeded("evidence_types", Arrays.asList(
+                "Ammunition", "Biological / DNA", "Currency", "Electronics",
+                "Firearm", "Jewelry", "Narcotic Equipment", "Narcotics", "Weapon"
+        ));
+    }
+
+    public List<String> getEvidenceStatuses() throws SQLException {
+        return getNamesSeeded("evidence_statuses", Arrays.asList(
+                "In Dropbox", "In Custody", "In Storage", "Checked In", "Checked Out",
+                "Deposited", "Missing", "Destroyed", "Disbursed", "Returned to Owner", "Pending"
+        ));
+    }
+
+    // ── Audit lookups ────────────────────────────────────────────────────────
+    public List<String> getAuditModules() throws SQLException {
+        return getNamesSeeded("audit_modules", Arrays.asList(
+                "Evidence", "Cases", "Users", "Narcotics", "Quartermaster", "System"
+        ));
+    }
+
+    public List<String> getAuditActions() throws SQLException {
+        return getNamesSeeded("audit_actions_lookup", Arrays.asList(
+                "CREATE", "UPDATE", "DELETE", "PRINT", "SAVE", "LOGIN", "LOGOUT"
+        ));
+    }
+
+    public List<String> getAuditTypes() throws SQLException {
+        return getNamesSeeded("audit_types", Arrays.asList("Full", "Random", "Location"));
+    }
+
+    // ── User roles / statuses ────────────────────────────────────────────────
+    public List<String> getUserRoles() throws SQLException {
+        return getNamesSeeded("user_roles_lookup", Arrays.asList("officer", "supervisor", "agency_admin"));
+    }
+
+    public List<String> getUserStatuses() throws SQLException {
+        return getNamesSeeded("user_statuses_lookup", Arrays.asList("Active", "Inactive"));
+    }
+
+    // ── QM lookups ───────────────────────────────────────────────────────────
+    public List<String> getQmEquipmentCategories() throws SQLException {
+        return getNamesSeeded("qm_equipment_categories_lookup", Arrays.asList(
+                "Weapon", "Uniform", "Equipment", "Vehicle", "Other"
+        ));
+    }
+
+    public List<String> getQmEquipmentStatuses() throws SQLException {
+        return getNamesSeeded("qm_equipment_statuses_lookup", Arrays.asList(
+                "Available", "Assigned", "Maintenance"
+        ));
+    }
+
+    public List<String> getQmVehicleStatuses() throws SQLException {
+        return getNamesSeeded("qm_vehicle_statuses_lookup", Arrays.asList("Impounded", "Released"));
+    }
+
+    public List<String> getQmStorageLocations() throws SQLException {
+        return getNamesSeeded("qm_storage_locations", Arrays.asList(
+                "QM Main Cage", "QM Armory", "QM Uniform Room", "QM Ammo Locker", "QM Vehicle Bay"
+        ));
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private List<LookupItem> getAll(String table) throws SQLException {
         List<LookupItem> list = new ArrayList<>();
-        try (Statement s = conn.createStatement();
+        try (Statement s = conn().createStatement();
              ResultSet rs = s.executeQuery("SELECT id, name FROM " + table + " ORDER BY name")) {
             while (rs.next()) list.add(new LookupItem(rs.getInt("id"), rs.getString("name")));
         }
@@ -101,23 +167,55 @@ public class LookupRepository {
 
     private List<String> getNames(String table) throws SQLException {
         List<String> list = new ArrayList<>();
-        try (Statement s = conn.createStatement();
+        try (Statement s = conn().createStatement();
              ResultSet rs = s.executeQuery("SELECT name FROM " + table + " ORDER BY name")) {
             while (rs.next()) list.add(rs.getString("name"));
         }
         return list;
     }
 
+    private List<String> getNamesSeeded(String table, List<String> defaults) throws SQLException {
+        if (isTablePresent(table)) {
+            ensureDefaults(table, defaults);
+        }
+        return getNames(table);
+    }
+
+    private boolean isTablePresent(String table) throws SQLException {
+        DatabaseMetaData meta = conn().getMetaData();
+        try (ResultSet rs = meta.getTables(null, null, table, new String[]{"TABLE"})) {
+            if (rs.next()) return true;
+        }
+        try (ResultSet rs = meta.getTables(null, null, table.toUpperCase(), new String[]{"TABLE"})) {
+            return rs.next();
+        }
+    }
+
+    private void ensureDefaults(String table, List<String> defaults) throws SQLException {
+        for (String value : defaults) {
+            if (value == null || value.isBlank()) continue;
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "INSERT INTO " + table + " (name) VALUES (?)")) {
+                ps.setString(1, value);
+                ps.executeUpdate();
+            } catch (SQLException ignored) {
+                // duplicate rows are fine
+            }
+        }
+    }
+
     private LookupItem addTo(String table, String name) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT OR IGNORE INTO " + table + " (name) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "INSERT INTO " + table + " (name) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, name);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return new LookupItem(keys.getInt(1), name);
             }
+        } catch (SQLException ignored) {
+            // duplicate rows are fine; fetch existing below
         }
-        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM " + table + " WHERE name=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT id, name FROM " + table + " WHERE name=?")) {
             ps.setString(1, name);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return new LookupItem(rs.getInt("id"), rs.getString("name"));
@@ -127,7 +225,7 @@ public class LookupRepository {
     }
 
     private void deleteFrom(String table, int id) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + table + " WHERE id=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + table + " WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
         }

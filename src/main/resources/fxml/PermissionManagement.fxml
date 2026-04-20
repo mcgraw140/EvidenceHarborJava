@@ -15,24 +15,14 @@
                 <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
                     <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
                     <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
-                    <Button text="Quartermaster" styleClass="nav-tab" onAction="#onQuartermaster"/>
-                    <Button text="Admin" styleClass="nav-tab active" onAction="#onAdmin"/>
-                    <Button text="Narcotics" styleClass="nav-tab"/>
+                    <Button fx:id="navAdminTab" text="Admin" styleClass="nav-tab active" onAction="#onAdmin"/>
                 </HBox>
             </HBox>
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
                 <Button text="Dashboard" styleClass="nav-tab" onAction="#onAdmin"/>
-                <Button text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
-                <Button text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
-            </HBox>
-                <Button text="Inventory"          styleClass="nav-tab" onAction="#onInventory"/>
-                <Button text="People"             styleClass="nav-tab" onAction="#onPeople"/>
-                <Button text="Dropbox Check-in"   styleClass="nav-tab" onAction="#onDropbox"/>
-                <Button text="Reports"            styleClass="nav-tab" onAction="#onReports"/>
-                <Button text="Settings"           styleClass="nav-tab" onAction="#onSettings"/>
-                <Button text="Admin"              styleClass="nav-tab active" onAction="#onAdmin"/>
-                <Button text="Quartermaster"      styleClass="nav-tab" onAction="#onQuartermaster"/>
+                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button fx:id="navAuditTrailBtn" text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
             </HBox>
         </VBox>
     </top>
@@ -43,10 +33,12 @@
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Label fx:id="pageTitle" text="Configure Permissions" styleClass="page-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Button text="Officer Preset"  styleClass="btn-secondary" onAction="#onOfficerPreset"/>
-                <Button text="Select All"      styleClass="btn-secondary" onAction="#onSelectAll"/>
-                <Button text="Clear All"       styleClass="btn-secondary" onAction="#onClearAll"/>
-                <Button text="Save"            styleClass="btn-primary"   onAction="#onSave"/>
+                <Button text="Officer Preset"       styleClass="btn-secondary" onAction="#onOfficerPreset"/>
+                <Button text="Evidence Tech Preset" styleClass="btn-secondary" onAction="#onEvidenceTechPreset"/>
+                <Button text="Admin Preset"         styleClass="btn-secondary" onAction="#onAdminPreset"/>
+                <Button text="Select All"           styleClass="btn-secondary" onAction="#onSelectAll"/>
+                <Button text="Clear All"            styleClass="btn-secondary" onAction="#onClearAll"/>
+                <Button text="Save"                 styleClass="btn-primary"   onAction="#onSave"/>
             </HBox>
             <Separator/>
             <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
@@ -56,4 +48,5 @@
             </ScrollPane>
         </VBox>
     </center>
+    <bottom><fx:include source="DbStatusBar.fxml"/></bottom>
 </BorderPane>

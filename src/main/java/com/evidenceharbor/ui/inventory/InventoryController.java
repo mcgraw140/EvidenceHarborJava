@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.inventory;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.Evidence;
@@ -24,6 +25,13 @@ import java.util.stream.Collectors;
 public class InventoryController implements Initializable {
 
     private static final Set<String> HISTORICAL_STATUSES = Set.of("Destroyed", "Disbursed", "Returned to Owner");
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
 
     @FXML private TextField searchField;
     @FXML private TableView<Evidence> inventoryTable;
@@ -77,6 +85,7 @@ public class InventoryController implements Initializable {
 
         searchField.textProperty().addListener((obs, o, n) -> applyFilter());
         loadData();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
     }
 
     private String statusColor(String status) {

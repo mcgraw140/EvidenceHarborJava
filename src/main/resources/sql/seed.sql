@@ -1,8 +1,5 @@
 -- Seed data
 
-INSERT OR IGNORE INTO officers (name, badge) VALUES ('Casey Mcgraw', 'B001');
-INSERT OR IGNORE INTO officers (name, badge) VALUES ('John Smith', 'B002');
-
 INSERT OR IGNORE INTO charges (code, description) VALUES
     ('13A-12-213', 'Unlawful Possession of Marijuana (1st Degree)'),
     ('13A-12-260', 'Possession of Drug paraphernalia (No Degree)'),
@@ -56,57 +53,37 @@ INSERT OR IGNORE INTO electronic_types (name) VALUES
 INSERT OR IGNORE INTO narcotics_types (name) VALUES
     ('Marijuana'), ('Cocaine'), ('Methamphetamine'), ('Heroin'), ('Fentanyl'), ('MDMA'), ('Prescription Pills');
 
-INSERT INTO persons (full_name)
-SELECT 'Unknown Person'
-WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='Unknown Person');
-INSERT INTO persons (full_name)
-SELECT 'John Johnson'
-WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='John Johnson');
-INSERT INTO persons (full_name)
-SELECT 'Jane Doe'
-WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='Jane Doe');
-INSERT INTO persons (full_name)
-SELECT 'BEST PERSON EVER'
-WHERE NOT EXISTS (SELECT 1 FROM persons WHERE full_name='BEST PERSON EVER');
+INSERT OR IGNORE INTO evidence_types (name) VALUES
+    ('Ammunition'), ('Biological / DNA'), ('Currency'), ('Electronics'),
+    ('Firearm'), ('Jewelry'), ('Narcotic Equipment'), ('Narcotics'), ('Weapon');
 
-INSERT OR IGNORE INTO cases (case_number, incident_date, officer_id)
-VALUES ('20250401-0001', '2026-01-28', (SELECT id FROM officers WHERE name='Casey Mcgraw'));
-INSERT OR IGNORE INTO cases (case_number, incident_date, officer_id)
-VALUES ('25-00002', '2026-01-27', (SELECT id FROM officers WHERE name='Casey Mcgraw'));
-INSERT OR IGNORE INTO cases (case_number, incident_date, officer_id)
-VALUES ('2025-0002', '2026-01-27', (SELECT id FROM officers WHERE name='Casey Mcgraw'));
-INSERT OR IGNORE INTO cases (case_number, incident_date, officer_id)
-VALUES ('CB-2025-0001', '2026-01-26', (SELECT id FROM officers WHERE name='Casey Mcgraw'));
-INSERT OR IGNORE INTO cases (case_number, incident_date, officer_id)
-VALUES ('25-00001', '2026-01-26', (SELECT id FROM officers WHERE name='Casey Mcgraw'));
+INSERT OR IGNORE INTO evidence_statuses (name) VALUES
+    ('In Dropbox'), ('In Custody'), ('In Storage'), ('Checked In'), ('Checked Out'),
+    ('Deposited'), ('Missing'), ('Destroyed'), ('Disbursed'), ('Returned to Owner'), ('Pending');
 
-INSERT OR IGNORE INTO case_persons (case_id, person_id, role) VALUES (
-    (SELECT id FROM cases WHERE case_number='20250401-0001'),
-    (SELECT id FROM persons WHERE full_name='Unknown Person'), 'Victim');
-INSERT OR IGNORE INTO case_persons (case_id, person_id, role) VALUES (
-    (SELECT id FROM cases WHERE case_number='20250401-0001'),
-    (SELECT id FROM persons WHERE full_name='BEST PERSON EVER'), 'Owner');
+INSERT OR IGNORE INTO audit_modules (name) VALUES
+    ('Evidence'), ('Cases'), ('Users'), ('Narcotics'), ('Quartermaster'), ('System');
 
-INSERT OR IGNORE INTO case_charges (case_id, charge_id) VALUES (
-    (SELECT id FROM cases WHERE case_number='20250401-0001'),
-    (SELECT id FROM charges WHERE code='13A-12-213'));
-INSERT OR IGNORE INTO case_charges (case_id, charge_id) VALUES (
-    (SELECT id FROM cases WHERE case_number='20250401-0001'),
-    (SELECT id FROM charges WHERE code='13A-12-260'));
+INSERT OR IGNORE INTO audit_actions_lookup (name) VALUES
+    ('CREATE'), ('UPDATE'), ('DELETE'), ('PRINT'), ('SAVE'), ('LOGIN'), ('LOGOUT');
 
-INSERT OR IGNORE INTO case_persons (case_id, person_id, role) VALUES (
-    (SELECT id FROM cases WHERE case_number='25-00002'),
-    (SELECT id FROM persons WHERE full_name='John Johnson'), 'Victim');
-INSERT OR IGNORE INTO case_persons (case_id, person_id, role) VALUES (
-    (SELECT id FROM cases WHERE case_number='2025-0002'),
-    (SELECT id FROM persons WHERE full_name='John Johnson'), 'Suspect');
+INSERT OR IGNORE INTO audit_types (name) VALUES
+    ('Full'), ('Random'), ('Location');
 
-INSERT OR IGNORE INTO evidence (
-    barcode, case_id, collected_by_officer_id, collection_date,
-    evidence_type, description, status, storage_location, currency_amount
-) VALUES (
-    '2026-CURRENCY-0004',
-    (SELECT id FROM cases WHERE case_number='20250401-0001'),
-    (SELECT id FROM officers WHERE name='Casey Mcgraw'),
-    '2026-01-28',
-    'Currency', '2500Currency all 100''s', 'In Storage', 'Bank Deposit', '2500.00');
+INSERT OR IGNORE INTO user_roles_lookup (name) VALUES
+    ('officer'), ('supervisor'), ('agency_admin');
+
+INSERT OR IGNORE INTO user_statuses_lookup (name) VALUES
+    ('Active'), ('Inactive');
+
+INSERT OR IGNORE INTO qm_equipment_categories_lookup (name) VALUES
+    ('Weapon'), ('Uniform'), ('Equipment'), ('Vehicle'), ('Other');
+
+INSERT OR IGNORE INTO qm_equipment_statuses_lookup (name) VALUES
+    ('Available'), ('Assigned'), ('Maintenance');
+
+INSERT OR IGNORE INTO qm_vehicle_statuses_lookup (name) VALUES
+    ('Impounded'), ('Released');
+
+INSERT OR IGNORE INTO qm_storage_locations (name) VALUES
+    ('QM Main Cage'), ('QM Armory'), ('QM Uniform Room'), ('QM Ammo Locker'), ('QM Vehicle Bay');

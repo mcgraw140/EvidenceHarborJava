@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.LookupItem;
 import com.evidenceharbor.persistence.LookupRepository;
@@ -20,6 +21,12 @@ public class LookupAdminController implements Initializable {
 
     @FXML private ListView<String>    categoryList;
     @FXML private Label               editorTitle;
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+
     @FXML private TextField           newItemField;
     @FXML private ListView<LookupItem> itemList;
 
@@ -37,6 +44,8 @@ public class LookupAdminController implements Initializable {
         CATEGORIES.put("Narcotics Unit Types",       "narcotics_unit_types");
         CATEGORIES.put("Evidence Storage Locations", "evidence_storage_locations");
         CATEGORIES.put("Intake Locations",           "intake_locations");
+        CATEGORIES.put("Evidence Types",             "evidence_types");
+        CATEGORIES.put("Evidence Statuses",          "evidence_statuses");
         // Case Management
         CATEGORIES.put("Person Roles",               "person_roles");
         CATEGORIES.put("Case Statuses",              "case_statuses");
@@ -44,6 +53,15 @@ public class LookupAdminController implements Initializable {
         CATEGORIES.put("Transfer Actions",           "transfer_actions");
         CATEGORIES.put("Analysis Labs",              "analysis_labs");
         CATEGORIES.put("Other Agencies",             "other_agencies");
+        CATEGORIES.put("Audit Modules",              "audit_modules");
+        CATEGORIES.put("Audit Actions",              "audit_actions_lookup");
+        CATEGORIES.put("Audit Types",                "audit_types");
+        CATEGORIES.put("User Roles",                 "user_roles_lookup");
+        CATEGORIES.put("User Statuses",              "user_statuses_lookup");
+        CATEGORIES.put("QM Equipment Categories",    "qm_equipment_categories_lookup");
+        CATEGORIES.put("QM Equipment Statuses",     "qm_equipment_statuses_lookup");
+        CATEGORIES.put("QM Vehicle Statuses",       "qm_vehicle_statuses_lookup");
+        CATEGORIES.put("QM Storage Locations",      "qm_storage_locations");
     }
 
     private String activeTable = null;
@@ -60,6 +78,7 @@ public class LookupAdminController implements Initializable {
         if (!CATEGORIES.isEmpty()) {
             categoryList.getSelectionModel().selectFirst();
         }
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     private void onCategorySelected(String displayName) {

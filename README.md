@@ -1,83 +1,123 @@
 # Evidence Harbor (Java)
 
-Evidence Harbor is a JavaFX desktop application for evidence, impound, and quartermaster workflows.
-
-This project is free to use and is still in active development. It is intended for any police department looking for a simple system.
+Evidence Harbor is a JavaFX desktop application for law enforcement evidence management, impound tracking, and quartermaster workflows. It is free to use, actively developed, and designed for any police department needing a lightweight on-premises solution.
 
 ## License
 
-This project is licensed under the Evidence Harbor Free Use, No Resale License.
+Licensed under the Evidence Harbor Free Use, No Resale License.
 
 - Free to use by police departments and other public safety/government users
-- Allowed to modify for internal use
-- Redistribution is allowed only on a non-commercial basis
-- Selling or commercial resale is not allowed without written permission
-- No warranty (provided as-is)
+- Permitted to modify for internal use
+- Redistribution allowed on a non-commercial basis only
+- Selling or commercial resale requires written permission
+- Provided as-is, no warranty
 
 See the LICENSE file for full terms.
 
 ## Tech Stack
 
-- Java 21
-- JavaFX 21.0.5
-- Maven
-- SQLite (`sqlite-jdbc 3.47.1.0`)
+| Component | Version |
+|-----------|---------|
+| Java | 21 |
+| JavaFX | 21.0.5 |
+| Build | Maven |
+| Database | MariaDB |
 
 ## Project Structure
 
-- `src/main/java/com/evidenceharbor/app`: app bootstrap and navigation
-- `src/main/java/com/evidenceharbor/domain`: domain models
-- `src/main/java/com/evidenceharbor/persistence`: repositories and DB management
-- `src/main/java/com/evidenceharbor/ui`: JavaFX controllers by module
-- `src/main/resources/fxml`: JavaFX views
-- `src/main/resources/sql`: schema and seed scripts
-- `src/main/resources/styles`: global styles
+```
+src/main/java/com/evidenceharbor/
+  app/          # Bootstrap, navigation, session, permissions, shared helpers
+  domain/       # Domain models (Evidence, Case, Officer, Person, Charge, ...)
+  persistence/  # Repository classes and DatabaseManager
+  ui/           # JavaFX controllers organized by module
+    admin/      # Admin dashboard, user management, permissions, audit trail,
+                #   lookup admin, bank account ledger, evidence audit
+    cases/      # Case list, case detail, add evidence
+    dropbox/    # Dropbox check-in workflow
+    evidence/   # Evidence detail and intake
+    inventory/  # Inventory view
+    people/     # People management
+    reports/    # Reports
+    settings/   # Settings
+    shared/     # Shared UI components
+  tools/        # Utility tools
+  util/         # General utilities
+src/main/resources/
+  fxml/         # JavaFX layout files
+  sql/          # Schema and seed scripts
+  styles/       # Global CSS themes
+```
 
 ## Modules
 
-- Evidence
-	- Cases
-	- Inventory
-	- People
-	- Dropbox Check-in
-	- Reports
-	- Settings/Admin workflows
-- Impound
-	- Impound Lot
-- Quartermaster
-	- Dashboard
-	- Assign Equipment
-	- Ammunition
-	- Inventory Levels
-	- Inventory Audit
-	- Officer Loadouts
-	- Vehicle Impound
+### Evidence
+- **Cases** — create and manage cases, attach charges, link people (victims, suspects, witnesses, etc.), add evidence
+- **Inventory** — full evidence inventory with search and status tracking
+- **People** — person records with role associations across cases
+- **Dropbox Check-in** — officer dropbox session workflow; processes items with status `In Dropbox`
+- **Reports** — evidence and case reporting
+- **Add Evidence** — barcode-driven intake with chain of custody
+
+### Admin
+- **Admin Dashboard** — agency overview
+- **User Management** — create/edit officers with role and password management
+- **Permission Management** — per-officer permission overrides on top of role defaults
+- **Audit Trail** — system-wide audit log
+- **Lookup Admin** — manage lookup tables (evidence types, storage locations, statuses, etc.)
+- **Bank Account Ledger** — track agency fund accounts and transactions
+- **Evidence Audit** — evidence audit records
+
+### Impound
+- **Impound Lot** — vehicle impound intake and tracking
+
+
+## Permission System
+
+Roles: `admin`, `evidence_tech`, `officer`
+
+Each role has default permission flags. Admins can add or remove individual flags per officer. Effective permissions are computed at login as:
+
+```
+effective = role_defaults + granted_overrides − revoked_overrides
+```
+
+Permission flags gate both navigation visibility and runtime access checks via `SessionManager.can(flag)`.
+
+Notable gating:
+- `can_view_all_evidence` — required to access Inventory, Reports, and Dropbox Check-in
+- `can_manage_users` — required for User Management and Permission Management
+- `can_view_audit` — required for Audit Trail
+- `can_manage_settings` — required for Settings and Lookup Admin
 
 ## Navigation Pattern
 
-The app uses a two-level navigation layout:
+Two-level layout:
 
-1. Top row: module-level tabs (`Evidence`, `Impound`, `Quartermaster`, `Narcotics`)
-2. Secondary row: module-specific workspace tabs
+1. **Top row** — module tabs: `Evidence`, `Impound`, `Quartermaster`
+2. **Secondary row** — workspace tabs within the active module
 
-## Dropbox Workflow Guard
+Navigation is enforced server-side in `Navigator.java` — unauthorized navigation attempts redirect to the default page for the user's role.
 
-Dropbox check-in sessions only start when there is at least one evidence item currently in an approved dropbox location with status `In Dropbox`.
+## Startup Flow
 
-## Vehicle Workflow
+1. `DatabaseStartupScreen` — verifies DB connection
+2. `FirstTimeSetupScreen` / `SetupWizard` — runs on first launch to configure agency settings
+3. `LoginScreen` — PBKDF2 password authentication
+4. Main workspace loads with nav visibility applied per effective permissions
 
-Vehicles are handled as impound records from case workflows and impound/quartermaster flows, not as standard evidence intake items.
+## Dropbox Workflow
+
+Sessions only activate when at least one evidence item has status `In Dropbox` at a valid dropbox location. Each session is logged to `dropbox_sessions` and generates chain-of-custody records.
+
+## Database
+
+Schema and seed data are auto-applied at startup by `DatabaseManager`.
+
+- Schema: `src/main/resources/sql/schema-mariadb.sql`
+- Seed data: `src/main/resources/sql/seed-mariadb.sql`
 
 ## Build and Run
-
-From repository root:
-
-```powershell
-mvn clean compile
-mvn javafx:run
-```
-
-If multiple JDKs are installed, set `JAVA_HOME` first:
 
 ```powershell
 $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
@@ -86,26 +126,14 @@ mvn clean javafx:run
 
 ## Packaging
 
-Create a shaded JAR:
-
 ```powershell
 mvn clean package
 ```
 
-Main class is `com.evidenceharbor.app.MainApp`.
-
-## Database
-
-Database is initialized at startup by `DatabaseManager` using:
-
-- `src/main/resources/sql/schema.sql`
-- `src/main/resources/sql/seed.sql`
-
-Runtime DB file defaults to:
-
-- `%USERPROFILE%\EvidenceHarbor\evidence_harbor.db`
+Main class: `com.evidenceharbor.app.MainApp`
 
 ## Notes
 
 - `.gitignore` excludes build output and local DB artifacts.
-- Temporary runtime failures after major FXML changes can often be resolved by running `mvn clean` before launch.
+- After major FXML changes, run `mvn clean` before launch to clear stale compiled resources.
+- All ComboBoxes in the UI are type-searchable (filter as you type).

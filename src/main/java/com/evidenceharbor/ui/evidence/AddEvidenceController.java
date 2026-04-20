@@ -1,6 +1,8 @@
 package com.evidenceharbor.ui.evidence;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
+import com.evidenceharbor.app.CurrentOfficerResolver;
 import com.evidenceharbor.domain.*;
 import com.evidenceharbor.persistence.*;
 import javafx.collections.FXCollections;
@@ -16,6 +18,13 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class AddEvidenceController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
 
     @FXML private Label breadcrumbCase;
     @FXML private Label caseNumberLabel;
@@ -101,20 +110,16 @@ public class AddEvidenceController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        evidenceTypeCombo.setItems(FXCollections.observableArrayList(
-                "Ammunition", "Biological / DNA", "Currency", "Electronics",
-                "Firearm", "Jewelry", "Narcotic Equipment", "Narcotics",
-            "Weapon"));
-
-        statusCombo.setItems(FXCollections.observableArrayList(
-                "In Dropbox", "In Custody", "In Storage",
-                "Checked In", "Checked Out", "Deposited",
-                "Missing", "Destroyed", "Disbursed",
-                "Returned to Owner", "Pending"));
-        statusCombo.setValue("In Dropbox");
-        statusCombo.setDisable(true);
-
         try {
+            evidenceTypeCombo.setItems(FXCollections.observableArrayList(lookupRepo.getEvidenceTypes()));
+            statusCombo.setItems(FXCollections.observableArrayList(lookupRepo.getEvidenceStatuses()));
+            if (statusCombo.getItems().contains("In Dropbox")) {
+                statusCombo.setValue("In Dropbox");
+            } else if (!statusCombo.getItems().isEmpty()) {
+                statusCombo.setValue(statusCombo.getItems().get(0));
+            }
+            statusCombo.setDisable(true);
+
             storageLocations = lookupRepo.getStorageLocations();
         } catch (Exception e) {
             showError(e);
@@ -122,6 +127,7 @@ public class AddEvidenceController implements Initializable {
         }
 
         collectionDate.setValue(LocalDate.now());
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
     }
 
     public void initForCase(Case c) {
@@ -131,6 +137,14 @@ public class AddEvidenceController implements Initializable {
         try {
             collectedByCombo.setItems(FXCollections.observableArrayList(officerRepo.findAll()));
             collectedFromPersonCombo.setItems(FXCollections.observableArrayList(personRepo.findAll()));
+
+            Officer defaultOfficer = CurrentOfficerResolver.resolveDefaultOfficer(officerRepo);
+            if (defaultOfficer != null) {
+                collectedByCombo.getItems().stream()
+                        .filter(o -> o.getId() == defaultOfficer.getId())
+                        .findFirst()
+                        .ifPresent(o -> collectedByCombo.getSelectionModel().select(o));
+            }
         } catch (Exception e) { showError(e); }
     }
 

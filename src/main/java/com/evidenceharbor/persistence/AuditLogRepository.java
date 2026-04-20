@@ -6,14 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AuditLogRepository {
-    private final Connection conn;
 
-    public AuditLogRepository() { this.conn = DatabaseManager.getInstance().getConnection(); }
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
+    }
 
     public List<AuditLog> findAll(int limit) throws SQLException {
         List<AuditLog> list = new ArrayList<>();
         String sql = "SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
@@ -50,7 +51,7 @@ public class AuditLogRepository {
         }
         sql.append("ORDER BY timestamp DESC LIMIT 500");
         List<AuditLog> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement ps = conn().prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
@@ -62,7 +63,7 @@ public class AuditLogRepository {
     public void insert(String userName, String action, String module,
                        String entityType, String entityId, String details) throws SQLException {
         String sql = "INSERT INTO audit_logs (user_name,action,module,entity_type,entity_id,details) VALUES (?,?,?,?,?,?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setString(1, userName);
             ps.setString(2, action);
             ps.setString(3, module);

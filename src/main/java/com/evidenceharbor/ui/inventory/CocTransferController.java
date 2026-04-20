@@ -1,10 +1,13 @@
 package com.evidenceharbor.ui.inventory;
 
+import com.evidenceharbor.app.CurrentOfficerResolver;
 import com.evidenceharbor.domain.ChainOfCustody;
 import com.evidenceharbor.domain.Evidence;
+import com.evidenceharbor.domain.Officer;
 import com.evidenceharbor.persistence.ChainOfCustodyRepository;
 import com.evidenceharbor.persistence.EvidenceRepository;
 import com.evidenceharbor.persistence.LookupRepository;
+import com.evidenceharbor.persistence.OfficerRepository;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -32,7 +35,7 @@ public class CocTransferController implements Initializable {
     );
 
     @FXML private ComboBox<String> actionCombo;
-    @FXML private TextField performedByField;
+    @FXML private ComboBox<Officer> performedByCombo;
     @FXML private TextField fromLocationField;
     @FXML private Label toLocationLabel;
     @FXML private ComboBox<String> toLocationCombo;
@@ -45,6 +48,7 @@ public class CocTransferController implements Initializable {
     private final ChainOfCustodyRepository cocRepo = new ChainOfCustodyRepository();
     private final EvidenceRepository evidenceRepo = new EvidenceRepository();
     private final LookupRepository lookupRepo = new LookupRepository();
+    private final OfficerRepository officerRepo = new OfficerRepository();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -54,6 +58,16 @@ public class CocTransferController implements Initializable {
 
             List<String> storageLocations = lookupRepo.getStorageLocations();
             toLocationCombo.setItems(FXCollections.observableArrayList(storageLocations));
+
+            List<Officer> officers = officerRepo.findAll();
+            performedByCombo.setItems(FXCollections.observableArrayList(officers));
+            Officer defaultOfficer = CurrentOfficerResolver.resolveDefaultOfficer(officerRepo);
+            if (defaultOfficer != null) {
+                performedByCombo.getItems().stream()
+                        .filter(o -> o.getId() == defaultOfficer.getId())
+                        .findFirst()
+                        .ifPresent(o -> performedByCombo.getSelectionModel().select(o));
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -103,12 +117,14 @@ public class CocTransferController implements Initializable {
 
         String toLocation = toLocationCombo.isVisible() ? toLocationCombo.getValue() : null;
         String toPerson = toPersonField.isVisible() ? toPersonField.getText().trim() : null;
+        Officer selectedOfficer = performedByCombo.getValue();
+        String performedBy = selectedOfficer == null ? "" : selectedOfficer.getName();
 
         ChainOfCustody entry = new ChainOfCustody();
         entry.setEvidenceId(evidence.getId());
         entry.setAction(action);
-        entry.setPerformedBy(performedByField.getText().trim());
-        entry.setPerformedByName(performedByField.getText().trim());
+        entry.setPerformedBy(performedBy);
+        entry.setPerformedByName(performedBy);
         entry.setFromLocation(fromLocationField.getText().trim());
         entry.setToLocation(toLocation);
         entry.setToPerson(toPerson != null && toPerson.isEmpty() ? null : toPerson);

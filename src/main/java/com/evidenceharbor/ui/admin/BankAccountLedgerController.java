@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.BankAccount;
 import com.evidenceharbor.domain.BankTransaction;
@@ -19,6 +20,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class BankAccountLedgerController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
 
     @FXML private ListView<BankAccount> accountList;
     @FXML private Label lblAccountName;
@@ -78,6 +85,7 @@ public class BankAccountLedgerController implements Initializable {
         });
 
         loadAccounts();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     private void loadAccounts() {

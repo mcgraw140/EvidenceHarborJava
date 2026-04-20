@@ -1,5 +1,8 @@
 package com.evidenceharbor.ui.dropbox;
 
+import com.evidenceharbor.app.ComboBoxHelper;
+import com.evidenceharbor.app.CurrentOfficerResolver;
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.ChainOfCustody;
 import com.evidenceharbor.domain.Evidence;
@@ -28,12 +31,19 @@ import java.util.stream.Collectors;
 public class DropboxController implements Initializable {
 
     // ── FXML bindings ────────────────────────────────────────────────────────
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
+
     @FXML private Label dropboxCountLabel;
     @FXML private Label sessionStateLabel;
     @FXML private VBox idlePane;
     @FXML private VBox activePane;
     @FXML private VBox historyPane;
-    @FXML private TextField officerNameField;
+    @FXML private ComboBox<Officer> officerNameCombo;
     @FXML private Label activeSummaryLabel;
 
     // Dropbox active table
@@ -69,11 +79,24 @@ public class DropboxController implements Initializable {
         setupHistoryTable();
         try {
             for (var c : caseRepo.findAll()) caseNumberById.put(c.getId(), c.getCaseNumber());
-            for (var o : officerRepo.findAll()) officerNameById.put(o.getId(), o.getName());
+            List<Officer> officers = officerRepo.findAll();
+            for (var o : officers) officerNameById.put(o.getId(), o.getName());
+            ComboBoxHelper.makeSearchable(officerNameCombo, officers, Officer::getName);
+
+            Officer defaultOfficer = CurrentOfficerResolver.resolveDefaultOfficer(officerRepo);
+            if (defaultOfficer != null) {
+                int defaultId = defaultOfficer.getId();
+                officers.stream()
+                        .filter(o -> o.getId() == defaultId)
+                        .findFirst()
+                        .ifPresent(officerNameCombo::setValue);
+            }
+
             storageLocations = lookupRepo.getStorageLocations();
         } catch (Exception e) { throw new RuntimeException(e); }
         showIdleState();
         refreshCount();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
     }
 
     // ── Table setup ──────────────────────────────────────────────────────────
@@ -200,8 +223,8 @@ public class DropboxController implements Initializable {
             ChainOfCustody coc = new ChainOfCustody();
             coc.setEvidenceId(item.evidence.getId());
             coc.setAction("Dropbox Verification");
-            coc.setPerformedBy(officerNameField.getText().trim());
-            coc.setPerformedByName(officerNameField.getText().trim());
+            coc.setPerformedBy(getSelectedOfficerName());
+            coc.setPerformedByName(getSelectedOfficerName());
             coc.setFromLocation(existingLocation);
             coc.setToLocation(existingLocation);
             coc.setNotes("Evidence Tech verified item remains in assigned dropbox.");
@@ -226,8 +249,8 @@ public class DropboxController implements Initializable {
                 ChainOfCustody coc = new ChainOfCustody();
                 coc.setEvidenceId(item.evidence.getId());
                 coc.setAction("Check In");
-                coc.setPerformedBy(officerNameField.getText().trim());
-                coc.setPerformedByName(officerNameField.getText().trim());
+                coc.setPerformedBy(getSelectedOfficerName());
+                coc.setPerformedByName(getSelectedOfficerName());
                 coc.setFromLocation("Dropbox");
                 coc.setToLocation(loc);
                 coc.setNotes("Checked in via Dropbox session");
@@ -242,7 +265,7 @@ public class DropboxController implements Initializable {
 
     private void onMarkMissing(DropboxItem item) {
         try {
-            String actorName = officerNameField.getText() == null ? "" : officerNameField.getText().trim();
+            String actorName = getSelectedOfficerName();
             if (!isEvidenceTechOrAdmin(actorName)) {
                 new Alert(Alert.AlertType.WARNING,
                         "Only Evidence Tech or Admin may mark evidence as Missing. Enter a valid officer name.")
@@ -297,7 +320,7 @@ public class DropboxController implements Initializable {
 
         try {
             int checkedIn = (int) sessionItems.stream().filter(i -> "Checked In".equals(i.action)).count();
-            String officer = officerNameField.getText().trim();
+            String officer = getSelectedOfficerName();
             saveSession(officer, sessionItems.size());
             sessionItems.clear();
             refreshCount();
@@ -414,6 +437,11 @@ public class DropboxController implements Initializable {
 
     private String nullToEmpty(String s) {
         return s == null ? "" : s;
+    }
+
+    private String getSelectedOfficerName() {
+        Officer officer = officerNameCombo == null ? null : officerNameCombo.getValue();
+        return officer == null || officer.getName() == null ? "" : officer.getName().trim();
     }
 }
 

@@ -1,8 +1,10 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.EvidenceAudit;
 import com.evidenceharbor.persistence.EvidenceAuditRepository;
+import com.evidenceharbor.persistence.LookupRepository;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -16,6 +18,12 @@ import java.util.ResourceBundle;
 
 public class EvidenceAuditController implements Initializable {
 
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+
     @FXML private TableView<EvidenceAudit> inProgressTable;
     @FXML private TableColumn<EvidenceAudit, String> colIPDate, colIPType, colIPScope, colIPBy, colIPStatus;
     @FXML private TableColumn<EvidenceAudit, String> colIPAction;
@@ -25,12 +33,14 @@ public class EvidenceAuditController implements Initializable {
     @FXML private TableColumn<EvidenceAudit, String> colCAction;
 
     private final EvidenceAuditRepository repo = new EvidenceAuditRepository();
+    private final LookupRepository lookupRepo = new LookupRepository();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupTable(inProgressTable, colIPDate, colIPType, colIPScope, colIPBy, colIPStatus, colIPAction, false);
         setupTable(completedTable, colCDate, colCType, colCScope, colCBy, colCStatus, colCAction, true);
         loadData();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     private void setupTable(TableView<EvidenceAudit> table,
@@ -87,8 +97,17 @@ public class EvidenceAuditController implements Initializable {
         var grid = new javafx.scene.layout.GridPane();
         grid.setHgap(12); grid.setVgap(10); grid.setPadding(new Insets(20));
 
-        ComboBox<String> typeCombo = new ComboBox<>(FXCollections.observableArrayList("Full", "Random", "Location"));
-        typeCombo.setValue("Full");
+        ComboBox<String> typeCombo = new ComboBox<>();
+        try {
+            typeCombo.setItems(FXCollections.observableArrayList(lookupRepo.getAuditTypes()));
+        } catch (Exception e) {
+            showError(e);
+        }
+        if (typeCombo.getItems().contains("Full")) {
+            typeCombo.setValue("Full");
+        } else if (!typeCombo.getItems().isEmpty()) {
+            typeCombo.setValue(typeCombo.getItems().get(0));
+        }
         TextField scopeField = new TextField();
         scopeField.setPromptText("e.g. 25% or Room A");
         TextField createdByField = new TextField();

@@ -6,15 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChainOfCustodyRepository {
-    private final Connection conn;
 
-    public ChainOfCustodyRepository() {
-        this.conn = DatabaseManager.getInstance().getConnection();
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
     }
 
     public List<ChainOfCustody> findByEvidence(int evidenceId) throws SQLException {
         List<ChainOfCustody> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT * FROM chain_of_custody WHERE evidence_id=? ORDER BY timestamp ASC")) {
             ps.setInt(1, evidenceId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -27,7 +26,7 @@ public class ChainOfCustodyRepository {
     public ChainOfCustody addEntry(ChainOfCustody c) throws SQLException {
         String sql = "INSERT INTO chain_of_custody (evidence_id,action,performed_by,performed_by_name," +
                 "from_location,to_location,to_person,reason,notes,signature_data) VALUES (?,?,?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, c.getEvidenceId());
             ps.setString(2, c.getAction());
             ps.setString(3, c.getPerformedBy());

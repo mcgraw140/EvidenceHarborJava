@@ -1,8 +1,11 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Officer;
+import com.evidenceharbor.persistence.LookupRepository;
 import com.evidenceharbor.persistence.OfficerRepository;
+import com.evidenceharbor.util.PasswordUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -20,6 +23,12 @@ import java.util.ResourceBundle;
 
 public class UserManagementController implements Initializable {
 
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+
     @FXML private TextField searchField;
     @FXML private TableView<Officer> userTable;
     @FXML private TableColumn<Officer, String> colName;
@@ -30,6 +39,7 @@ public class UserManagementController implements Initializable {
     @FXML private TableColumn<Officer, String> colActions;
 
     private final OfficerRepository officerRepo = new OfficerRepository();
+    private final LookupRepository lookupRepo = new LookupRepository();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -61,8 +71,7 @@ public class UserManagementController implements Initializable {
                 cd.getValue().getBadge() != null ? cd.getValue().getBadge() : ""));
         colUsername.setCellValueFactory(cd -> new SimpleStringProperty(
                 cd.getValue().getUsername() != null ? cd.getValue().getUsername() : ""));
-        colRole.setCellValueFactory(cd -> new SimpleStringProperty(
-                cd.getValue().getRole() != null ? cd.getValue().getRole() : "officer"));
+        colRole.setCellValueFactory(cd -> new SimpleStringProperty(formatRole(cd.getValue().getRole())));
 
         // Status column — green pill for Active
         colStatus.setCellValueFactory(cd -> new SimpleStringProperty(
@@ -81,29 +90,27 @@ public class UserManagementController implements Initializable {
             }
         });
 
-        // Actions column — Edit + Permissions + Delete buttons
+        // Actions column — Edit + Permissions buttons
         colActions.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn  = new Button("Edit");
             private final Button permsBtn = new Button("Permissions");
-            private final Button delBtn   = new Button("Delete");
             {
                 editBtn.setStyle("-fx-font-size:11; -fx-padding: 2 8 2 8;");
                 permsBtn.setStyle("-fx-font-size:11; -fx-padding: 2 8 2 8;");
-                delBtn.setStyle("-fx-font-size:11; -fx-padding: 2 8 2 8; -fx-background-color:#c0392b; -fx-text-fill:white;");
                 editBtn.setOnAction(e  -> showUserDialog(getTableView().getItems().get(getIndex())));
                 permsBtn.setOnAction(e -> Navigator.get().showPermissions(getTableView().getItems().get(getIndex())));
-                delBtn.setOnAction(e   -> deleteUser(getTableView().getItems().get(getIndex())));
             }
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) { setGraphic(null); return; }
-                HBox box = new HBox(6, editBtn, permsBtn, delBtn);
+                HBox box = new HBox(6, editBtn, permsBtn);
                 setGraphic(box);
             }
         });
 
         loadUsers(null);
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     @FXML
@@ -142,13 +149,22 @@ public class UserManagementController implements Initializable {
         TextField badgeField    = new TextField(target.getBadge() != null ? target.getBadge() : "");
         TextField usernameField = new TextField(target.getUsername() != null ? target.getUsername() : "");
         PasswordField passwordField = new PasswordField();
-        ComboBox<String> roleCombo = new ComboBox<>(FXCollections.observableArrayList(
-                "officer", "supervisor", "agency_admin"));
+        ComboBox<String> roleCombo = new ComboBox<>();
+        ComboBox<String> statusCombo = new ComboBox<>();
+        try {
+            roleCombo.setItems(FXCollections.observableArrayList(lookupRepo.getUserRoles()));
+            statusCombo.setItems(FXCollections.observableArrayList(lookupRepo.getUserStatuses()));
+        } catch (Exception e) {
+            showError(e);
+        }
+        if (roleCombo.getItems().isEmpty()) {
+            roleCombo.setItems(FXCollections.observableArrayList("officer", "evidence_tech", "admin"));
+        }
         roleCombo.setValue(target.getRole() != null ? target.getRole() : "officer");
-        ComboBox<String> statusCombo = new ComboBox<>(FXCollections.observableArrayList("Active", "Inactive"));
+        if (statusCombo.getItems().isEmpty()) {
+            statusCombo.setItems(FXCollections.observableArrayList("Active"));
+        }
         statusCombo.setValue(target.getStatus() != null ? target.getStatus() : "Active");
-        CheckBox externalCheck = new CheckBox("External User");
-        externalCheck.setSelected(target.isExternal());
 
         for (javafx.scene.control.Control c : new javafx.scene.control.Control[]{nameField, badgeField, usernameField, passwordField}) {
             ((Region)c).setMaxWidth(Double.MAX_VALUE);
@@ -168,7 +184,6 @@ public class UserManagementController implements Initializable {
         }
         grid.add(new Label("Role"),   0, 5); grid.add(roleCombo, 1, 5);
         grid.add(new Label("Status"), 0, 6); grid.add(statusCombo, 1, 6);
-        grid.add(externalCheck, 1, 7);
 
         dlg.getDialogPane().setContent(grid);
         ButtonType saveBtn = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
@@ -181,12 +196,10 @@ public class UserManagementController implements Initializable {
             target.setUsername(usernameField.getText().trim());
             String pw = passwordField.getText();
             if (!pw.isBlank()) {
-                // Simple SHA-256 hash — no need for full bcrypt in desktop app
-                target.setPasswordHash(sha256(pw));
+                target.setPasswordHash(PasswordUtils.hash(pw));
             }
             target.setRole(roleCombo.getValue());
             target.setStatus(statusCombo.getValue());
-            target.setExternal(externalCheck.isSelected());
             return target;
         });
 
@@ -203,28 +216,13 @@ public class UserManagementController implements Initializable {
         });
     }
 
-    private void deleteUser(Officer o) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Delete user \"" + o.getName() + "\"? This cannot be undone.", ButtonType.YES, ButtonType.CANCEL);
-        confirm.setHeaderText(null);
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                try {
-                    officerRepo.delete(o.getId());
-                    loadUsers(searchField.getText().trim());
-                } catch (Exception e) { showError(e); }
-            }
-        });
-    }
-
-    private String sha256(String input) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) { return input; }
+    private static String formatRole(String role) {
+        if (role == null) return "Officer";
+        return switch (role.toLowerCase()) {
+            case "evidence_tech" -> "Evidence Tech";
+            case "admin"         -> "Admin";
+            default              -> "Officer";
+        };
     }
 
     // ── Nav ────────────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.people;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Person;
 import com.evidenceharbor.persistence.PersonRepository;
@@ -7,6 +8,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -17,6 +19,13 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class PeopleController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
 
     @FXML private TextField searchField;
     @FXML private TableView<Person> peopleTable;
@@ -41,6 +50,7 @@ public class PeopleController implements Initializable {
 
         searchField.textProperty().addListener((obs, oldVal, newVal) -> applySearch(newVal));
         loadPeople();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
     }
 
     private void loadPeople() {

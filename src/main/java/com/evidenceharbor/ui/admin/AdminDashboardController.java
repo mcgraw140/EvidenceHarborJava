@@ -1,9 +1,22 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 
 public class AdminDashboardController {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+
+    @FXML
+    void initialize() {
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
+    }
 
     // ── Admin card actions ────────────────────────────────────────────────────
     @FXML private void onUserManagement()    { Navigator.get().showUserManagement(); }

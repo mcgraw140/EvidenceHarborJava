@@ -1,189 +1,199 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Officer;
 import com.evidenceharbor.persistence.OfficerRepository;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class PermissionManagementController implements Initializable {
 
-    @FXML private Label   pageTitle;
-    @FXML private VBox    permissionsContainer;
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+
+    @FXML private Label pageTitle;
+    @FXML private VBox  permissionsContainer;
 
     private Officer officer;
     private final OfficerRepository repo = new OfficerRepository();
 
-    /** Permission catalog — group -> resource -> actions */
-    private static final LinkedHashMap<String, LinkedHashMap<String, String[]>> CATALOG = new LinkedHashMap<>();
-    static {
-        LinkedHashMap<String, String[]> evidence = new LinkedHashMap<>();
-        evidence.put("cases",           new String[]{"view","create","edit","delete"});
-        evidence.put("evidence",        new String[]{"view","create","edit","delete"});
-        evidence.put("custody",         new String[]{"view","create","edit","transfer"});
-        evidence.put("dropbox",         new String[]{"view","create","edit","process"});
-        evidence.put("reports",         new String[]{"view","create","edit"});
-        CATALOG.put("Evidence Module", evidence);
+    // ── Permission flag definitions ────────────────────────────────────────────
+    record PermFlag(String flag, String label, String description) {}
 
-        LinkedHashMap<String, String[]> admin = new LinkedHashMap<>();
-        admin.put("admin_dashboard",    new String[]{"view"});
-        admin.put("users",              new String[]{"view","create","edit","delete"});
-        admin.put("people",             new String[]{"view","create","edit","delete"});
-        admin.put("permissions",        new String[]{"view","create","edit"});
-        admin.put("audit_evidence",     new String[]{"view","create","edit","perform"});
-        admin.put("bank_accounts",      new String[]{"view","create","edit"});
-        admin.put("audit_trail",        new String[]{"view"});
-        admin.put("lookups",            new String[]{"view","create","edit"});
-        admin.put("custom_fields",      new String[]{"view","create","edit"});
-        admin.put("settings",           new String[]{"view","create","edit"});
-        CATALOG.put("Administration", admin);
-
-        LinkedHashMap<String, String[]> narc = new LinkedHashMap<>();
-        narc.put("narcotics",           new String[]{"view","create","edit"});
-        narc.put("narcotics_buys",      new String[]{"view","create","edit"});
-        CATALOG.put("Narcotics", narc);
-
-        LinkedHashMap<String, String[]> qm = new LinkedHashMap<>();
-        qm.put("qm_dashboard",          new String[]{"view"});
-        qm.put("qm_equipment",          new String[]{"view","create","edit"});
-        qm.put("qm_weapons",            new String[]{"view","create","edit"});
-        qm.put("qm_uniforms",           new String[]{"view","create","edit"});
-        CATALOG.put("Quartermaster", qm);
-    }
-
-    private static final List<String> OFFICER_PRESET = List.of(
-            "cases:view","cases:create","cases:edit",
-            "evidence:view","evidence:create","evidence:edit",
-            "custody:view","custody:create","custody:edit","custody:transfer",
-            "dropbox:view","dropbox:create","dropbox:edit","dropbox:process",
-            "reports:view",
-            "people:view","people:create","people:edit",
-            "narcotics:view","narcotics:create","narcotics:edit",
-            "narcotics_buys:view","narcotics_buys:create","narcotics_buys:edit",
-            "qm_dashboard:view","qm_equipment:view","qm_weapons:view","qm_uniforms:view"
+    private static final List<PermFlag> ALL_FLAGS = List.of(
+        new PermFlag("can_create_evidence",        "Create Evidence",          "Submit new evidence items"),
+        new PermFlag("can_edit_own_evidence",       "Edit Own Evidence",        "Edit own evidence before it is submitted"),
+        new PermFlag("can_edit_all_evidence",       "Edit All Evidence",        "Edit any evidence record"),
+        new PermFlag("can_view_all_evidence",       "View All Evidence",        "View evidence from all officers"),
+        new PermFlag("can_change_status",           "Change Status",            "Change evidence status (e.g. Booked, Released)"),
+        new PermFlag("can_change_location",         "Move Storage Locations",   "Move evidence between storage locations"),
+        new PermFlag("can_manage_chain_of_custody", "Manage Chain of Custody",  "Add, edit, and transfer chain of custody entries"),
+        new PermFlag("can_upload_files",            "Upload Files / Photos",    "Attach files and photos to evidence"),
+        new PermFlag("can_delete_evidence",         "Delete Evidence",          "Soft-delete evidence records (no role gets this by default)"),
+        new PermFlag("can_manage_users",            "Manage Users",             "Create, edit, and manage user accounts and permissions"),
+        new PermFlag("can_view_audit_logs",         "View Audit Logs",          "Access the audit trail and system logs"),
+        new PermFlag("can_manage_settings",         "Manage Settings",          "Configure system settings, dropboxes, and lookup lists")
     );
 
-    /** Map from permission key -> CheckBox */
+    // ── Role default presets ───────────────────────────────────────────────────
+    public static final Set<String> OFFICER_DEFAULTS = Set.of(
+        "can_create_evidence",
+        "can_edit_own_evidence",
+        "can_upload_files"
+    );
+
+    public static final Set<String> EVIDENCE_TECH_DEFAULTS = Set.of(
+        "can_create_evidence",
+        "can_edit_own_evidence",
+        "can_edit_all_evidence",
+        "can_view_all_evidence",
+        "can_change_status",
+        "can_change_location",
+        "can_manage_chain_of_custody",
+        "can_upload_files",
+        "can_view_audit_logs"
+    );
+
+    public static final Set<String> ADMIN_DEFAULTS = Set.of(
+        "can_create_evidence",
+        "can_edit_own_evidence",
+        "can_edit_all_evidence",
+        "can_view_all_evidence",
+        "can_change_status",
+        "can_change_location",
+        "can_manage_chain_of_custody",
+        "can_upload_files",
+        "can_view_audit_logs",
+        "can_manage_users",
+        "can_manage_settings"
+    );
+
+    /** Returns the role default set for the given role string. */
+    public static Set<String> defaultsForRole(String role) {
+        if (role == null) return OFFICER_DEFAULTS;
+        return switch (role.toLowerCase()) {
+            case "evidence_tech" -> EVIDENCE_TECH_DEFAULTS;
+            case "admin"         -> ADMIN_DEFAULTS;
+            default              -> OFFICER_DEFAULTS;
+        };
+    }
+
+    /**
+     * Computes the effective permission set for an officer:
+     *   Base   = role defaults
+     *   +flag  → added over role default
+     *   -flag  → removed from role default
+     */
+    public static Set<String> computeEffective(Officer officer) {
+        Set<String> effective = new HashSet<>(defaultsForRole(officer.getRole()));
+        String raw = officer.getPermissions();
+        if (raw != null && !raw.isBlank()) {
+            for (String token : raw.split(",")) {
+                String t = token.trim();
+                if (t.startsWith("+"))      effective.add(t.substring(1));
+                else if (t.startsWith("-")) effective.remove(t.substring(1));
+            }
+        }
+        return effective;
+    }
+
+    /** Map from flag -> CheckBox */
     private final Map<String, CheckBox> checkboxMap = new LinkedHashMap<>();
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        buildUI();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
+    }
 
     public void setOfficer(Officer officer) {
         this.officer = officer;
         pageTitle.setText("Permissions — " + officer.getName());
-        // Parse stored permissions
-        Set<String> stored = parsePermissions(officer.getPermissions());
-        checkboxMap.forEach((key, cb) -> cb.setSelected(stored.contains(key)));
+        Set<String> effective = computeEffective(officer);
+        checkboxMap.forEach((flag, cb) -> cb.setSelected(effective.contains(flag)));
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        buildPermissionUI();
-    }
-
-    private void buildPermissionUI() {
+    private void buildUI() {
         checkboxMap.clear();
         permissionsContainer.getChildren().clear();
 
-        CATALOG.forEach((groupName, resources2) -> {
-            // Group header
-            TitledPane pane = new TitledPane();
-            pane.setText(groupName);
-            pane.setStyle("-fx-text-fill: white;");
+        for (PermFlag pf : ALL_FLAGS) {
+            HBox row = new HBox(14);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(10, 12, 10, 12));
+            row.setStyle("-fx-background-color:#1e293b; -fx-background-radius:6; -fx-border-color:#2d3748; -fx-border-radius:6;");
 
-            VBox groupBox = new VBox(8);
-            groupBox.setPadding(new Insets(8, 0, 8, 16));
+            CheckBox cb = new CheckBox();
+            cb.setStyle("-fx-scale-x:1.2; -fx-scale-y:1.2;");
+            checkboxMap.put(pf.flag(), cb);
 
-            resources2.forEach((resource, actions) -> {
-                VBox resourceBox = new VBox(4);
-                resourceBox.setPadding(new Insets(4, 0, 4, 0));
+            VBox labels = new VBox(2);
+            Label name = new Label(pf.label());
+            name.setStyle("-fx-font-weight:bold; -fx-text-fill:white; -fx-font-size:13;");
+            Label desc = new Label(pf.description());
+            desc.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:11;");
+            Label pill = new Label(pf.flag());
+            pill.setStyle("-fx-background-color:#0f172a; -fx-text-fill:#475569; -fx-font-size:10; " +
+                    "-fx-padding:2 6 2 6; -fx-background-radius:4; -fx-font-family:monospace;");
+            labels.getChildren().addAll(name, desc, pill);
 
-                // Resource header + "Select all for resource" checkbox
-                HBox headerRow = new HBox(12);
-                headerRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                Label resourceLabel = new Label(resource.replace("_", " ").toUpperCase());
-                resourceLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#ccc; -fx-font-size:12;");
-                CheckBox selectAllCb = new CheckBox("All");
-                selectAllCb.setStyle("-fx-text-fill:#888; -fx-font-size:11;");
-                headerRow.getChildren().addAll(resourceLabel, selectAllCb);
-                resourceBox.getChildren().add(headerRow);
-
-                // Action checkboxes
-                HBox actionsRow = new HBox(16);
-                actionsRow.setPadding(new Insets(0, 0, 0, 8));
-                List<CheckBox> rowCbs = new ArrayList<>();
-                for (String action : actions) {
-                    String key = resource + ":" + action;
-                    CheckBox cb = new CheckBox(action);
-                    cb.setStyle("-fx-text-fill: white;");
-                    checkboxMap.put(key, cb);
-                    actionsRow.getChildren().add(cb);
-                    rowCbs.add(cb);
-                }
-                resourceBox.getChildren().add(actionsRow);
-
-                // Wire select-all checkbox
-                selectAllCb.setOnAction(e -> rowCbs.forEach(cb -> cb.setSelected(selectAllCb.isSelected())));
-                rowCbs.forEach(cb -> cb.setOnAction(e ->
-                        selectAllCb.setSelected(rowCbs.stream().allMatch(CheckBox::isSelected))));
-
-                groupBox.getChildren().add(resourceBox);
-                groupBox.getChildren().add(new Separator());
-            });
-
-            pane.setContent(groupBox);
-            permissionsContainer.getChildren().add(pane);
-        });
+            row.getChildren().addAll(cb, labels);
+            permissionsContainer.getChildren().add(row);
+        }
     }
 
-    @FXML private void onOfficerPreset() {
-        checkboxMap.forEach((key, cb) -> cb.setSelected(OFFICER_PRESET.contains(key)));
+    // ── Preset buttons ─────────────────────────────────────────────────────────
+    @FXML private void onOfficerPreset()      { applyPreset(OFFICER_DEFAULTS); }
+    @FXML private void onEvidenceTechPreset() { applyPreset(EVIDENCE_TECH_DEFAULTS); }
+    @FXML private void onAdminPreset()        { applyPreset(ADMIN_DEFAULTS); }
+    @FXML private void onSelectAll()          { checkboxMap.values().forEach(cb -> cb.setSelected(true)); }
+    @FXML private void onClearAll()           { checkboxMap.values().forEach(cb -> cb.setSelected(false)); }
+
+    private void applyPreset(Set<String> preset) {
+        checkboxMap.forEach((flag, cb) -> cb.setSelected(preset.contains(flag)));
     }
 
-    @FXML private void onSelectAll() {
-        checkboxMap.values().forEach(cb -> cb.setSelected(true));
-    }
-
-    @FXML private void onClearAll() {
-        checkboxMap.values().forEach(cb -> cb.setSelected(false));
-    }
-
+    // ── Save ───────────────────────────────────────────────────────────────────
     @FXML
     private void onSave() {
         if (officer == null) return;
-        List<String> perms = checkboxMap.entrySet().stream()
-                .filter(e -> e.getValue().isSelected())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        // Store as comma-separated string in the role field for now
-        // (a dedicated permissions column can be added in a future migration)
+        Set<String> roleDefaults = defaultsForRole(officer.getRole());
+        List<String> overrides = new ArrayList<>();
+        checkboxMap.forEach((flag, cb) -> {
+            boolean checked   = cb.isSelected();
+            boolean inDefault = roleDefaults.contains(flag);
+            if (checked && !inDefault)  overrides.add("+" + flag);
+            if (!checked && inDefault)  overrides.add("-" + flag);
+        });
         try {
-            repo.savePermissions(officer.getId(), String.join(",", perms));
+            String stored = String.join(",", overrides);
+            repo.savePermissions(officer.getId(), stored);
+            officer.setPermissions(stored);
             new Alert(Alert.AlertType.INFORMATION, "Permissions saved for " + officer.getName()).showAndWait();
-        } catch (Exception e) { showError(e); }
-    }
-
-    private Set<String> parsePermissions(String permissionsField) {
-        if (permissionsField == null || permissionsField.isBlank()) return new HashSet<>();
-        return new HashSet<>(Arrays.asList(permissionsField.split(",")));
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        }
     }
 
     // ── Nav ───────────────────────────────────────────────────────────────────
-    @FXML private void onCases()     { Navigator.get().showCaseList(); }
-    @FXML private void onInventory() { Navigator.get().showInventory(); }
-    @FXML private void onPeople()    { Navigator.get().showPeople(); }
-    @FXML private void onDropbox()   { Navigator.get().showDropbox(); }
-    @FXML private void onReports()   { Navigator.get().showReports(); }
-    @FXML private void onSettings()  { Navigator.get().showSettings(); }
-    @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
-    @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onCases()         { Navigator.get().showCaseList(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+    @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
+    @FXML private void onSettings()      { Navigator.get().showSettings(); }
+    @FXML private void onAuditTrail()    { Navigator.get().showAuditTrail(); }
+    @FXML private void onReports()       { Navigator.get().showReports(); }
+    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
     private void showError(Exception e) {
         e.printStackTrace();
         new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();

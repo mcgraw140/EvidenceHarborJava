@@ -6,13 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OfficerRepository {
-    private final Connection conn;
 
-    public OfficerRepository() { this.conn = DatabaseManager.getInstance().getConnection(); }
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
+    }
 
     public List<Officer> findAll() throws SQLException {
         List<Officer> list = new ArrayList<>();
-        try (Statement s = conn.createStatement();
+        try (Statement s = conn().createStatement();
              ResultSet rs = s.executeQuery("SELECT * FROM officers ORDER BY name")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -22,7 +23,7 @@ public class OfficerRepository {
     public List<Officer> search(String query) throws SQLException {
         List<Officer> list = new ArrayList<>();
         String q = "%" + query.toLowerCase() + "%";
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT * FROM officers WHERE lower(name) LIKE ? OR lower(badge) LIKE ? OR lower(username) LIKE ? ORDER BY name")) {
             ps.setString(1, q); ps.setString(2, q); ps.setString(3, q);
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(map(rs)); }
@@ -31,21 +32,38 @@ public class OfficerRepository {
     }
 
     public Officer findById(int id) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM officers WHERE id=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT * FROM officers WHERE id=?")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
         }
     }
 
     public Officer findByName(String name) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM officers WHERE lower(name)=lower(?) LIMIT 1")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT * FROM officers WHERE lower(name)=lower(?) LIMIT 1")) {
             ps.setString(1, name);
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
         }
     }
 
+    public Officer findByUsername(String username) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT * FROM officers WHERE lower(username)=lower(?) LIMIT 1")) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? map(rs) : null; }
+        }
+    }
+
+    /** Returns true if at least one officer has a username and password_hash set (i.e. login is configured). */
+    public boolean hasPasswordAccounts() throws SQLException {
+        try (Statement s = conn().createStatement();
+             ResultSet rs = s.executeQuery(
+                     "SELECT 1 FROM officers WHERE username IS NOT NULL AND username != '' " +
+                     "AND password_hash IS NOT NULL AND password_hash != '' LIMIT 1")) {
+            return rs.next();
+        }
+    }
+
     public boolean usernameExists(String username, int excludeId) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT 1 FROM officers WHERE lower(username)=lower(?) AND id != ?")) {
             ps.setString(1, username); ps.setInt(2, excludeId);
             try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
@@ -54,7 +72,7 @@ public class OfficerRepository {
 
     public Officer save(Officer o) throws SQLException {
         if (o.getId() == 0) {
-            try (PreparedStatement ps = conn.prepareStatement(
+            try (PreparedStatement ps = conn().prepareStatement(
                     "INSERT INTO officers (name, badge, username, password_hash, role, status, is_external) VALUES (?,?,?,?,?,?,?)",
                     Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, o.getName());
@@ -71,7 +89,7 @@ public class OfficerRepository {
             String sql = o.getPasswordHash() != null && !o.getPasswordHash().isBlank()
                     ? "UPDATE officers SET name=?, badge=?, username=?, password_hash=?, role=?, status=?, is_external=? WHERE id=?"
                     : "UPDATE officers SET name=?, badge=?, username=?, role=?, status=?, is_external=? WHERE id=?";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (PreparedStatement ps = conn().prepareStatement(sql)) {
                 ps.setString(1, o.getName());
                 ps.setString(2, o.getBadge());
                 ps.setString(3, o.getUsername());
@@ -93,14 +111,24 @@ public class OfficerRepository {
         return o;
     }
 
+    public int countCases(int officerId) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT COUNT(*) FROM cases WHERE officer_id=?")) {
+            ps.setInt(1, officerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM officers WHERE id=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM officers WHERE id=?")) {
             ps.setInt(1, id); ps.executeUpdate();
         }
     }
 
     public void savePermissions(int officerId, String permissions) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE officers SET permissions=? WHERE id=?")) {
             ps.setString(1, permissions);
             ps.setInt(2, officerId);

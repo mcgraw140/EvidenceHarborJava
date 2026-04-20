@@ -32,6 +32,7 @@ public class Navigator {
     }
 
     public void showInventory() {
+        if (!SessionManager.can("can_view_all_evidence")) { showCaseList(); return; }
         loadScene("/fxml/Inventory.fxml", null);
     }
 
@@ -40,26 +41,35 @@ public class Navigator {
     }
 
     public void showDropbox() {
+        if (!SessionManager.can("can_view_all_evidence")) { showCaseList(); return; }
         loadScene("/fxml/Dropbox.fxml", null);
     }
 
     public void showReports() {
+        if (!SessionManager.can("can_view_all_evidence")) { showCaseList(); return; }
         loadScene("/fxml/Reports.fxml", null);
     }
 
     public void showSettings() {
+        if (!SessionManager.can("can_manage_settings")) { showAdminDashboard(); return; }
         loadScene("/fxml/Settings.fxml", null);
     }
 
     public void showUserManagement() {
+        if (!SessionManager.can("can_manage_users")) { showAdminDashboard(); return; }
         loadScene("/fxml/UserManagement.fxml", null);
     }
 
     public void showAdminDashboard() {
+        boolean hasAdminAccess = SessionManager.can("can_manage_users")
+                || SessionManager.can("can_manage_settings")
+                || SessionManager.can("can_view_audit_logs");
+        if (!hasAdminAccess) { showCaseList(); return; }
         loadScene("/fxml/AdminDashboard.fxml", null);
     }
 
     public void showPermissions(com.evidenceharbor.domain.Officer officer) {
+        if (!SessionManager.can("can_manage_users")) { showAdminDashboard(); return; }
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PermissionManagement.fxml"));
         try {
             Parent root = loader.load();
@@ -70,59 +80,63 @@ public class Navigator {
     }
 
     public void showLookupAdmin() {
+        if (!SessionManager.can("can_manage_settings")) { showAdminDashboard(); return; }
         loadScene("/fxml/LookupAdmin.fxml", null);
     }
 
     public void showEvidenceAudit() {
+        if (!SessionManager.can("can_view_audit_logs")) { showAdminDashboard(); return; }
         loadScene("/fxml/EvidenceAudit.fxml", null);
     }
 
     public void showAuditTrail() {
+        if (!SessionManager.can("can_view_audit_logs")) { showAdminDashboard(); return; }
         loadScene("/fxml/AuditTrail.fxml", null);
     }
 
     public void showBankAccountLedger() {
+        if (!SessionManager.can("can_manage_settings")) { showAdminDashboard(); return; }
         loadScene("/fxml/BankAccountLedger.fxml", null);
     }
 
     public void showQmDashboard() {
-        loadScene("/fxml/QmDashboard.fxml", null);
+        showCaseList();
     }
 
     public void showQmAssignEquipment() {
-        loadScene("/fxml/QmAssignEquipment.fxml", null);
+        showCaseList();
     }
 
     public void showQmEquipment() {
-        loadScene("/fxml/QmEquipment.fxml", null);
+        showCaseList();
     }
 
     public void showQmWeapons() {
-        loadScene("/fxml/QmWeapons.fxml", null);
+        showCaseList();
     }
 
     public void showQmUniforms() {
-        loadScene("/fxml/QmUniforms.fxml", null);
+        showCaseList();
     }
 
     public void showQmAmmunition() {
-        loadScene("/fxml/QmAmmunition.fxml", null);
+        showCaseList();
     }
 
     public void showQmInventoryLevels() {
-        loadScene("/fxml/QmInventoryLevels.fxml", null);
+        showCaseList();
     }
 
     public void showQmOfficerLoadouts() {
-        loadScene("/fxml/QmOfficerLoadouts.fxml", null);
+        showCaseList();
     }
 
     public void showQmVehicleImpound() {
-        loadScene("/fxml/QmVehicleImpound.fxml", null);
+        showCaseList();
     }
 
     public void showQmInventoryAudit() {
-        loadScene("/fxml/QmInventoryAudit.fxml", null);
+        showCaseList();
     }
 
     public void showImpoundLot() {

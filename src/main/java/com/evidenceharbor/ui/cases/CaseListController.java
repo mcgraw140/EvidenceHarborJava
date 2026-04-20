@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.cases;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.CasePerson;
@@ -18,6 +19,13 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class CaseListController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+    @FXML private Button navDropboxBtn;
 
     @FXML private TextField searchField;
     @FXML private TableView<Case> caseTable;
@@ -55,6 +63,7 @@ public class CaseListController implements Initializable {
 
         searchField.textProperty().addListener((obs, oldVal, newVal) -> loadCases(newVal));
         loadCases("");
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
     }
 
     private void loadCases(String query) {

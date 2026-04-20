@@ -77,4 +77,5 @@
             </VBox>
         </VBox>
     </center>
+    <bottom><fx:include source="DbStatusBar.fxml"/></bottom>
 </BorderPane>

@@ -1,8 +1,10 @@
 package com.evidenceharbor.ui.admin;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.AuditLog;
 import com.evidenceharbor.persistence.AuditLogRepository;
+import com.evidenceharbor.persistence.LookupRepository;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -18,10 +20,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class AuditTrailController implements Initializable {
+
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
 
     @FXML private TextField   searchField;
     @FXML private ComboBox<String> moduleFilter;
@@ -35,16 +44,24 @@ public class AuditTrailController implements Initializable {
     @FXML private TableColumn<AuditLog, String> colTimestamp, colUser, colAction, colModule, colRecord, colDetails;
 
     private final AuditLogRepository repo = new AuditLogRepository();
+    private final LookupRepository lookupRepo = new LookupRepository();
     private String activeModule = null;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        moduleFilter.setItems(FXCollections.observableArrayList(
-                "All", "Evidence", "Cases", "Users", "Narcotics", "Quartermaster", "System"));
-        actionFilter.setItems(FXCollections.observableArrayList(
-                "CREATE", "UPDATE", "DELETE", "PRINT", "SAVE", "LOGIN", "LOGOUT"));
+        try {
+            List<String> modules = new ArrayList<>();
+            modules.add("All");
+            modules.addAll(lookupRepo.getAuditModules());
+            moduleFilter.setItems(FXCollections.observableArrayList(modules));
+            actionFilter.setItems(FXCollections.observableArrayList(lookupRepo.getAuditActions()));
+        } catch (Exception e) {
+            showError(e);
+            moduleFilter.setItems(FXCollections.observableArrayList("All"));
+            actionFilter.setItems(FXCollections.observableArrayList());
+        }
 
         colTimestamp.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getTimestamp()));
         colUser.setCellValueFactory(cd -> new SimpleStringProperty(
@@ -71,6 +88,7 @@ public class AuditTrailController implements Initializable {
         });
 
         loadLogs();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     @FXML private void onSearch()       { loadLogs(); }

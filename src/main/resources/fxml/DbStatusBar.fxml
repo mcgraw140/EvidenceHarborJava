@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<HBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.evidenceharbor.ui.shared.DbStatusBarController"
+      styleClass="db-status-bar" alignment="CENTER_LEFT" spacing="8"
+      style="-fx-background-color:#0f172a; -fx-border-color:#1e293b; -fx-border-width:1 0 0 0;">
+    <padding><Insets top="5" right="16" bottom="5" left="16"/></padding>
+    <Label fx:id="dot" text="●" style="-fx-font-size:13px; -fx-text-fill:#f59e0b;"/>
+    <Label fx:id="statusLabel" text="Checking database connection..." style="-fx-font-size:11px; -fx-text-fill:#94a3b8;"/>
+</HBox>

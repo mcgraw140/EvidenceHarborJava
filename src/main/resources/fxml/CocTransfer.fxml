@@ -21,7 +21,7 @@
         <ComboBox fx:id="actionCombo" prefWidth="340" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
         <Label text="Performed By" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-        <TextField fx:id="performedByField" promptText="Officer name" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <ComboBox fx:id="performedByCombo" promptText="Select officer" prefWidth="340" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
         <Label text="From Location" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
         <TextField fx:id="fromLocationField" promptText="Current location" GridPane.columnIndex="1" GridPane.rowIndex="2"/>

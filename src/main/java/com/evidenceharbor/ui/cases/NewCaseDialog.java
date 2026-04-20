@@ -1,5 +1,7 @@
 package com.evidenceharbor.ui.cases;
 
+import com.evidenceharbor.app.ComboBoxHelper;
+import com.evidenceharbor.app.SessionManager;
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.Officer;
 import com.evidenceharbor.persistence.CaseRepository;
@@ -30,8 +32,14 @@ public class NewCaseDialog {
 
         try {
             List<Officer> officers = new OfficerRepository().findAll();
-            officerBox.getItems().addAll(officers);
-            if (!officers.isEmpty()) officerBox.setValue(officers.get(0));
+            ComboBoxHelper.makeSearchable(officerBox, officers, Officer::getName);
+            // Pre-select the currently logged-in officer
+            Officer me = SessionManager.getCurrentOfficer();
+            Officer preselect = officers.stream()
+                    .filter(o -> me != null && o.getId() == me.getId())
+                    .findFirst()
+                    .orElse(officers.isEmpty() ? null : officers.get(0));
+            officerBox.setValue(preselect);
         } catch (Exception e) { e.printStackTrace(); }
 
         grid.add(new Label("Case Number:"), 0, 0);

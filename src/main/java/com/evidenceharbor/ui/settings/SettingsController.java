@@ -1,18 +1,27 @@
 package com.evidenceharbor.ui.settings;
 
+import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.AgencySettings;
-import com.evidenceharbor.domain.LookupItem;
-import com.evidenceharbor.persistence.LookupRepository;
+import com.evidenceharbor.persistence.DatabaseManager;
 import com.evidenceharbor.persistence.SettingsRepository;
-import javafx.collections.FXCollections;
+import com.evidenceharbor.util.TailscaleManager;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.DirectoryChooser;
+import java.awt.Desktop;
+import java.io.File;
 
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -20,6 +29,12 @@ import java.util.regex.PatternSyntaxException;
 public class SettingsController implements Initializable {
 
     // Agency info
+    @FXML private Button navAdminTab;
+    @FXML private Button navAuditTrailBtn;
+    @FXML private Button navSettingsBtn;
+    @FXML private Button navInventoryBtn;
+    @FXML private Button navReportsBtn;
+
     @FXML private TextField agencyNameField;
     @FXML private TextField agencyAddressField;
     @FXML private TextField agencyCityField;
@@ -40,44 +55,39 @@ public class SettingsController implements Initializable {
     @FXML private TextField barcodePrefixField;
     @FXML private Label     barcodePreviewLabel;
 
-    // Lookup lists
-    @FXML private TextField caliberInput;
-    @FXML private ListView<LookupItem> caliberList;
-    @FXML private TextField electronicInput;
-    @FXML private ListView<LookupItem> electronicList;
-    @FXML private TextField narcoticsInput;
-    @FXML private ListView<LookupItem> narcoticsList;
+    // Tailscale tab
+    @FXML private TabPane      tabPane;
+    @FXML private Label        tsStatusDot;
+    @FXML private Label        tsStatusLabel;
+    @FXML private Label        tsIpLabel;
+    @FXML private VBox         tsInstallBox;
+    @FXML private VBox         tsConnectBox;
+    @FXML private PasswordField tsAuthKeyField;
+    @FXML private TextArea     tsLogArea;
 
-    @FXML private TextField weaponTypeInput;
-    @FXML private ListView<LookupItem> weaponTypeList;
-    @FXML private TextField bioSourceInput;
-    @FXML private ListView<LookupItem> bioSourceList;
-    @FXML private TextField storageLocationInput;
-    @FXML private ListView<LookupItem> storageLocationList;
-    @FXML private TextField intakeLocationInput;
-    @FXML private ListView<LookupItem> intakeLocationList;
-    @FXML private TextField personRoleInput;
-    @FXML private ListView<LookupItem> personRoleList;
-    @FXML private TextField caseStatusInput;
-    @FXML private ListView<LookupItem> caseStatusList;
-    @FXML private TextField transferActionInput;
-    @FXML private ListView<LookupItem> transferActionList;
-    @FXML private TextField analysisLabInput;
-    @FXML private ListView<LookupItem> analysisLabList;
-    @FXML private TextField otherAgencyInput;
-    @FXML private ListView<LookupItem> otherAgencyList;
-    @FXML private TextField narcUnitTypeInput;
-    @FXML private ListView<LookupItem> narcUnitTypeList;
+    // Database connection tab
+    @FXML private Label        dbStatusDot;
+    @FXML private Label        dbStatusLabel;
+    @FXML private TextField    dbHostField;
+    @FXML private TextField    dbPortField;
+    @FXML private TextField    dbNameField;
+    @FXML private TextField    dbUserField;
+    @FXML private PasswordField dbPasswordField;
+    @FXML private Label        dbTestResultLabel;
+    @FXML private TextArea     dbLogArea;
+    @FXML private TextField    dbDataDirField;
 
     private final SettingsRepository settingsRepo = new SettingsRepository();
-    private final LookupRepository   lookupRepo   = new LookupRepository();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         loadAgencySettings();
-        loadLookupLists();
         wirePatternValidation();
         wireBarcodePreview();
+        loadDbConnectionSettings();
+        refreshDbStatus();
+        refreshTailscaleStatus();
+        NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
     // ──────────────────────── LOAD ────────────────────────
@@ -97,26 +107,6 @@ public class SettingsController implements Initializable {
             barcodePrefixField.setText(s.getBarcodePrefix());
         } catch (Exception e) {
             showError("Failed to load settings: " + e.getMessage());
-        }
-    }
-
-    private void loadLookupLists() {
-        try {
-            caliberList.setItems(FXCollections.observableArrayList(lookupRepo.getCaliberList()));
-            electronicList.setItems(FXCollections.observableArrayList(lookupRepo.getElectronicTypeItems()));
-            narcoticsList.setItems(FXCollections.observableArrayList(lookupRepo.getNarcoticsTypeItems()));
-            weaponTypeList.setItems(FXCollections.observableArrayList(lookupRepo.getWeaponTypeItems()));
-            bioSourceList.setItems(FXCollections.observableArrayList(lookupRepo.getBiologicalSourceItems()));
-            storageLocationList.setItems(FXCollections.observableArrayList(lookupRepo.getStorageLocationItems()));
-            intakeLocationList.setItems(FXCollections.observableArrayList(lookupRepo.getIntakeLocationItems()));
-            personRoleList.setItems(FXCollections.observableArrayList(lookupRepo.getPersonRoleItems()));
-            caseStatusList.setItems(FXCollections.observableArrayList(lookupRepo.getCaseStatusItems()));
-            transferActionList.setItems(FXCollections.observableArrayList(lookupRepo.getTransferActionItems()));
-            analysisLabList.setItems(FXCollections.observableArrayList(lookupRepo.getAnalysisLabItems()));
-            otherAgencyList.setItems(FXCollections.observableArrayList(lookupRepo.getOtherAgencyItems()));
-            narcUnitTypeList.setItems(FXCollections.observableArrayList(lookupRepo.getNarcoticsUnitTypeItems()));
-        } catch (Exception e) {
-            showError("Failed to load lookup lists: " + e.getMessage());
         }
     }
 
@@ -202,100 +192,293 @@ public class SettingsController implements Initializable {
         }
     }
 
-    // ──────────────────────── LOOKUP CRUD ────────────────────────
+    // ──────────────────────── TAILSCALE ────────────────────────
 
-    @FXML
-    private void onAddCaliber() {
-        String name = caliberInput.getText().trim();
-        if (name.isEmpty()) return;
-        try {
-            lookupRepo.addCaliber(name);
-            caliberInput.clear();
-            caliberList.setItems(FXCollections.observableArrayList(lookupRepo.getCaliberList()));
-        } catch (Exception e) { showError(e.getMessage()); }
+    private void refreshTailscaleStatus() {
+        runTailscaleTask(() -> TailscaleManager.getStatus(), result -> {
+            TailscaleManager.TailscaleStatus s = (TailscaleManager.TailscaleStatus) result;
+            if (!TailscaleManager.isInstalled()) {
+                tsStatusDot.setStyle("-fx-text-fill:#ef4444; -fx-font-size:20px; -fx-font-weight:bold;");
+                tsStatusLabel.setText("Tailscale not installed");
+                tsIpLabel.setText("");
+                tsInstallBox.setVisible(true);
+                tsInstallBox.setManaged(true);
+                tsConnectBox.setVisible(false);
+                tsConnectBox.setManaged(false);
+            } else if (s.running) {
+                tsStatusDot.setStyle("-fx-text-fill:#22c55e; -fx-font-size:20px; -fx-font-weight:bold;");
+                tsStatusLabel.setText("Tailscale connected");
+                tsIpLabel.setText(s.selfIp != null ? "Your IP: " + s.selfIp : "IP unavailable");
+                tsInstallBox.setVisible(false);
+                tsInstallBox.setManaged(false);
+                tsConnectBox.setVisible(true);
+                tsConnectBox.setManaged(true);
+            } else {
+                tsStatusDot.setStyle("-fx-text-fill:#f59e0b; -fx-font-size:20px; -fx-font-weight:bold;");
+                tsStatusLabel.setText("Tailscale installed but not connected");
+                tsIpLabel.setText("");
+                tsInstallBox.setVisible(false);
+                tsInstallBox.setManaged(false);
+                tsConnectBox.setVisible(true);
+                tsConnectBox.setManaged(true);
+            }
+            appendTsLog("[" + timestamp() + "] Status: " + (s.rawOutput.isBlank() ? "No output" : s.rawOutput));
+        });
     }
 
     @FXML
-    private void onRemoveCaliber() {
-        LookupItem sel = caliberList.getSelectionModel().getSelectedItem();
-        if (sel == null) return;
-        try {
-            lookupRepo.deleteCaliber(sel.getId());
-            caliberList.setItems(FXCollections.observableArrayList(lookupRepo.getCaliberList()));
-        } catch (Exception e) { showError(e.getMessage()); }
+    private void onTailscaleRefresh() {
+        refreshTailscaleStatus();
     }
 
     @FXML
-    private void onAddElectronic() {
-        String name = electronicInput.getText().trim();
-        if (name.isEmpty()) return;
-        try {
-            lookupRepo.addElectronicType(name);
-            electronicInput.clear();
-            electronicList.setItems(FXCollections.observableArrayList(lookupRepo.getElectronicTypeItems()));
-        } catch (Exception e) { showError(e.getMessage()); }
+    private void onInstallTailscale() {
+        appendTsLog("[" + timestamp() + "] Launching Tailscale installer (silent)...");
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Process proc = TailscaleManager.launchInstaller();
+                proc.waitFor();
+                return null;
+            }
+        };
+        task.setOnSucceeded(e -> {
+            appendTsLog("[" + timestamp() + "] Installer finished. Refreshing status...");
+            refreshTailscaleStatus();
+        });
+        task.setOnFailed(e -> appendTsLog("[" + timestamp() + "] Install error: " + rootMsg(task.getException())));
+        new Thread(task, "ts-installer").start();
     }
 
     @FXML
-    private void onRemoveElectronic() {
-        LookupItem sel = electronicList.getSelectionModel().getSelectedItem();
-        if (sel == null) return;
-        try {
-            lookupRepo.deleteElectronicType(sel.getId());
-            electronicList.setItems(FXCollections.observableArrayList(lookupRepo.getElectronicTypeItems()));
-        } catch (Exception e) { showError(e.getMessage()); }
+    private void onTailscaleConnect() {
+        String key = tsAuthKeyField.getText();
+        appendTsLog("[" + timestamp() + "] Connecting Tailscale" + (key.isBlank() ? " (browser login)..." : " with auth key..."));
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return TailscaleManager.connect(key);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            appendTsLog("[" + timestamp() + "] " + task.getValue());
+            refreshTailscaleStatus();
+        });
+        task.setOnFailed(e -> appendTsLog("[" + timestamp() + "] Error: " + rootMsg(task.getException())));
+        new Thread(task, "ts-connect").start();
     }
 
     @FXML
-    private void onAddNarcotics() {
-        String name = narcoticsInput.getText().trim();
-        if (name.isEmpty()) return;
-        try {
-            lookupRepo.addNarcoticsType(name);
-            narcoticsInput.clear();
-            narcoticsList.setItems(FXCollections.observableArrayList(lookupRepo.getNarcoticsTypeItems()));
-        } catch (Exception e) { showError(e.getMessage()); }
+    private void onTailscaleDisconnect() {
+        appendTsLog("[" + timestamp() + "] Disconnecting Tailscale...");
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return TailscaleManager.disconnect();
+            }
+        };
+        task.setOnSucceeded(e -> {
+            appendTsLog("[" + timestamp() + "] " + task.getValue());
+            refreshTailscaleStatus();
+        });
+        task.setOnFailed(e -> appendTsLog("[" + timestamp() + "] Error: " + rootMsg(task.getException())));
+        new Thread(task, "ts-disconnect").start();
     }
 
     @FXML
-    private void onRemoveNarcotics() {
-        LookupItem sel = narcoticsList.getSelectionModel().getSelectedItem();
-        if (sel == null) return;
+    private void onUseTailscaleIpAsDbHost() {
         try {
-            lookupRepo.deleteNarcoticsType(sel.getId());
-            narcoticsList.setItems(FXCollections.observableArrayList(lookupRepo.getNarcoticsTypeItems()));
-        } catch (Exception e) { showError(e.getMessage()); }
+            TailscaleManager.TailscaleStatus s = TailscaleManager.getStatus();
+            if (s.selfIp != null && !s.selfIp.isBlank()) {
+                dbHostField.setText(s.selfIp);
+                appendTsLog("[" + timestamp() + "] DB Host set to Tailscale IP: " + s.selfIp);
+                // Switch to Database Connection tab (index 2)
+                tabPane.getSelectionModel().select(2);
+            } else {
+                appendTsLog("[" + timestamp() + "] Could not get Tailscale IP. Are you connected?");
+            }
+        } catch (Exception e) {
+            appendTsLog("[" + timestamp() + "] Error: " + rootMsg(e));
+        }
     }
 
-    @FXML private void onAddWeaponType() { addRemoveHelper(weaponTypeInput, weaponTypeList, n -> lookupRepo.addWeaponType(n), () -> lookupRepo.getWeaponTypeItems()); }
-    @FXML private void onRemoveWeaponType() { removeHelper(weaponTypeList, id -> lookupRepo.deleteWeaponType(id), () -> lookupRepo.getWeaponTypeItems()); }
+    @SuppressWarnings("unchecked")
+    private <T> void runTailscaleTask(java.util.concurrent.Callable<T> action, java.util.function.Consumer<T> onSuccess) {
+        Task<T> task = new Task<>() {
+            @Override
+            protected T call() throws Exception {
+                return action.call();
+            }
+        };
+        task.setOnSucceeded(e -> onSuccess.accept(task.getValue()));
+        task.setOnFailed(e -> appendTsLog("[" + timestamp() + "] Error: " + rootMsg(task.getException())));
+        new Thread(task, "ts-task").start();
+    }
 
-    @FXML private void onAddBioSource() { addRemoveHelper(bioSourceInput, bioSourceList, n -> lookupRepo.addBiologicalSource(n), () -> lookupRepo.getBiologicalSourceItems()); }
-    @FXML private void onRemoveBioSource() { removeHelper(bioSourceList, id -> lookupRepo.deleteBiologicalSource(id), () -> lookupRepo.getBiologicalSourceItems()); }
+    private void appendTsLog(String msg) {
+        Platform.runLater(() -> {
+            if (tsLogArea != null) tsLogArea.appendText(msg + System.lineSeparator());
+        });
+    }
 
-    @FXML private void onAddStorageLocation() { addRemoveHelper(storageLocationInput, storageLocationList, n -> lookupRepo.addStorageLocation(n), () -> lookupRepo.getStorageLocationItems()); }
-    @FXML private void onRemoveStorageLocation() { removeHelper(storageLocationList, id -> lookupRepo.deleteStorageLocation(id), () -> lookupRepo.getStorageLocationItems()); }
+    // ──────────────────────── DATABASE CONNECTION ────────────────────────
 
-    @FXML private void onAddIntakeLocation() { addRemoveHelper(intakeLocationInput, intakeLocationList, n -> lookupRepo.addIntakeLocation(n), () -> lookupRepo.getIntakeLocationItems()); }
-    @FXML private void onRemoveIntakeLocation() { removeHelper(intakeLocationList, id -> lookupRepo.deleteIntakeLocation(id), () -> lookupRepo.getIntakeLocationItems()); }
+    private void loadDbConnectionSettings() {
+        try {
+            Properties props = DatabaseManager.getLiveConfig();
+            dbHostField.setText(props.getProperty("mariadb.host", "127.0.0.1"));
+            dbPortField.setText(props.getProperty("mariadb.port", "3306"));
+            dbNameField.setText(props.getProperty("mariadb.database", "evidence_harbor"));
+            dbUserField.setText(props.getProperty("mariadb.user", "root"));
+            dbPasswordField.setText(props.getProperty("mariadb.password", ""));
+            String savedDir = props.getProperty("mariadb.data.dir", "");
+            dbDataDirField.setText(savedDir);
+        } catch (Exception e) {
+            appendDbLog("Failed to load saved connection settings: " + e.getMessage());
+        }
+    }
 
-    @FXML private void onAddPersonRole() { addRemoveHelper(personRoleInput, personRoleList, n -> lookupRepo.addPersonRole(n), () -> lookupRepo.getPersonRoleItems()); }
-    @FXML private void onRemovePersonRole() { removeHelper(personRoleList, id -> lookupRepo.deletePersonRole(id), () -> lookupRepo.getPersonRoleItems()); }
+    private void refreshDbStatus() {
+        boolean connected = DatabaseManager.isConnected();
+        String color = connected ? "#22c55e" : "#ef4444";
+        String msg   = connected ? "Connected to MariaDB" : "Not connected";
+        dbStatusDot.setStyle("-fx-text-fill:" + color + "; -fx-font-size:20px; -fx-font-weight:bold;");
+        dbStatusLabel.setText(msg);
+    }
 
-    @FXML private void onAddCaseStatus() { addRemoveHelper(caseStatusInput, caseStatusList, n -> lookupRepo.addCaseStatus(n), () -> lookupRepo.getCaseStatusItems()); }
-    @FXML private void onRemoveCaseStatus() { removeHelper(caseStatusList, id -> lookupRepo.deleteCaseStatus(id), () -> lookupRepo.getCaseStatusItems()); }
+    @FXML
+    private void onTestConnection() {
+        runDbTask(false, true);
+    }
 
-    @FXML private void onAddTransferAction() { addRemoveHelper(transferActionInput, transferActionList, n -> lookupRepo.addTransferAction(n), () -> lookupRepo.getTransferActionItems()); }
-    @FXML private void onRemoveTransferAction() { removeHelper(transferActionList, id -> lookupRepo.deleteTransferAction(id), () -> lookupRepo.getTransferActionItems()); }
+    @FXML
+    private void onSaveReconnect() {
+        runDbTask(false, false);
+    }
 
-    @FXML private void onAddAnalysisLab() { addRemoveHelper(analysisLabInput, analysisLabList, n -> lookupRepo.addAnalysisLab(n), () -> lookupRepo.getAnalysisLabItems()); }
-    @FXML private void onRemoveAnalysisLab() { removeHelper(analysisLabList, id -> lookupRepo.deleteAnalysisLab(id), () -> lookupRepo.getAnalysisLabItems()); }
+    private void runDbTask(boolean createDb, boolean testOnly) {
+        String host     = dbHostField.getText().trim();
+        String port     = dbPortField.getText().trim();
+        String db       = dbNameField.getText().trim();
+        String user     = dbUserField.getText().trim();
+        String password = dbPasswordField.getText();
 
-    @FXML private void onAddOtherAgency() { addRemoveHelper(otherAgencyInput, otherAgencyList, n -> lookupRepo.addOtherAgency(n), () -> lookupRepo.getOtherAgencyItems()); }
-    @FXML private void onRemoveOtherAgency() { removeHelper(otherAgencyList, id -> lookupRepo.deleteOtherAgency(id), () -> lookupRepo.getOtherAgencyItems()); }
+        if (host.isBlank() || port.isBlank() || db.isBlank() || user.isBlank()) {
+            dbTestResultLabel.setText("Please fill in all connection fields.");
+            dbTestResultLabel.setTextFill(Color.RED);
+            return;
+        }
 
-    @FXML private void onAddNarcUnitType() { addRemoveHelper(narcUnitTypeInput, narcUnitTypeList, n -> lookupRepo.addNarcoticsUnitType(n), () -> lookupRepo.getNarcoticsUnitTypeItems()); }
-    @FXML private void onRemoveNarcUnitType() { removeHelper(narcUnitTypeList, id -> lookupRepo.deleteNarcoticsUnitType(id), () -> lookupRepo.getNarcoticsUnitTypeItems()); }
+        dbTestResultLabel.setText("Connecting...");
+        dbTestResultLabel.setTextFill(Color.ORANGE);
+        appendDbLog("[" + timestamp() + "] Attempting " + (testOnly ? "test" : "reconnect") + " to " + host + ":" + port + "/" + db);
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                if (!testOnly) {
+                    DatabaseManager.configureAndConnect(host, port, db, user, password, createDb);
+                } else {
+                    // Test-only: just try opening a raw connection without switching the live instance
+                    String url = "jdbc:mariadb://" + host + ":" + port + "/" + db
+                            + "?useUnicode=true&characterEncoding=utf8&connectTimeout=5000";
+                    java.sql.DriverManager.getConnection(url, user, password).close();
+                }
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            String msg = testOnly ? "Test successful — connection is working." : "Reconnected successfully.";
+            dbTestResultLabel.setText(msg);
+            dbTestResultLabel.setTextFill(Color.GREEN);
+            appendDbLog("[" + timestamp() + "] " + msg);
+            refreshDbStatus();
+            // Persist the data directory setting alongside the connection
+            String dataDir = dbDataDirField.getText().trim();
+            try {
+                DatabaseManager.setProperty("mariadb.data.dir", dataDir);
+            } catch (Exception ex) {
+                appendDbLog("[" + timestamp() + "] Warning: could not save data dir: " + ex.getMessage());
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable err = task.getException();
+            String msg = rootMsg(err);
+            dbTestResultLabel.setText("Failed: " + msg);
+            dbTestResultLabel.setTextFill(Color.RED);
+            appendDbLog("[" + timestamp() + "] ERROR: " + msg);
+            refreshDbStatus();
+        });
+
+        Thread t = new Thread(task, "db-settings-connect");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    @FXML
+    private void onBrowseDataDir() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select MariaDB Data Directory");
+        String current = dbDataDirField.getText().trim();
+        if (!current.isBlank()) {
+            File f = new File(current);
+            if (f.exists()) chooser.setInitialDirectory(f);
+        }
+        File selected = chooser.showDialog(dbDataDirField.getScene().getWindow());
+        if (selected != null) {
+            dbDataDirField.setText(selected.getAbsolutePath());
+            try {
+                DatabaseManager.setProperty("mariadb.data.dir", selected.getAbsolutePath());
+                appendDbLog("[" + timestamp() + "] Data directory saved: " + selected.getAbsolutePath());
+            } catch (Exception e) {
+                appendDbLog("[" + timestamp() + "] Warning: could not save data dir: " + e.getMessage());
+            }
+        }
+    }
+
+    @FXML
+    private void onOpenDataDir() {
+        String path = dbDataDirField.getText().trim();
+        if (path.isBlank()) {
+            dbTestResultLabel.setText("Set a data directory path first.");
+            dbTestResultLabel.setTextFill(Color.ORANGE);
+            return;
+        }
+        File dir = new File(path);
+        if (!dir.exists()) {
+            dbTestResultLabel.setText("Directory not found: " + path);
+            dbTestResultLabel.setTextFill(Color.RED);
+            return;
+        }
+        try {
+            Desktop.getDesktop().open(dir);
+        } catch (Exception e) {
+            // Fallback: open parent
+            try {
+                new ProcessBuilder("explorer.exe", dir.getAbsolutePath()).start();
+            } catch (Exception ex) {
+                dbTestResultLabel.setText("Could not open Explorer: " + ex.getMessage());
+                dbTestResultLabel.setTextFill(Color.RED);
+            }
+        }
+    }
+
+    private void appendDbLog(String msg) {
+        Platform.runLater(() -> {
+            if (dbLogArea != null) dbLogArea.appendText(msg + System.lineSeparator());
+        });
+    }
+
+    private String timestamp() {
+        return LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+    }
+
+    private String rootMsg(Throwable t) {
+        while (t.getCause() != null) t = t.getCause();
+        return t.getMessage() == null ? t.toString() : t.getMessage();
+    }
 
     // ──────────────────────── NAV ────────────────────────
 
@@ -309,33 +492,6 @@ public class SettingsController implements Initializable {
     @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
     @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
-    // ──────────────────────── HELPERS ────────────────────────
-
-    @FunctionalInterface
-    interface ThrowingSupplier<T> { T get() throws Exception; }
-    @FunctionalInterface
-    interface ThrowingFunction<T, R> { R apply(T t) throws Exception; }
-    @FunctionalInterface
-    interface ThrowingConsumer<T> { void accept(T t) throws Exception; }
-
-    private void addRemoveHelper(TextField input, ListView<LookupItem> list,
-                                 ThrowingFunction<String, LookupItem> adder,
-                                 ThrowingSupplier<java.util.List<LookupItem>> reloader) {
-        String name = input.getText().trim();
-        if (name.isEmpty()) return;
-        try { adder.apply(name); input.clear(); list.setItems(FXCollections.observableArrayList(reloader.get())); }
-        catch (Exception e) { showError(e.getMessage()); }
-    }
-
-    private void removeHelper(ListView<LookupItem> list,
-                              ThrowingConsumer<Integer> deleter,
-                              ThrowingSupplier<java.util.List<LookupItem>> reloader) {
-        LookupItem sel = list.getSelectionModel().getSelectedItem();
-        if (sel == null) return;
-        try { deleter.accept(sel.getId()); list.setItems(FXCollections.observableArrayList(reloader.get())); }
-        catch (Exception e) { showError(e.getMessage()); }
-    }
-
     private void showError(String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
         a.setHeaderText(null);

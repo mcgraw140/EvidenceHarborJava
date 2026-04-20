@@ -7,17 +7,13 @@ import javafx.stage.Stage;
 public class MainApp extends Application {
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        // Initialize DB
-        DatabaseManager.getInstance();
-
-        Navigator nav = new Navigator(primaryStage);
-        nav.showCaseList();
+    public void start(Stage primaryStage) {
+        new SetupWizard(primaryStage).show();
     }
 
     @Override
     public void stop() {
-        DatabaseManager.getInstance().close();
+        DatabaseManager.shutdown();
     }
 
     public static void main(String[] args) {

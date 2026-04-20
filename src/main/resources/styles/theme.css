@@ -365,20 +365,37 @@
 /* ── CheckBox ────────────────────────────────────────────── */
 .check-box-default {
     -fx-text-fill: #e2e8f0;
+    -fx-font-size: 13px;
 }
 .check-box-default .box {
-    -fx-background-color: #243447;
-    -fx-border-color: #2d4059;
-    -fx-border-radius: 4;
-    -fx-background-radius: 4;
-    -fx-border-width: 1;
+    -fx-background-color: #1a2235;
+    -fx-border-color: #3d5270;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-border-width: 1.5;
+    -fx-min-width: 16px;
+    -fx-min-height: 16px;
+    -fx-max-width: 16px;
+    -fx-max-height: 16px;
+}
+.check-box-default:hover .box {
+    -fx-border-color: #60a5fa;
+    -fx-background-color: #1e2d40;
 }
 .check-box-default:selected .box {
     -fx-background-color: #3b82f6;
     -fx-border-color: #3b82f6;
 }
+.check-box-default:selected:hover .box {
+    -fx-background-color: #60a5fa;
+    -fx-border-color: #60a5fa;
+}
+.check-box-default:focused .box {
+    -fx-effect: dropshadow(gaussian, #3b82f680, 4, 0.5, 0, 0);
+}
 .check-box-default .mark {
     -fx-background-color: white;
+    -fx-padding: 2px;
 }
 
 /* ── Dialog ──────────────────────────────────────────────── */
@@ -621,20 +638,37 @@
 /* ── CheckBox (global) ───────────────────────────────────── */
 .check-box {
     -fx-text-fill: #e2e8f0;
+    -fx-font-size: 13px;
 }
 .check-box .box {
-    -fx-background-color: #243447;
-    -fx-border-color: #2d4059;
-    -fx-border-radius: 4;
-    -fx-background-radius: 4;
-    -fx-border-width: 1;
+    -fx-background-color: #1a2235;
+    -fx-border-color: #3d5270;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-border-width: 1.5;
+    -fx-min-width: 16px;
+    -fx-min-height: 16px;
+    -fx-max-width: 16px;
+    -fx-max-height: 16px;
+}
+.check-box:hover .box {
+    -fx-border-color: #60a5fa;
+    -fx-background-color: #1e2d40;
 }
 .check-box:selected .box {
     -fx-background-color: #3b82f6;
     -fx-border-color: #3b82f6;
 }
+.check-box:selected:hover .box {
+    -fx-background-color: #60a5fa;
+    -fx-border-color: #60a5fa;
+}
+.check-box:focused .box {
+    -fx-effect: dropshadow(gaussian, #3b82f680, 4, 0.5, 0, 0);
+}
 .check-box .mark {
     -fx-background-color: white;
+    -fx-padding: 2px;
 }
 
 /* ── ScrollPane (global) ─────────────────────────────────── */

@@ -7,15 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EvidenceRepository {
-    private final Connection conn;
 
-    public EvidenceRepository() {
-        this.conn = DatabaseManager.getInstance().getConnection();
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
     }
 
     public List<Evidence> findByCase(int caseId) throws SQLException {
         List<Evidence> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT * FROM evidence WHERE case_id=? ORDER BY collection_date DESC")) {
             ps.setInt(1, caseId);
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(map(rs)); }
@@ -25,7 +24,7 @@ public class EvidenceRepository {
 
     public List<Evidence> findAll() throws SQLException {
         List<Evidence> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT * FROM evidence ORDER BY id DESC")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
@@ -39,7 +38,7 @@ public class EvidenceRepository {
         if (typeCode.length() > 10) typeCode = typeCode.substring(0, 10);
         int year = LocalDate.now().getYear();
         String prefix = year + "-" + typeCode + "-";
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT barcode FROM evidence WHERE barcode LIKE ? ORDER BY barcode DESC LIMIT 1")) {
             ps.setString(1, prefix + "%");
             try (ResultSet rs = ps.executeQuery()) {
@@ -80,7 +79,7 @@ public class EvidenceRepository {
                 "?,?,?,?,?,?," +
                 "?,?,?,?,?,?,?,?,?," +
                 "?,?,?,?,?,?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             int i = 1;
             ps.setString(i++, e.getBarcode());
             ps.setInt(i++, e.getCaseId());
@@ -262,7 +261,7 @@ public class EvidenceRepository {
     }
 
     public Evidence findById(int id) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM evidence WHERE id=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT * FROM evidence WHERE id=?")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return map(rs);
@@ -272,7 +271,7 @@ public class EvidenceRepository {
     }
 
     public void updateStatus(int id, String status, String storageLocation) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE evidence SET status=?, storage_location=? WHERE id=?")) {
             ps.setString(1, status);
             ps.setString(2, storageLocation);
@@ -283,7 +282,7 @@ public class EvidenceRepository {
 
     public List<Evidence> findByStatus(String status) throws SQLException {
         List<Evidence> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT * FROM evidence WHERE status=? ORDER BY id DESC")) {
             ps.setString(1, status);
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(map(rs)); }

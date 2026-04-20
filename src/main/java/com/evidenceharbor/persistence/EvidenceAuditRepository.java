@@ -6,16 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EvidenceAuditRepository {
-    private final Connection conn;
 
-    public EvidenceAuditRepository() { this.conn = DatabaseManager.getInstance().getConnection(); }
+    private Connection conn() {
+        return DatabaseManager.getInstance().getConnection();
+    }
 
     public List<EvidenceAudit> findInProgress() throws SQLException { return findByStatus("In Progress"); }
     public List<EvidenceAudit> findCompleted()   throws SQLException { return findByStatus("Completed"); }
 
     public EvidenceAudit create(String auditType, String scope, String createdBy) throws SQLException {
         String sql = "INSERT INTO evidence_audits (audit_type, scope, created_by) VALUES (?,?,?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, auditType);
             ps.setString(2, scope);
             ps.setString(3, createdBy);
@@ -28,7 +29,7 @@ public class EvidenceAuditRepository {
     }
 
     public EvidenceAudit findById(int id) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM evidence_audits WHERE id=?")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT * FROM evidence_audits WHERE id=?")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return map(rs);
@@ -38,15 +39,15 @@ public class EvidenceAuditRepository {
     }
 
     public void complete(int id) throws SQLException {
-        String sql = "UPDATE evidence_audits SET status='Completed', completed_at=datetime('now') WHERE id=?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = "UPDATE evidence_audits SET status='Completed', completed_at=CURRENT_TIMESTAMP WHERE id=?";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.executeUpdate();
         }
     }
 
     public void updateItems(int id, String itemsJson) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE evidence_audits SET items_json=? WHERE id=?")) {
             ps.setString(1, itemsJson);
             ps.setInt(2, id);
@@ -56,7 +57,7 @@ public class EvidenceAuditRepository {
 
     private List<EvidenceAudit> findByStatus(String status) throws SQLException {
         List<EvidenceAudit> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn().prepareStatement(
                 "SELECT * FROM evidence_audits WHERE status=? ORDER BY created_at DESC")) {
             ps.setString(1, status);
             try (ResultSet rs = ps.executeQuery()) {
