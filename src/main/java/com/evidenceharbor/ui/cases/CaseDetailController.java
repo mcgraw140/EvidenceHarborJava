@@ -70,6 +70,7 @@ public class CaseDetailController implements Initializable {
     private final LookupRepository lookupRepo = new LookupRepository();
 
     @Override
+    @SuppressWarnings("unchecked")
     public void initialize(URL location, ResourceBundle resources) {
         colPersonName.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getPerson().getFullName()));
         colPersonRole.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getRole()));
@@ -437,8 +438,6 @@ public class CaseDetailController implements Initializable {
         });
 
         dialog.setResultConverter(bt -> {
-            if (bt != ButtonType.OK || savedHolder[0] == null) return null;
-            return new NewPersonSelection(savedHolder[0], roleBox.getValue());g.setResultConverter(bt -> {
             if (bt != ButtonType.OK || savedHolder[0] == null) return null;
             return new NewPersonSelection(savedHolder[0], roleBox.getValue());
         });

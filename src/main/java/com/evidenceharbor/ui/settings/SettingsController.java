@@ -302,7 +302,6 @@ public class SettingsController implements Initializable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void runTailscaleTask(java.util.concurrent.Callable<T> action, java.util.function.Consumer<T> onSuccess) {
         Task<T> task = new Task<>() {
             @Override

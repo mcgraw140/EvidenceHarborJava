@@ -267,20 +267,6 @@ public class AddEvidenceController implements Initializable {
         dynamicPanel.getChildren().add(g);
     }
 
-    private void buildVehiclePanel() {
-        GridPane g = grid();
-        vehicleMakeField         = textField("e.g. Ford, Honda");
-        vehicleModelField        = textField();
-        vehicleYearField         = textField("YYYY");
-        vehicleLicensePlateField = textField();
-        vehicleVinField          = textField();
-
-        addRow(g, 0, "Make",          vehicleMakeField,         "Model",         vehicleModelField);
-        addRow(g, 1, "Year",          vehicleYearField,         "License Plate", vehicleLicensePlateField);
-        addRow(g, 2, "VIN",           vehicleVinField,          null,            null);
-        dynamicPanel.getChildren().add(g);
-    }
-
     private void buildWeaponPanel() {
         GridPane g = grid();
         weaponTypeCombo  = comboField();
@@ -444,12 +430,6 @@ public class AddEvidenceController implements Initializable {
         cb.getItems().addAll(items);
         cb.getStyleClass().add("combo-box-default");
         cb.setMaxWidth(Double.MAX_VALUE);
-        return cb;
-    }
-
-    private CheckBox checkField(String text) {
-        CheckBox cb = new CheckBox(text);
-        cb.getStyleClass().add("check-box-default");
         return cb;
     }
 

@@ -70,6 +70,7 @@ public class DropboxController implements Initializable {
     private List<String> storageLocations = List.of();
     private List<String> intakeLocations = List.of();
     private final ObservableList<DropboxItem> sessionItems = FXCollections.observableArrayList();
+    @SuppressWarnings("unused")
     private boolean sessionActive = false;
 
     @Override

@@ -194,8 +194,4 @@ public class PermissionManagementController implements Initializable {
     @FXML private void onAuditTrail()    { Navigator.get().showAuditTrail(); }
     @FXML private void onReports()       { Navigator.get().showReports(); }
     @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
-    private void showError(Exception e) {
-        e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
-    }
 }
