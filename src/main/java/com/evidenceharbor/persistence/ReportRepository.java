@@ -3,6 +3,7 @@ package com.evidenceharbor.persistence;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ReportRepository {
@@ -163,7 +164,7 @@ public class ReportRepository {
     /** All evidence items matching any of the given statuses (for stat-card drill-down). */
     public List<String[]> evidenceDetailByStatuses(List<String> statuses) throws SQLException {
         if (statuses == null || statuses.isEmpty()) return new ArrayList<>();
-        String placeholders = String.join(",", java.util.Collections.nCopies(statuses.size(), "?"));
+        String placeholders = String.join(",", Collections.nCopies(statuses.size(), "?"));
         String sql = DETAIL_SELECT + "WHERE e.status IN (" + placeholders + ") ORDER BY e.id DESC";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             for (int i = 0; i < statuses.size(); i++) ps.setString(i + 1, statuses.get(i));
