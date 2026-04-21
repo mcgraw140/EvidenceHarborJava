@@ -8,9 +8,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.io.File;
@@ -58,6 +64,17 @@ public class ReportsController implements Initializable {
         loadSummaryStats();
         // Auto-select status report on load
         onSelectStatusReport();
+
+        // Drill-down: single-click a report row to see the individual evidence items
+        reportTable.setRowFactory(tv -> {
+            TableRow<ObservableList<String>> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getClickCount() == 1) {
+                    drillDownFromRow(row.getItem());
+                }
+            });
+            return row;
+        });
     }
 
     private void loadSummaryStats() {
@@ -169,6 +186,123 @@ public class ReportsController implements Initializable {
         reportCountLabel.setText(data.size() + " record" + (data.size() == 1 ? "" : "s"));
     }
 
+    // ── Stat card click handlers ───────────────────────────────────────────────
+
+    @FXML
+    private void onStatTotalEvidenceClicked(MouseEvent event) {
+        try {
+            List<String[]> data = reportRepo.evidenceDetailAll();
+            openDetailDialog("All Evidence (" + data.size() + " items)",
+                ReportRepository.DETAIL_HEADERS, data);
+        } catch (Exception e) {
+            showError(e);
+        }
+    }
+
+    @FXML
+    private void onStatInCustodyClicked(MouseEvent event) {
+        try {
+            List<String[]> data = reportRepo.evidenceDetailByStatuses(
+                List.of("In Custody", "In Storage", "Checked In", "In Dropbox", "Pending"));
+            openDetailDialog("Active / In Custody (" + data.size() + " items)",
+                ReportRepository.DETAIL_HEADERS, data);
+        } catch (Exception e) {
+            showError(e);
+        }
+    }
+
+    @FXML
+    private void onStatTotalCasesClicked(MouseEvent event) {
+        onSelectCasesReport();
+    }
+
+    @FXML
+    private void onStatDisposedClicked(MouseEvent event) {
+        try {
+            List<String[]> data = reportRepo.evidenceDetailByStatuses(
+                List.of("Destroyed", "Disbursed", "Returned to Owner"));
+            openDetailDialog("Disposed Evidence (" + data.size() + " items)",
+                ReportRepository.DETAIL_HEADERS, data);
+        } catch (Exception e) {
+            showError(e);
+        }
+    }
+
+    // ── Report table row drill-down ────────────────────────────────────────────
+
+    private void drillDownFromRow(ObservableList<String> row) {
+        if (selectedReport == null || row.isEmpty()) return;
+        try {
+            List<String[]> data;
+            String label = row.get(0);
+            String title;
+            switch (selectedReport) {
+                case "status" -> {
+                    data = reportRepo.evidenceDetailByStatus(label);
+                    title = "Evidence — Status: " + label;
+                }
+                case "type" -> {
+                    data = reportRepo.evidenceDetailByType(label);
+                    title = "Evidence — Type: " + label;
+                }
+                case "officer" -> {
+                    data = reportRepo.evidenceDetailByOfficer(label);
+                    title = "Evidence — Officer: " + label;
+                }
+                case "location" -> {
+                    data = reportRepo.evidenceDetailByLocation(label);
+                    title = "Evidence — Location: " + label;
+                }
+                default -> { return; }
+            }
+            openDetailDialog(title + " (" + data.size() + " items)",
+                ReportRepository.DETAIL_HEADERS, data);
+        } catch (Exception e) {
+            showError(e);
+        }
+    }
+
+    private void openDetailDialog(String title, String[] headers, List<String[]> data) {
+        TableView<ObservableList<String>> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        for (int i = 0; i < headers.length; i++) {
+            final int col = i;
+            TableColumn<ObservableList<String>, String> tc = new TableColumn<>(headers[i]);
+            tc.setCellValueFactory(cd ->
+                new SimpleStringProperty(col < cd.getValue().size() ? cd.getValue().get(col) : ""));
+            table.getColumns().add(tc);
+        }
+        ObservableList<ObservableList<String>> rows = FXCollections.observableArrayList();
+        for (String[] r : data) rows.add(FXCollections.observableArrayList(r));
+        table.setItems(rows);
+
+        Label countLabel = new Label(data.size() + " record" + (data.size() == 1 ? "" : "s"));
+        countLabel.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:12px;");
+        Button closeBtn = new Button("Close");
+        closeBtn.getStyleClass().add("btn-secondary");
+
+        VBox content = new VBox(10, countLabel, table);
+        content.setPadding(new Insets(16));
+        VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
+
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.initOwner(reportTable.getScene().getWindow());
+        dialog.setTitle(title);
+        closeBtn.setOnAction(e -> dialog.close());
+
+        HBox footer = new HBox(closeBtn);
+        footer.setPadding(new Insets(0, 16, 16, 16));
+
+        VBox root = new VBox(content, footer);
+        VBox.setVgrow(content, javafx.scene.layout.Priority.ALWAYS);
+
+        Scene scene = new Scene(root, 980, 560);
+        scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
+        dialog.setScene(scene);
+        dialog.show();
+    }
+
     @FXML
     private void onExportCsv() {
         if (currentHeaders.length == 0 || reportTable.getItems().isEmpty()) return;
@@ -198,4 +332,9 @@ public class ReportsController implements Initializable {
     @FXML private void onReports()       { }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+
+    private void showError(Exception e) {
+        e.printStackTrace();
+        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+    }
 }

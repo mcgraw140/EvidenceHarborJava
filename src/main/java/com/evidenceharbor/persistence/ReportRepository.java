@@ -89,6 +89,96 @@ public class ReportRepository {
         return rows;
     }
 
+    // ── Detail drill-down queries ──────────────────────────────────────────────
+
+    private static final String DETAIL_SELECT =
+        "SELECT e.barcode, COALESCE(c.case_number,'—') AS case_number, " +
+        "COALESCE(e.evidence_type,'Unknown') AS evidence_type, " +
+        "COALESCE(e.status,'Unknown') AS status, " +
+        "COALESCE(e.storage_location,'Unassigned') AS storage_location, " +
+        "COALESCE(o.name,'—') AS officer_name, " +
+        "COALESCE(e.collection_date,'') AS collection_date, " +
+        "COALESCE(e.description,'') AS description " +
+        "FROM evidence e " +
+        "LEFT JOIN cases c ON c.id = e.case_id " +
+        "LEFT JOIN officers o ON o.id = e.collected_by_officer_id ";
+
+    public static final String[] DETAIL_HEADERS =
+        {"Barcode", "Case #", "Type", "Status", "Location", "Officer", "Date", "Description"};
+
+    private List<String[]> mapDetailRows(ResultSet rs) throws SQLException {
+        List<String[]> rows = new ArrayList<>();
+        while (rs.next()) {
+            rows.add(new String[]{
+                rs.getString("barcode"),
+                rs.getString("case_number"),
+                rs.getString("evidence_type"),
+                rs.getString("status"),
+                rs.getString("storage_location"),
+                rs.getString("officer_name"),
+                rs.getString("collection_date"),
+                rs.getString("description")
+            });
+        }
+        return rows;
+    }
+
+    /** All evidence items with a given status. */
+    public List<String[]> evidenceDetailByStatus(String status) throws SQLException {
+        String sql = DETAIL_SELECT + "WHERE e.status = ? ORDER BY e.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) { return mapDetailRows(rs); }
+        }
+    }
+
+    /** All evidence items belonging to a given type. */
+    public List<String[]> evidenceDetailByType(String type) throws SQLException {
+        String sql = DETAIL_SELECT + "WHERE COALESCE(e.evidence_type,'Unknown') = ? ORDER BY e.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, type);
+            try (ResultSet rs = ps.executeQuery()) { return mapDetailRows(rs); }
+        }
+    }
+
+    /** All evidence items collected by a given officer (matched by name). */
+    public List<String[]> evidenceDetailByOfficer(String officerName) throws SQLException {
+        String sql = DETAIL_SELECT + "WHERE o.name = ? ORDER BY e.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, officerName);
+            try (ResultSet rs = ps.executeQuery()) { return mapDetailRows(rs); }
+        }
+    }
+
+    /** All evidence items in a given storage location. */
+    public List<String[]> evidenceDetailByLocation(String location) throws SQLException {
+        String sql = DETAIL_SELECT +
+            "WHERE COALESCE(e.storage_location,'Unassigned') = ? ORDER BY e.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, location);
+            try (ResultSet rs = ps.executeQuery()) { return mapDetailRows(rs); }
+        }
+    }
+
+    /** All evidence items matching any of the given statuses (for stat-card drill-down). */
+    public List<String[]> evidenceDetailByStatuses(List<String> statuses) throws SQLException {
+        if (statuses == null || statuses.isEmpty()) return new ArrayList<>();
+        String placeholders = String.join(",", java.util.Collections.nCopies(statuses.size(), "?"));
+        String sql = DETAIL_SELECT + "WHERE e.status IN (" + placeholders + ") ORDER BY e.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            for (int i = 0; i < statuses.size(); i++) ps.setString(i + 1, statuses.get(i));
+            try (ResultSet rs = ps.executeQuery()) { return mapDetailRows(rs); }
+        }
+    }
+
+    /** All evidence items regardless of status. */
+    public List<String[]> evidenceDetailAll() throws SQLException {
+        String sql = DETAIL_SELECT + "ORDER BY e.id DESC";
+        try (Statement s = conn().createStatement(); ResultSet rs = s.executeQuery(sql)) {
+            return mapDetailRows(rs);
+        }
+    }
+
     /**
      * Returns [totalEvidence, activeEvidence, totalCases, disposedEvidence]
      */

@@ -37,25 +37,29 @@
 
             <!-- Summary stat cards -->
             <HBox spacing="12">
-                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                      style="-fx-cursor: hand;" onMouseClicked="#onStatTotalEvidenceClicked">
                     <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
                     <Label fx:id="statTotalEvidence" text="—"
                            style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#3b82f6;"/>
                     <Label text="Total Evidence" styleClass="subtitle"/>
                 </VBox>
-                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                      style="-fx-cursor: hand;" onMouseClicked="#onStatInCustodyClicked">
                     <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
                     <Label fx:id="statInCustody" text="—"
                            style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#22c55e;"/>
                     <Label text="Active / In Custody" styleClass="subtitle"/>
                 </VBox>
-                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                      style="-fx-cursor: hand;" onMouseClicked="#onStatTotalCasesClicked">
                     <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
                     <Label fx:id="statTotalCases" text="—"
                            style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#a78bfa;"/>
                     <Label text="Total Cases" styleClass="subtitle"/>
                 </VBox>
-                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                      style="-fx-cursor: hand;" onMouseClicked="#onStatDisposedClicked">
                     <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
                     <Label fx:id="statDisposed" text="—"
                            style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#f59e0b;"/>
