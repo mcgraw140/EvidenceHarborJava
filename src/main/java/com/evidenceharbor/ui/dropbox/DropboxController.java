@@ -1,6 +1,5 @@
 package com.evidenceharbor.ui.dropbox;
 
-import com.evidenceharbor.app.ComboBoxHelper;
 import com.evidenceharbor.app.CurrentOfficerResolver;
 import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
@@ -26,7 +25,6 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DropboxController implements Initializable {
 
@@ -70,6 +68,7 @@ public class DropboxController implements Initializable {
     private final Map<Integer, String> caseNumberById = new HashMap<>();
     private final Map<Integer, String> officerNameById = new HashMap<>();
     private List<String> storageLocations = List.of();
+    private List<String> intakeLocations = List.of();
     private final ObservableList<DropboxItem> sessionItems = FXCollections.observableArrayList();
     private boolean sessionActive = false;
 
@@ -81,7 +80,12 @@ public class DropboxController implements Initializable {
             for (var c : caseRepo.findAll()) caseNumberById.put(c.getId(), c.getCaseNumber());
             List<Officer> officers = officerRepo.findAll();
             for (var o : officers) officerNameById.put(o.getId(), o.getName());
-            ComboBoxHelper.makeSearchable(officerNameCombo, officers, Officer::getName);
+            officerNameCombo.getItems().setAll(officers);
+            officerNameCombo.setConverter(new javafx.util.StringConverter<Officer>() {
+                @Override public String toString(Officer o) { return o == null ? "" : o.getName(); }
+                @Override public Officer fromString(String s) { return null; }
+            });
+            officerNameCombo.setEditable(false);
 
             Officer defaultOfficer = CurrentOfficerResolver.resolveDefaultOfficer(officerRepo);
             if (defaultOfficer != null) {
@@ -93,6 +97,7 @@ public class DropboxController implements Initializable {
             }
 
             storageLocations = lookupRepo.getStorageLocations();
+            intakeLocations = lookupRepo.getIntakeLocations();
         } catch (Exception e) { throw new RuntimeException(e); }
         showIdleState();
         refreshCount();
@@ -118,9 +123,9 @@ public class DropboxController implements Initializable {
                 btnCheckIn.getStyleClass().add("btn-primary");
                 btnKeepHere.getStyleClass().add("btn-secondary");
                 btnMissing.getStyleClass().add("btn-secondary");
-                btnCheckIn.setStyle("-fx-font-size:11; -fx-padding: 2 8 2 8;");
-                btnKeepHere.setStyle("-fx-font-size:11; -fx-padding: 2 8 2 8;");
-                btnMissing.setStyle("-fx-font-size:11; -fx-padding: 2 8 2 8;");
+                btnCheckIn.setStyle("-fx-font-size:14; -fx-padding: 4 12 4 12;");
+                btnKeepHere.setStyle("-fx-font-size:14; -fx-padding: 4 12 4 12;");
+                btnMissing.setStyle("-fx-font-size:14; -fx-padding: 4 12 4 12;");
                 btnCheckIn.setOnAction(e -> onCheckInItem(getTableView().getItems().get(getIndex())));
                 btnKeepHere.setOnAction(e -> onKeepInDropbox(getTableView().getItems().get(getIndex())));
                 btnMissing.setOnAction(e -> onMarkMissing(getTableView().getItems().get(getIndex())));
@@ -244,14 +249,14 @@ public class DropboxController implements Initializable {
         dialog.setContentText("Storage Location:");
         dialog.showAndWait().ifPresent(loc -> {
             try {
-                evidenceRepo.updateStatus(item.evidence.getId(), "In Custody", loc);
+                evidenceRepo.updateStatus(item.evidence.getId(), "In Storage", loc);
 
                 ChainOfCustody coc = new ChainOfCustody();
                 coc.setEvidenceId(item.evidence.getId());
                 coc.setAction("Check In");
                 coc.setPerformedBy(getSelectedOfficerName());
                 coc.setPerformedByName(getSelectedOfficerName());
-                coc.setFromLocation("Dropbox");
+                coc.setFromLocation(nullToEmpty(item.evidence.getStorageLocation()));
                 coc.setToLocation(loc);
                 coc.setNotes("Checked in via Dropbox session");
                 cocRepo.addEntry(coc);
@@ -414,13 +419,7 @@ public class DropboxController implements Initializable {
     }
 
     private List<String> getApprovedDropboxLocations() {
-        return storageLocations.stream().filter(this::looksLikeDropboxLocation).collect(Collectors.toList());
-    }
-
-    private boolean looksLikeDropboxLocation(String location) {
-        if (location == null) return false;
-        String v = location.toLowerCase();
-        return v.contains("dropbox") || v.contains("drop box") || v.contains("locker");
+        return intakeLocations;
     }
 
     private boolean isEvidenceTechOrAdmin(String officerName) {

@@ -391,7 +391,7 @@ public class CaseDetailController implements Initializable {
         contactField.setPromptText("Contact Info (Phone/Email) - Optional");
 
         ComboBox<String> roleBox = new ComboBox<>();
-        makeSearchableComboBox(roleBox, roles, Function.identity());
+        roleBox.getItems().setAll(roles);
         roleBox.setPromptText("Select...");
 
         grid.add(new Label("Full Name"), 0, 0); grid.add(fullNameField, 1, 0);
@@ -409,34 +409,38 @@ public class CaseDetailController implements Initializable {
         dialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/styles/theme.css").toExternalForm());
 
+        // Mutable holder so we can save inside onAction (keeps dialog open on error)
+        Person[] savedHolder = new Person[1];
         Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         ok.setOnAction(e -> {
             String fullName = fullNameField.getText().trim();
-            String role = roleBox.getEditor().getText().trim();
+            String role = roleBox.getValue();
             if (fullName.isEmpty()) {
                 new Alert(Alert.AlertType.WARNING, "Full name is required.").showAndWait();
                 e.consume();
                 return;
             }
-            if (role.isEmpty()) {
+            if (role == null || role.isBlank()) {
                 new Alert(Alert.AlertType.WARNING, "Role is required.").showAndWait();
                 e.consume();
+                return;
+            }
+            try {
+                Person p = new Person();
+                p.setFullName(fullName);
+                personRepo.save(p);
+                savedHolder[0] = p;
+            } catch (Exception ex) {
+                showError(ex);
+                e.consume(); // keep dialog open on DB error
             }
         });
 
         dialog.setResultConverter(bt -> {
-            if (bt != ButtonType.OK) {
-                return null;
-            }
-            try {
-                Person p = new Person();
-                p.setFullName(fullNameField.getText().trim());
-                personRepo.save(p);
-                return new NewPersonSelection(p, roleBox.getEditor().getText().trim());
-            } catch (Exception ex) {
-                showError(ex);
-                return null;
-            }
+            if (bt != ButtonType.OK || savedHolder[0] == null) return null;
+            return new NewPersonSelection(savedHolder[0], roleBox.getValue());g.setResultConverter(bt -> {
+            if (bt != ButtonType.OK || savedHolder[0] == null) return null;
+            return new NewPersonSelection(savedHolder[0], roleBox.getValue());
         });
 
         return dialog.showAndWait().orElse(null);

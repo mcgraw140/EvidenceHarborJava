@@ -70,7 +70,7 @@
                         <TableColumn fx:id="dbColCase" text="CASE #" prefWidth="130"/>
                         <TableColumn fx:id="dbColDescription" text="DESCRIPTION" prefWidth="230"/>
                         <TableColumn fx:id="dbColType" text="TYPE" prefWidth="120"/>
-                        <TableColumn fx:id="dbColAction" text="ACTION" prefWidth="180"/>
+                        <TableColumn fx:id="dbColAction" text="ACTION" prefWidth="300"/>
                     </columns>
                 </TableView>
             </VBox>
