@@ -109,19 +109,28 @@
                 </TableView>
 
                 <!-- Deposited Evidence section -->
-                <Label text="Deposited Evidence Items" styleClass="section-title" style="-fx-padding:16 0 8 0;"/>
-                <TableView fx:id="depositedEvidenceTable" styleClass="data-table" VBox.vgrow="ALWAYS" prefHeight="200">
+                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding:16 0 4 0;">
+                    <Label text="Deposited Evidence Items" styleClass="section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="evidenceSearchField" promptText="Filter by any field (barcode, case, person, SSN, amount...)" prefWidth="420"/>
+                </HBox>
+                <TableView fx:id="depositedEvidenceTable" styleClass="data-table" VBox.vgrow="ALWAYS" prefHeight="220">
                     <columns>
-                        <TableColumn fx:id="colEvBarcode"   text="Barcode"         prefWidth="170"/>
-                        <TableColumn fx:id="colEvType"      text="Type"            prefWidth="120"/>
-                        <TableColumn fx:id="colEvCase"      text="Case #"          prefWidth="130"/>
-                        <TableColumn fx:id="colEvDate"      text="Collection Date" prefWidth="140"/>
-                        <TableColumn fx:id="colEvBy"        text="Collected By"    prefWidth="140"/>
-                        <TableColumn fx:id="colEvLocation"  text="Storage Location" prefWidth="160"/>
-                        <TableColumn fx:id="colEvDesc"      text="Description"     prefWidth="240"/>
+                        <TableColumn fx:id="colEvBarcode"   text="Barcode"          prefWidth="150"/>
+                        <TableColumn fx:id="colEvType"      text="Type"             prefWidth="100"/>
+                        <TableColumn fx:id="colEvCase"      text="Case #"           prefWidth="110"/>
+                        <TableColumn fx:id="colEvDate"      text="Collection Date"  prefWidth="120"/>
+                        <TableColumn fx:id="colEvBy"        text="Collected By"     prefWidth="130"/>
+                        <TableColumn fx:id="colEvLocation"  text="Storage Location" prefWidth="140"/>
+                        <TableColumn fx:id="colEvPerson"    text="Collected From"   prefWidth="140"/>
+                        <TableColumn fx:id="colEvSsn"       text="SSN"              prefWidth="110"/>
+                        <TableColumn fx:id="colEvAmount"    text="Deposit Amount"   prefWidth="110"/>
+                        <TableColumn fx:id="colEvDesc"      text="Description"      prefWidth="220"/>
                     </columns>
                     <placeholder><Label text="No deposited evidence linked to this account"/></placeholder>
                 </TableView>
+                <Label text="Double-click an item to view its evidence sheet and add chain-of-custody entries."
+                       style="-fx-text-fill:#94a3b8; -fx-font-size:11px; -fx-padding:2 0 0 0;"/>
 
             </VBox>
         </HBox>

@@ -87,6 +87,49 @@ public class BankAccountRepository {
         return result;
     }
 
+    /** Returns rows [id, barcode, type, case#, collectionDate, collectedBy, storageLocation, description, personName, personSsn, depositAmount] for evidence deposited into this account. */
+    public List<String[]> getDepositedEvidenceByAccount(int accountId) {
+        List<String[]> result = new ArrayList<>();
+        String sql =
+            "SELECT e.id, e.barcode, e.evidence_type, c.case_number, e.collection_date, " +
+            "       o.name, e.storage_location, e.description, " +
+            "       p.full_name, p.ssn, " +
+            "       (SELECT SUM(t.amount) FROM bank_account_transactions t " +
+            "        WHERE t.account_id = e.bank_account_id AND t.action = 'Deposit' " +
+            "          AND t.voided = 0 AND t.source_ref = e.barcode) AS deposit_amount " +
+            "FROM evidence e " +
+            "LEFT JOIN cases c ON c.id = e.case_id " +
+            "LEFT JOIN officers o ON o.id = e.collected_by_officer_id " +
+            "LEFT JOIN persons p ON p.id = e.collected_from_person_id " +
+            "WHERE e.bank_account_id = ? AND e.status = 'Deposited' " +
+            "ORDER BY e.collection_date DESC, e.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    double amt = rs.getDouble(11);
+                    String amtStr = rs.wasNull() ? "" : String.format("$%.2f", amt);
+                    result.add(new String[] {
+                        String.valueOf(rs.getInt(1)),
+                        nvl(rs.getString(2)),
+                        nvl(rs.getString(3)),
+                        nvl(rs.getString(4)),
+                        nvl(rs.getString(5)),
+                        nvl(rs.getString(6)),
+                        nvl(rs.getString(7)),
+                        nvl(rs.getString(8)),
+                        nvl(rs.getString(9)),
+                        nvl(rs.getString(10)),
+                        amtStr
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load deposited evidence: " + e.getMessage(), e);
+        }
+        return result;
+    }
+
     public void addTransaction(int accountId, String action, double amount, String slip, String date, String performedBy, String notes) {
         addTransaction(accountId, action, amount, slip, date, performedBy, notes, null);
     }
@@ -154,39 +197,6 @@ public class BankAccountRepository {
             ps.setInt(3, transactionId);
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException("Failed to void transaction: " + e.getMessage(), e); }
-    }
-
-    // ── Deposited Evidence ────────────────────────────────────────────────────
-
-    /** Returns rows: [barcode, evidence_type, storage_location, collection_date, collected_by, case_number, description] */
-    public List<String[]> getDepositedEvidenceByAccount(int accountId) {
-        String sql = """
-            SELECT e.barcode, e.evidence_type, e.storage_location,
-                   e.collection_date, e.collected_by,
-                   c.case_number, e.description
-            FROM evidence e
-            LEFT JOIN cases c ON e.case_id = c.id
-            WHERE e.bank_account_id = ?
-            ORDER BY e.collection_date DESC
-            """;
-        List<String[]> rows = new ArrayList<>();
-        try (PreparedStatement ps = conn().prepareStatement(sql)) {
-            ps.setInt(1, accountId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    rows.add(new String[]{
-                        nvl(rs.getString("barcode")),
-                        nvl(rs.getString("evidence_type")),
-                        nvl(rs.getString("storage_location")),
-                        nvl(rs.getString("collection_date")),
-                        nvl(rs.getString("collected_by")),
-                        nvl(rs.getString("case_number")),
-                        nvl(rs.getString("description"))
-                    });
-                }
-            }
-        } catch (SQLException e) { throw new RuntimeException("Failed to load deposited evidence: " + e.getMessage(), e); }
-        return rows;
     }
 
     private static String nvl(String s) { return s == null ? "" : s; }

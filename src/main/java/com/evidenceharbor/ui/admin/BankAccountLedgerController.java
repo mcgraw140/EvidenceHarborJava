@@ -5,16 +5,26 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.app.SessionManager;
 import com.evidenceharbor.domain.BankAccount;
 import com.evidenceharbor.domain.BankTransaction;
+import com.evidenceharbor.domain.Evidence;
 import com.evidenceharbor.persistence.BankAccountRepository;
+import com.evidenceharbor.persistence.EvidenceRepository;
+import com.evidenceharbor.ui.inventory.EvidenceDetailController;
 import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 
 import java.net.URL;
@@ -53,9 +63,16 @@ public class BankAccountLedgerController implements Initializable {
     @FXML private TableColumn<String[], String> colEvDate;
     @FXML private TableColumn<String[], String> colEvBy;
     @FXML private TableColumn<String[], String> colEvLocation;
+    @FXML private TableColumn<String[], String> colEvPerson;
+    @FXML private TableColumn<String[], String> colEvSsn;
+    @FXML private TableColumn<String[], String> colEvAmount;
     @FXML private TableColumn<String[], String> colEvDesc;
+    @FXML private TextField evidenceSearchField;
 
     private final BankAccountRepository repo = new BankAccountRepository();
+    private final EvidenceRepository evidenceRepo = new EvidenceRepository();
+    private final ObservableList<String[]> depositedEvidenceAll = FXCollections.observableArrayList();
+    private FilteredList<String[]> depositedEvidenceFiltered;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -128,13 +145,31 @@ public class BankAccountLedgerController implements Initializable {
         });
 
         // Deposited evidence table columns
-        colEvBarcode.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[0]));
-        colEvType.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[1]));
-        colEvLocation.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[2]));
-        colEvDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[3]));
-        colEvBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[4]));
-        colEvCase.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[5]));
-        colEvDesc.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[6]));
+        // Row array: [id, barcode, type, case#, date, by, location, description, person, ssn, amount]
+        colEvBarcode.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[1]));
+        colEvType.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[2]));
+        colEvCase.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[3]));
+        colEvDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[4]));
+        colEvBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[5]));
+        colEvLocation.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[6]));
+        colEvDesc.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[7]));
+        colEvPerson.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[8]));
+        colEvSsn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[9]));
+        colEvAmount.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[10]));
+
+        // Filter + double-click to open Evidence Detail
+        depositedEvidenceFiltered = new FilteredList<>(depositedEvidenceAll, r -> true);
+        depositedEvidenceTable.setItems(depositedEvidenceFiltered);
+        if (evidenceSearchField != null) {
+            evidenceSearchField.textProperty().addListener((obs, oldV, newV) -> applyDepositedEvidenceFilter(newV));
+        }
+        depositedEvidenceTable.setRowFactory(tv -> {
+            TableRow<String[]> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty()) openEvidenceDetail(row.getItem());
+            });
+            return row;
+        });
 
         loadAccounts();
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
@@ -173,7 +208,7 @@ public class BankAccountLedgerController implements Initializable {
         lblAccountNumber.setText("");
         btnEditAccount.setDisable(true);
         txTable.getItems().clear();
-        depositedEvidenceTable.getItems().clear();
+        depositedEvidenceAll.clear();
     }
 
     private void loadTransactions(BankAccount account) {
@@ -184,11 +219,61 @@ public class BankAccountLedgerController implements Initializable {
             showError(e.getMessage());
         }
         try {
-            ObservableList<String[]> evRows = FXCollections.observableArrayList(
-                    repo.getDepositedEvidenceByAccount(account.getId()));
-            depositedEvidenceTable.setItems(evRows);
+            depositedEvidenceAll.setAll(repo.getDepositedEvidenceByAccount(account.getId()));
+            if (evidenceSearchField != null) applyDepositedEvidenceFilter(evidenceSearchField.getText());
         } catch (RuntimeException e) {
             showError(e.getMessage());
+        }
+    }
+
+    private void applyDepositedEvidenceFilter(String query) {
+        if (depositedEvidenceFiltered == null) return;
+        final String q = query == null ? "" : query.trim().toLowerCase();
+        if (q.isEmpty()) {
+            depositedEvidenceFiltered.setPredicate(r -> true);
+            return;
+        }
+        depositedEvidenceFiltered.setPredicate(row -> {
+            if (row == null) return false;
+            for (int i = 1; i < row.length; i++) { // skip id at index 0
+                String cell = row[i];
+                if (cell != null && cell.toLowerCase().contains(q)) return true;
+            }
+            return false;
+        });
+    }
+
+    private void openEvidenceDetail(String[] row) {
+        if (row == null || row.length == 0) return;
+        int evidenceId;
+        try { evidenceId = Integer.parseInt(row[0]); } catch (NumberFormatException e) { return; }
+        try {
+            Evidence ev = evidenceRepo.findById(evidenceId);
+            if (ev == null) {
+                Dialogs.warn("Not found", "Evidence record could not be loaded.");
+                return;
+            }
+            String caseNumber = row.length > 3 ? row[3] : "";
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/EvidenceDetail.fxml"));
+            Parent root = loader.load();
+            EvidenceDetailController ctrl = loader.getController();
+            ctrl.setEvidence(ev, caseNumber);
+
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.WINDOW_MODAL);
+            Window owner = depositedEvidenceTable.getScene().getWindow();
+            dialog.initOwner(owner);
+            dialog.setTitle("Evidence Detail \u2014 " + ev.getBarcode());
+            Scene scene = new Scene(root, 860, 640);
+            scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
+            dialog.setScene(scene);
+            dialog.showAndWait();
+            // Refresh after potential status changes (removal unlinks account)
+            BankAccount sel = accountList.getSelectionModel().getSelectedItem();
+            if (sel != null) { loadAccounts(); }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Dialogs.error(ex);
         }
     }
 

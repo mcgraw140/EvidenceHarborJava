@@ -110,7 +110,8 @@ public class ReportsController implements Initializable {
     }
 
     private void highlightSelected(String type) {
-        for (Button b : new Button[]{btnAllReport, btnStatusReport, btnTypeReport, btnOfficerReport, btnLocationReport, btnCasesReport}) {
+        for (Button b : new Button[]{btnAllReport, btnStatusReport, btnTypeReport, btnOfficerReport, btnLocationReport, btnCasesReport, btnCaseReport}) {
+            if (b == null) continue;
             b.getStyleClass().removeAll("btn-primary");
             if (!b.getStyleClass().contains("btn-secondary")) b.getStyleClass().add("btn-secondary");
         }
