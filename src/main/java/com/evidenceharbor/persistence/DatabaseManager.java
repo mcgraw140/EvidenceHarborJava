@@ -22,7 +22,7 @@ public class DatabaseManager {
 
     private static final String DB_DIR = System.getProperty("user.home") + "/EvidenceHarbor";
     private static final String CONFIG_FILE = DB_DIR + "/db.properties";
-    private static final String SEED_VERSION = "3";
+    private static final String SEED_VERSION = "4";
     private static DatabaseManager instance;
 
     private final Connection connection;
@@ -196,7 +196,16 @@ public class DatabaseManager {
             "ALTER TABLE bank_account_transactions ADD COLUMN voided_reason TEXT",
             "ALTER TABLE bank_account_transactions ADD COLUMN voided_by VARCHAR(255)",
             "ALTER TABLE bank_account_transactions ADD COLUMN voided_at DATETIME",
-            "ALTER TABLE bank_account_transactions ADD COLUMN source_ref VARCHAR(255)"
+            "ALTER TABLE bank_account_transactions ADD COLUMN source_ref VARCHAR(255)",
+            "ALTER TABLE persons ADD COLUMN dob VARCHAR(20)",
+            "ALTER TABLE persons ADD COLUMN ssn VARCHAR(20)",
+            "ALTER TABLE persons ADD COLUMN street VARCHAR(255)",
+            "ALTER TABLE persons ADD COLUMN city VARCHAR(100)",
+            "ALTER TABLE persons ADD COLUMN state VARCHAR(10)",
+            "ALTER TABLE persons ADD COLUMN zip VARCHAR(20)",
+            "ALTER TABLE persons ADD COLUMN contact VARCHAR(255)",
+            "ALTER TABLE evidence ADD COLUMN bank_account_id INT",
+            "UPDATE evidence SET bank_account_id = (SELECT id FROM bank_accounts ORDER BY id LIMIT 1) WHERE status = 'Deposited' AND bank_account_id IS NULL"
         };
         for (String alter : alters) {
             try (Statement s = connection.createStatement()) {

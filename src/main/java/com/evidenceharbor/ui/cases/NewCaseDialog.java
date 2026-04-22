@@ -6,6 +6,7 @@ import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.Officer;
 import com.evidenceharbor.persistence.CaseRepository;
 import com.evidenceharbor.persistence.OfficerRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -60,16 +61,11 @@ public class NewCaseDialog {
             officerBox.getParent().requestFocus();
             String num = caseNumberField.getText().trim();
             if (num.isEmpty() || datePicker.getValue() == null || officerBox.getValue() == null) {
-                Alert warn = new Alert(Alert.AlertType.WARNING);
-                warn.setTitle("Missing Information");
-                warn.setHeaderText("All fields are required");
                 StringBuilder sb = new StringBuilder();
-                if (num.isEmpty())                   sb.append("• Case Number\n");
-                if (datePicker.getValue() == null)   sb.append("• Incident Date\n");
-                if (officerBox.getValue() == null)   sb.append("• Case Officer\n");
-                warn.setContentText("Please fill in:\n" + sb);
-                warn.initOwner(dialog.getDialogPane().getScene().getWindow());
-                warn.showAndWait();
+                if (num.isEmpty())                   sb.append("\u2022 Case Number\n");
+                if (datePicker.getValue() == null)   sb.append("\u2022 Incident Date\n");
+                if (officerBox.getValue() == null)   sb.append("\u2022 Case Officer\n");
+                Dialogs.warn("All fields are required", "Please fill in:\n" + sb);
                 e.consume();
                 return;
             }
@@ -81,7 +77,7 @@ public class NewCaseDialog {
                 caseRepo.save(c);
                 onSaved.run();
             } catch (Exception ex) {
-                new Alert(Alert.AlertType.ERROR, "Could not save: " + ex.getMessage()).showAndWait();
+                Dialogs.error("Could not save", ex.getMessage());
                 e.consume();
             }
         });

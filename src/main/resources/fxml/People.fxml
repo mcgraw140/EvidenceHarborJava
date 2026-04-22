@@ -26,6 +26,7 @@
                 <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
                 <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
                 <Button fx:id="navReportsBtn" text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="People" styleClass="nav-tab active" onAction="#onPeople"/>
             </HBox>
         </VBox>
     </top>
@@ -43,21 +44,25 @@
                 <Label text="People Directory" styleClass="page-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="searchField" promptText="Search people..." styleClass="search-field" prefWidth="260"/>
+                <Button fx:id="btnEdit"  text="Edit Name"   styleClass="btn-secondary" onAction="#onEditPerson"  disable="true"/>
+                <Button fx:id="btnMerge" text="Combine..."  styleClass="btn-secondary" onAction="#onMergePeople" disable="true"/>
             </HBox>
 
-            <Label text="Select a person to view their details, associated cases, and evidence." styleClass="subtitle"/>
+            <Label text="Double-click a person to view their cases. Admins and Evidence Techs can rename or combine duplicates."
+                   styleClass="subtitle" wrapText="true"/>
 
             <VBox styleClass="card" spacing="0">
                 <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
                 <TableView fx:id="peopleTable" styleClass="data-table" VBox.vgrow="ALWAYS">
                     <columns>
-                        <TableColumn fx:id="colName" text="NAME" prefWidth="220"/>
-                        <TableColumn fx:id="colType" text="TYPE" prefWidth="110"/>
-                        <TableColumn fx:id="colDob" text="DATE OF BIRTH" prefWidth="150"/>
-                        <TableColumn fx:id="colSsn" text="SSN" prefWidth="140"/>
-                        <TableColumn fx:id="colAddress" text="ADDRESS" prefWidth="300"/>
-                        <TableColumn fx:id="colContact" text="CONTACT INFO" prefWidth="180"/>
+                        <TableColumn fx:id="colName"    text="NAME"         prefWidth="200"/>
+                        <TableColumn fx:id="colDob"     text="DOB"          prefWidth="100"/>
+                        <TableColumn fx:id="colSsn"     text="SSN"          prefWidth="110"/>
+                        <TableColumn fx:id="colAddress" text="ADDRESS"      prefWidth="260"/>
+                        <TableColumn fx:id="colContact" text="CONTACT"      prefWidth="140"/>
+                        <TableColumn fx:id="colCases"   text="# CASES"      prefWidth="80"/>
                     </columns>
+                    <placeholder><Label text="No people recorded." styleClass="placeholder-label"/></placeholder>
                 </TableView>
             </VBox>
         </VBox>

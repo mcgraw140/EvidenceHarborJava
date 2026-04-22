@@ -156,6 +156,41 @@ public class BankAccountRepository {
         } catch (SQLException e) { throw new RuntimeException("Failed to void transaction: " + e.getMessage(), e); }
     }
 
+    // ── Deposited Evidence ────────────────────────────────────────────────────
+
+    /** Returns rows: [barcode, evidence_type, storage_location, collection_date, collected_by, case_number, description] */
+    public List<String[]> getDepositedEvidenceByAccount(int accountId) {
+        String sql = """
+            SELECT e.barcode, e.evidence_type, e.storage_location,
+                   e.collection_date, e.collected_by,
+                   c.case_number, e.description
+            FROM evidence e
+            LEFT JOIN cases c ON e.case_id = c.id
+            WHERE e.bank_account_id = ?
+            ORDER BY e.collection_date DESC
+            """;
+        List<String[]> rows = new ArrayList<>();
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rows.add(new String[]{
+                        nvl(rs.getString("barcode")),
+                        nvl(rs.getString("evidence_type")),
+                        nvl(rs.getString("storage_location")),
+                        nvl(rs.getString("collection_date")),
+                        nvl(rs.getString("collected_by")),
+                        nvl(rs.getString("case_number")),
+                        nvl(rs.getString("description"))
+                    });
+                }
+            }
+        } catch (SQLException e) { throw new RuntimeException("Failed to load deposited evidence: " + e.getMessage(), e); }
+        return rows;
+    }
+
+    private static String nvl(String s) { return s == null ? "" : s; }
+
     // ── Mappers ───────────────────────────────────────────────────────────────
 
     private BankAccount mapAccount(ResultSet rs) throws SQLException {

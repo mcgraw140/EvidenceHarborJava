@@ -132,13 +132,123 @@ public class SetupWizard {
 
             new Thread(autoConnect, "wizard-auto").start();
         } else {
-            showDbStep();
+            showSetupTypeStep();
         }
     }
 
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  STEP 1 — DATABASE
     // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+    private void showSetupTypeStep() {
+        stepLabel.setText("Step 1 of 3  \u00b7  Setup Type");
+        clearError();
+
+        Label heading = new Label("How is Evidence Harbor deployed?");
+        heading.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#dbeafe;");
+
+        Label sub = new Label("Choose your deployment type. You can always reconnect to a different database later.");
+        sub.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:13px; -fx-wrap-text:true;");
+        sub.setMaxWidth(480);
+
+        VBox singleCard = new VBox(8);
+        singleCard.getStyleClass().add("card");
+        singleCard.setPadding(new Insets(16));
+        singleCard.setStyle("-fx-cursor: hand;");
+        Label singleTitle = new Label("\uD83D\uDDA5  Single-Computer Setup");
+        singleTitle.setStyle("-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#3b82f6;");
+        Label singleDesc = new Label(
+            "MariaDB is installed on this same PC. The database host will be 127.0.0.1 (localhost). " +
+            "Ideal for a single workstation or testing.");
+        singleDesc.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:12px; -fx-wrap-text:true;");
+        singleDesc.setMaxWidth(440);
+        singleCard.getChildren().addAll(singleTitle, singleDesc);
+
+        VBox tailscaleCard = new VBox(8);
+        tailscaleCard.getStyleClass().add("card");
+        tailscaleCard.setPadding(new Insets(16));
+        tailscaleCard.setStyle("-fx-cursor: hand;");
+        Label tsTitle = new Label("\uD83C\uDF10  Multi-PC / Tailscale Network");
+        tsTitle.setStyle("-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:#a78bfa;");
+        Label tsDesc = new Label(
+            "MariaDB is on a separate server or another PC. Other workstations connect over Tailscale. " +
+            "You will enter the Tailscale IP of the server machine as the database host (e.g. 100.x.y.z).");
+        tsDesc.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:12px; -fx-wrap-text:true;");
+        tsDesc.setMaxWidth(440);
+        Label tsHint = new Label(
+            "\u2139  On the server PC: install Tailscale, start it, and note the 100.x IP shown in the Tailscale tray icon. " +
+            "On each workstation: install Tailscale, join the same network, and enter the server's Tailscale IP as the host.");
+        tsHint.setStyle("-fx-text-fill:#38bdf8; -fx-font-size:11px; -fx-wrap-text:true;");
+        tsHint.setMaxWidth(440);
+        tailscaleCard.getChildren().addAll(tsTitle, tsDesc, tsHint);
+
+        VBox options = new VBox(12, singleCard, tailscaleCard);
+        contentBox.getChildren().setAll(heading, sub, options);
+        setStatus("Select your setup type to continue.");
+
+        singleCard.setOnMouseClicked(e -> {
+            dbHostField.setText("127.0.0.1");
+            dbPortField.setText("3306");
+            dbNameField.setText("evidence_harbor");
+            dbUserField.setText("root");
+            showDbStep();
+        });
+        tailscaleCard.setOnMouseClicked(e -> showTailscaleStep());
+    }
+
+    private void showTailscaleStep() {
+        stepLabel.setText("Step 2 of 3  \u00b7  Tailscale Connection");
+        clearError();
+
+        Label heading = new Label("Multi-PC / Tailscale Setup");
+        heading.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#dbeafe;");
+
+        Label instructions = new Label(
+            "1. On the server PC, install Tailscale (tailscale.com/download) and sign in.\n" +
+            "2. In the Tailscale tray icon, note the 100.x.y.z IP address of the server.\n" +
+            "3. Ensure MariaDB on the server allows remote connections (bind-address = 0.0.0.0 in my.cnf).\n" +
+            "4. On this workstation, install Tailscale and join the same Tailscale account/network.\n" +
+            "5. Enter the server's Tailscale IP as the Server Host below.");
+        instructions.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:12.5px; -fx-wrap-text:true;");
+        instructions.setMaxWidth(480);
+
+        dbHostField.setText("100.");
+        dbHostField.setPromptText("e.g. 100.64.1.5");
+        dbPortField.setText("3306");
+        dbNameField.setText("evidence_harbor");
+        dbUserField.setText("root");
+        styleField(dbHostField); styleField(dbPortField); styleField(dbNameField); styleField(dbUserField); styleField(dbPassField);
+        dbPassField.setPromptText("MariaDB root password");
+
+        GridPane form = new GridPane();
+        form.setHgap(12); form.setVgap(10);
+        ColumnConstraints c1 = new ColumnConstraints(); c1.setPrefWidth(160);
+        ColumnConstraints c2 = new ColumnConstraints(); c2.setHgrow(Priority.ALWAYS);
+        form.getColumnConstraints().addAll(c1, c2);
+        form.add(fl("Tailscale IP (Host)"), 0, 0); form.add(dbHostField, 1, 0);
+        form.add(fl("Port"),                0, 1); form.add(dbPortField, 1, 1);
+        form.add(fl("Database Name"),       0, 2); form.add(dbNameField, 1, 2);
+        form.add(fl("MariaDB User"),         0, 3); form.add(dbUserField, 1, 3);
+        form.add(fl("Password"),            0, 4); form.add(dbPassField, 1, 4);
+
+        Button backBtn = new Button("\u2190 Back");
+        backBtn.getStyleClass().add("btn-secondary");
+        backBtn.setOnAction(e -> showSetupTypeStep());
+
+        Button connectBtn = new Button("Connect via Tailscale");
+        connectBtn.getStyleClass().add("btn-primary");
+        connectBtn.setOnAction(ev -> doDbConnect(false));
+
+        Button createBtn = new Button("Create DB + Connect");
+        createBtn.getStyleClass().add("btn-secondary");
+        createBtn.setOnAction(ev -> doDbConnect(true));
+
+        HBox btns = new HBox(10, backBtn, createBtn, connectBtn);
+        btns.setAlignment(Pos.CENTER_RIGHT);
+
+        contentBox.getChildren().setAll(heading, instructions, form, btns);
+        setStatus("Enter the Tailscale IP of the server and click Connect.");
+    }
 
     private void showDbStep() {
         stepLabel.setText("Step 1 of 2  ·  Database Connection");

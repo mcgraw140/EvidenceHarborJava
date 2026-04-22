@@ -5,6 +5,7 @@ import com.evidenceharbor.domain.Evidence;
 import com.evidenceharbor.domain.EvidenceAudit;
 import com.evidenceharbor.persistence.EvidenceAuditRepository;
 import com.evidenceharbor.persistence.EvidenceRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -60,22 +61,17 @@ public class EvidenceAuditSessionController {
 
     @FXML
     private void onEdit() {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+        boolean ok = Dialogs.confirm("Edit Completed Audit",
                 "Re-open this completed audit for editing?\n\n"
-                        + "The audit will be set back to 'In Progress' until you click 'Complete Audit' again.",
-                ButtonType.YES, ButtonType.NO);
-        confirm.setHeaderText("Edit Completed Audit");
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                try {
-                    auditRepo.reopen(audit.getId());
-                    audit.setStatus("In Progress");
-                    audit.setCompletedAt(null);
-                    metaStatus.setText("In Progress");
-                    setLocked(false);
-                } catch (Exception e) { showError(e); }
-            }
-        });
+                        + "The audit will be set back to 'In Progress' until you click 'Complete Audit' again.");
+        if (!ok) return;
+        try {
+            auditRepo.reopen(audit.getId());
+            audit.setStatus("In Progress");
+            audit.setCompletedAt(null);
+            metaStatus.setText("In Progress");
+            setLocked(false);
+        } catch (Exception e) { showError(e); }
     }
 
     @FXML
@@ -223,12 +219,9 @@ public class EvidenceAuditSessionController {
             }
         }
         if (match == null) {
-            Alert a = new Alert(Alert.AlertType.WARNING,
+            Dialogs.warn("Not in audit",
                     "Barcode \"" + q + "\" is not in this audit's item list.\n\n"
-                            + "If it should be, check the audit scope.",
-                    ButtonType.OK);
-            a.setHeaderText("Not in audit");
-            a.showAndWait();
+                            + "If it should be, check the audit scope.");
             return;
         }
         match.resultProp.set(result);
@@ -246,17 +239,12 @@ public class EvidenceAuditSessionController {
 
     @FXML
     private void onResetAll() {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Reset all items to Pending? This clears Found/Missing marks (notes are kept).",
-                ButtonType.YES, ButtonType.NO);
-        confirm.setHeaderText("Reset Results");
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                for (AuditRow r : allRows) r.resultProp.set("Pending");
-                updateSummary();
-                itemsTable.refresh();
-            }
-        });
+        boolean ok = Dialogs.confirm("Reset Results",
+                "Reset all items to Pending? This clears Found/Missing marks (notes are kept).");
+        if (!ok) return;
+        for (AuditRow r : allRows) r.resultProp.set("Pending");
+        updateSummary();
+        itemsTable.refresh();
     }
 
     @FXML
@@ -395,7 +383,7 @@ public class EvidenceAuditSessionController {
         try {
             auditRepo.updateItems(audit.getId(), serializeItems());
             audit.setItemsJson(serializeItems());
-            new Alert(Alert.AlertType.INFORMATION, "Progress saved.").showAndWait();
+            Dialogs.info("Progress saved", "Progress saved.");
         } catch (Exception e) { showError(e); }
     }
 
@@ -408,24 +396,17 @@ public class EvidenceAuditSessionController {
         String msg = pending > 0
                 ? pending + " item(s) are still pending. Complete anyway?"
                 : "Mark this audit as complete?";
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, msg, ButtonType.YES, ButtonType.NO);
-        confirm.setHeaderText("Complete Audit");
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                try {
-                    auditRepo.updateItems(audit.getId(), serializeItems());
-                    auditRepo.complete(audit.getId());
-                    Navigator.get().showEvidenceAudit();
-                } catch (Exception e) { showError(e); }
-            }
-        });
+        if (!Dialogs.confirm("Complete Audit", msg)) return;
+        try {
+            auditRepo.updateItems(audit.getId(), serializeItems());
+            auditRepo.complete(audit.getId());
+            Navigator.get().showEvidenceAudit();
+        } catch (Exception e) { showError(e); }
     }
 
     private void showError(Exception e) {
         e.printStackTrace();
-        Alert a = new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK);
-        a.setHeaderText("Audit Session Error");
-        a.showAndWait();
+        Dialogs.error("Audit Session Error", e.getMessage());
     }
 
     private static String nullSafe(String s) { return s == null || s.isBlank() ? "—" : s; }

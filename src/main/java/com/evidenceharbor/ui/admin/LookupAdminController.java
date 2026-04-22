@@ -4,6 +4,7 @@ import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.LookupItem;
 import com.evidenceharbor.persistence.LookupRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -102,7 +103,7 @@ public class LookupAdminController implements Initializable {
         boolean exists = itemList.getItems().stream()
                 .anyMatch(i -> i.getName().equalsIgnoreCase(name));
         if (exists) {
-            new Alert(Alert.AlertType.WARNING, "\"" + name + "\" already exists in this list.").showAndWait();
+            Dialogs.warn("Duplicate entry", "\"" + name + "\" already exists in this list.");
             return;
         }
         try {
@@ -113,17 +114,11 @@ public class LookupAdminController implements Initializable {
     }
 
     private void deleteItem(LookupItem item) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Delete \"" + item.getName() + "\"?", ButtonType.YES, ButtonType.CANCEL);
-        confirm.setHeaderText(null);
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                try {
-                    repo.deleteFromTable(activeTable, item.getId());
-                    loadItems();
-                } catch (SQLException e) { showError(e); }
-            }
-        });
+        if (!Dialogs.confirm("Delete entry?", "Delete \"" + item.getName() + "\"?")) return;
+        try {
+            repo.deleteFromTable(activeTable, item.getId());
+            loadItems();
+        } catch (SQLException e) { showError(e); }
     }
 
     // â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -144,7 +139,7 @@ public class LookupAdminController implements Initializable {
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        Dialogs.error(e);
     }
 
     // â”€â”€ Cell factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

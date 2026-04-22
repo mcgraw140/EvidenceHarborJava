@@ -34,8 +34,11 @@ public class EvidenceRepository {
     }
 
     public String generateBarcode(String evidenceType) throws SQLException {
-        String typeCode = evidenceType.replaceAll("[^A-Z0-9a-z]", "").toUpperCase();
-        if (typeCode.length() > 10) typeCode = typeCode.substring(0, 10);
+        // Title-case the type, strip non-alphanumeric, cap at 12 chars
+        String cleaned = evidenceType == null ? "Unknown" : evidenceType.replaceAll("[^A-Za-z0-9]", "");
+        String typeCode = cleaned.isEmpty() ? "Unknown"
+                : Character.toUpperCase(cleaned.charAt(0)) + cleaned.substring(1).toLowerCase();
+        if (typeCode.length() > 12) typeCode = typeCode.substring(0, 12);
         int year = LocalDate.now().getYear();
         String prefix = year + "-" + typeCode + "-";
         try (PreparedStatement ps = conn().prepareStatement(
@@ -47,7 +50,7 @@ public class EvidenceRepository {
                     String[] parts = rs.getString("barcode").split("-");
                     try { next = Integer.parseInt(parts[parts.length - 1]) + 1; } catch (NumberFormatException ignored) {}
                 }
-                return prefix + String.format("%04d", next);
+                return prefix + String.format("%03d", next);
             }
         }
     }

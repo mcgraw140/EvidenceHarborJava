@@ -5,6 +5,7 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.EvidenceAudit;
 import com.evidenceharbor.persistence.EvidenceAuditRepository;
 import com.evidenceharbor.persistence.LookupRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -166,6 +167,6 @@ public class EvidenceAuditController implements Initializable {
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        Dialogs.error(e);
     }
 }

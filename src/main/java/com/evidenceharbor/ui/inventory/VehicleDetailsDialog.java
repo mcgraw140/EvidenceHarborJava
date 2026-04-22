@@ -4,6 +4,7 @@ import com.evidenceharbor.domain.Evidence;
 import com.evidenceharbor.persistence.ChainOfCustodyRepository;
 import com.evidenceharbor.persistence.EvidenceRepository;
 import com.evidenceharbor.persistence.LookupRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -91,7 +92,7 @@ public final class VehicleDetailsDialog {
         saveBtn.setOnAction(e -> {
             String status = statusBox.getValue() == null ? "" : statusBox.getValue().trim();
             if (status.isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Status is required.").showAndWait();
+                Dialogs.warn("Status required", "Status is required.");
                 e.consume();
                 return;
             }
@@ -129,7 +130,7 @@ public final class VehicleDetailsDialog {
                 saved[0] = true;
             } catch (Exception ex) {
                 ex.printStackTrace();
-                new Alert(Alert.AlertType.ERROR, "Error: " + ex.getMessage()).showAndWait();
+                Dialogs.error(ex);
                 e.consume();
             }
         });

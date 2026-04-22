@@ -34,11 +34,15 @@
         <Label fx:id="toPersonLabel" text="To Person" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
         <TextField fx:id="toPersonField" promptText="Recipient name (officer / person)" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
 
-        <Label text="Reason" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-        <TextField fx:id="reasonField" promptText="Brief reason for transfer" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+        <!-- Conditional: amount (Bank Deposit / Bank Removal) -->
+        <Label fx:id="amountLabel" text="Amount ($)" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+        <TextField fx:id="amountField" promptText="e.g. 250.00" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
 
-        <Label text="Notes" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
-        <TextArea fx:id="notesArea" prefRowCount="3" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+        <Label text="Reason" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+        <TextField fx:id="reasonField" promptText="Brief reason for transfer" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+
+        <Label text="Notes" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="7"/>
+        <TextArea fx:id="notesArea" prefRowCount="3" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
     </GridPane>
 
     <Region VBox.vgrow="ALWAYS"/>

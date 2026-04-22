@@ -19,7 +19,14 @@ CREATE TABLE IF NOT EXISTS officers (
 
 CREATE TABLE IF NOT EXISTS persons (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(255) NOT NULL
+    full_name VARCHAR(255) NOT NULL,
+    dob VARCHAR(20),
+    ssn VARCHAR(20),
+    street VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(10),
+    zip VARCHAR(20),
+    contact VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS cases (

@@ -26,6 +26,7 @@
                 <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
                 <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
                 <Button fx:id="navReportsBtn" text="Reports" styleClass="nav-tab active" onAction="#onReports"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
             </HBox>
         </VBox>
     </top>
@@ -77,6 +78,7 @@
                     <Button fx:id="btnOfficerReport"  text="Evidence by Officer"  styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectOfficerReport"/>
                     <Button fx:id="btnLocationReport" text="Evidence by Location" styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectLocationReport"/>
                     <Button fx:id="btnCasesReport"    text="Cases Summary"        styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectCasesReport"/>
+                    <Button fx:id="btnCaseReport"     text="Case Detail Report"   styleClass="btn-secondary" maxWidth="Infinity" onAction="#onSelectCaseReport"/>
                 </VBox>
 
                 <!-- Right: filter + table -->

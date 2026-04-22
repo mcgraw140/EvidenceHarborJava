@@ -6,6 +6,7 @@ import com.evidenceharbor.domain.Officer;
 import com.evidenceharbor.persistence.LookupRepository;
 import com.evidenceharbor.persistence.OfficerRepository;
 import com.evidenceharbor.util.PasswordUtils;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -206,7 +207,7 @@ public class UserManagementController implements Initializable {
         Optional<Officer> result = dlg.showAndWait();
         result.ifPresent(o -> {
             if (o.getName().isBlank()) {
-                new Alert(Alert.AlertType.WARNING, "Name is required.").showAndWait();
+                Dialogs.warn("Name required", "Name is required.");
                 return;
             }
             try {
@@ -243,6 +244,6 @@ public class UserManagementController implements Initializable {
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        Dialogs.error(e);
     }
 }

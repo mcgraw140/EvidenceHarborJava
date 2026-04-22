@@ -4,6 +4,7 @@ import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Officer;
 import com.evidenceharbor.persistence.OfficerRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -180,9 +181,9 @@ public class PermissionManagementController implements Initializable {
             String stored = String.join(",", overrides);
             repo.savePermissions(officer.getId(), stored);
             officer.setPermissions(stored);
-            new Alert(Alert.AlertType.INFORMATION, "Permissions saved for " + officer.getName()).showAndWait();
+            Dialogs.info("Permissions saved", "Permissions saved for " + officer.getName());
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+            Dialogs.error(e);
         }
     }
 

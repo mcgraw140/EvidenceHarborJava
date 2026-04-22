@@ -11,8 +11,15 @@ INSERT IGNORE INTO weapon_types (name) VALUES
     ('Brass Knuckles'), ('Bow'), ('Spear'), ('Other');
 
 INSERT IGNORE INTO biological_sources (name) VALUES
-    ('Blood Swab'), ('Saliva Swab'), ('Hair Sample'), ('Tissue Sample'),
-    ('Urine Sample'), ('Fingernail Clipping'), ('Buccal Swab'), ('Other');
+    ('Blood Swab'), ('Bloodstain Card'), ('Saliva Swab'), ('Buccal Swab'),
+    ('Hair Sample (with root)'), ('Hair Sample (shaft only)'),
+    ('Tissue Sample'), ('Bone Sample'), ('Teeth / Dental Sample'),
+    ('Urine Sample'), ('Semen Swab'), ('Vaginal Swab'), ('Rectal Swab'),
+    ('Oral Swab'), ('Skin / Touch DNA Swab'), ('Fingernail Clipping'),
+    ('Nail Scraping'), ('Sexual Assault Kit (SAK)'),
+    ('Cigarette Butt'), ('Chewing Gum'), ('Drinking Vessel / Bottle'),
+    ('Clothing Stain'), ('Bandage / Gauze'), ('Fecal Sample'),
+    ('Vomitus'), ('Other');
 
 INSERT IGNORE INTO narcotics_unit_types (name) VALUES
     ('Grams'), ('Ounces'), ('Pounds'), ('Kilograms'),

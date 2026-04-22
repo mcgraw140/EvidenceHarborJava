@@ -5,6 +5,7 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.Case;
 import com.evidenceharbor.domain.CasePerson;
 import com.evidenceharbor.persistence.CaseRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -116,6 +117,6 @@ public class CaseListController implements Initializable {
     }
 
     private void showError(Exception e) {
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        Dialogs.error(e);
     }
 }

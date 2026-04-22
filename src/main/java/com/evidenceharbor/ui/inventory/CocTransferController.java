@@ -10,6 +10,7 @@ import com.evidenceharbor.persistence.ChainOfCustodyRepository;
 import com.evidenceharbor.persistence.EvidenceRepository;
 import com.evidenceharbor.persistence.LookupRepository;
 import com.evidenceharbor.persistence.OfficerRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -43,6 +44,8 @@ public class CocTransferController implements Initializable {
     @FXML private ComboBox<String> toLocationCombo;
     @FXML private Label toPersonLabel;
     @FXML private TextField toPersonField;
+    @FXML private Label amountLabel;
+    @FXML private TextField amountField;
     @FXML private TextField reasonField;
     @FXML private TextArea notesArea;
 
@@ -153,6 +156,13 @@ public class CocTransferController implements Initializable {
         toPersonField.setVisible(showPerson);
         toPersonLabel.setManaged(showPerson);
         toPersonField.setManaged(showPerson);
+
+        boolean showAmount = "Bank Deposit".equals(action) || "Bank Removal".equals(action);
+        amountLabel.setVisible(showAmount);
+        amountLabel.setManaged(showAmount);
+        amountField.setVisible(showAmount);
+        amountField.setManaged(showAmount);
+        if (!showAmount) amountField.clear();
     }
 
     private String bankAccountLabel(BankAccount a) {
@@ -170,7 +180,7 @@ public class CocTransferController implements Initializable {
     private void onSave() {
         String action = actionCombo.getValue();
         if (action == null || action.isBlank()) {
-            new Alert(Alert.AlertType.WARNING, "Please select an action.").showAndWait();
+            Dialogs.warn("Action required", "Please select an action.");
             return;
         }
 
@@ -188,17 +198,21 @@ public class CocTransferController implements Initializable {
 
         // Action-specific validation
         if ("Submit for Analysis".equals(action) && (toLocation == null)) {
-            new Alert(Alert.AlertType.WARNING, "Please select an analysis lab.").showAndWait(); return;
+            Dialogs.warn("Analysis lab required", "Please select an analysis lab."); return;
         }
         if ("Agency Transfer".equals(action) && (toLocation == null)) {
-            new Alert(Alert.AlertType.WARNING, "Please select the receiving agency.").showAndWait(); return;
+            Dialogs.warn("Agency required", "Please select the receiving agency."); return;
         }
         if ("Bank Deposit".equals(action) && (toLocation == null)) {
-            new Alert(Alert.AlertType.WARNING, "Please select a bank account.").showAndWait(); return;
+            Dialogs.warn("Bank account required", "Please select a bank account."); return;
+        }
+        if (("Bank Deposit".equals(action) || "Bank Removal".equals(action))
+                && amountField.isVisible() && amountField.getText().trim().isBlank()) {
+            Dialogs.warn("Amount required", "Please enter the dollar amount for this bank transaction."); return;
         }
         if ("Bank Removal".equals(action) && toLocation == null && toPerson == null) {
-            new Alert(Alert.AlertType.WARNING,
-                    "Select a return location or enter an owner to return to.").showAndWait();
+            Dialogs.warn("Return target required",
+                    "Select a return location or enter an owner to return to.");
             return;
         }
 
@@ -225,6 +239,33 @@ public class CocTransferController implements Initializable {
         try {
             cocRepo.addEntry(entry);
 
+            // Auto-create bank ledger transaction for Bank Deposit / Bank Removal
+            if (("Bank Deposit".equals(action) || "Bank Removal".equals(action))
+                    && toLocation != null && amountField.isVisible()) {
+                double amount = 0;
+                try { amount = Double.parseDouble(amountField.getText().trim().replace(",", ".")); }
+                catch (NumberFormatException ignored) {}
+                if (amount > 0) {
+                    // Match chosen label back to BankAccount id
+                    BankAccount matchedAccount = null;
+                    String chosenLabel = toLocation;
+                    for (BankAccount ba : bankAccountsCache) {
+                        if (bankAccountLabel(ba).equals(chosenLabel)) { matchedAccount = ba; break; }
+                    }
+                    if (matchedAccount == null && !bankAccountsCache.isEmpty())
+                        matchedAccount = bankAccountsCache.get(0);
+                    if (matchedAccount != null) {
+                        String txAction = "Bank Deposit".equals(action) ? "Deposit" : "Withdrawal";
+                        String today = java.time.LocalDate.now().toString();
+                        bankRepo.addTransaction(
+                            matchedAccount.getId(), txAction, amount,
+                            null, today, performedBy,
+                            "CoC — " + (evidence.getBarcode() != null ? evidence.getBarcode() : "evidence"),
+                            evidence.getBarcode());
+                    }
+                }
+            }
+
             // Update evidence status and storage location
             String newStatus = ACTION_STATUS.getOrDefault(action, evidence.getStatus());
             if ("Bank Removal".equals(action) && toPerson != null) {
@@ -239,7 +280,7 @@ public class CocTransferController implements Initializable {
 
             actionCombo.getScene().getWindow().hide();
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "Error saving: " + e.getMessage()).showAndWait();
+            Dialogs.error("Error saving", e.getMessage());
         }
     }
 

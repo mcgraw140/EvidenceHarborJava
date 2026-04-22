@@ -25,8 +25,7 @@
                 <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
                 <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
                 <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab active" onAction="#onDropbox"/>
-                <Button fx:id="navReportsBtn" text="Reports" styleClass="nav-tab" onAction="#onReports"/>
-            </HBox>
+                <Button fx:id="navReportsBtn" text="Reports" styleClass="nav-tab" onAction="#onReports"/>                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>            </HBox>
         </VBox>
     </top>
 

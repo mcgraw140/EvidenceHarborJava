@@ -5,6 +5,7 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.app.CurrentOfficerResolver;
 import com.evidenceharbor.domain.*;
 import com.evidenceharbor.persistence.*;
+import com.evidenceharbor.util.Dialogs;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -45,15 +46,17 @@ public class AddEvidenceController implements Initializable {
     @FXML private TextField descriptionField;
     @FXML private VBox dynamicPanel;
 
-    @FXML private TextField storageLocationField;
+    @FXML private ComboBox<String> storageLocationCombo;
     @FXML private ComboBox<String> statusCombo;
 
     private Case currentCase;
     private final OfficerRepository officerRepo = new OfficerRepository();
+    @SuppressWarnings("unused")
     private final PersonRepository personRepo = new PersonRepository();
     private final EvidenceRepository evidenceRepo = new EvidenceRepository();
     private final LookupRepository lookupRepo = new LookupRepository();
-    private List<String> storageLocations = List.of();
+    /** Approved dropbox locations come from the intake_locations lookup. */
+    private List<String> dropboxLocations = List.of();
 
     // Dynamic field references
     // Ammunition
@@ -120,10 +123,14 @@ public class AddEvidenceController implements Initializable {
             }
             statusCombo.setDisable(true);
 
-            storageLocations = lookupRepo.getStorageLocations();
+            dropboxLocations = lookupRepo.getIntakeLocations();
+            storageLocationCombo.setItems(FXCollections.observableArrayList(dropboxLocations));
+            if (!dropboxLocations.isEmpty()) {
+                storageLocationCombo.getSelectionModel().selectFirst();
+            }
         } catch (Exception e) {
             showError(e);
-            storageLocations = List.of();
+            dropboxLocations = List.of();
         }
 
         collectionDate.setValue(LocalDate.now());
@@ -136,7 +143,20 @@ public class AddEvidenceController implements Initializable {
         caseNumberLabel.setText("Case #" + c.getCaseNumber());
         try {
             collectedByCombo.setItems(FXCollections.observableArrayList(officerRepo.findAll()));
-            collectedFromPersonCombo.setItems(FXCollections.observableArrayList(personRepo.findAll()));
+
+            // Only people already associated with this case may be selected as the
+            // "collected from" person — associate them on the Case page first.
+            List<Person> casePersons = (c.getPersons() == null) ? List.of()
+                    : c.getPersons().stream()
+                            .map(cp -> cp.getPerson())
+                            .filter(p -> p != null)
+                            .distinct()
+                            .collect(Collectors.toList());
+            collectedFromPersonCombo.setItems(FXCollections.observableArrayList(casePersons));
+            if (casePersons.isEmpty()) {
+                collectedFromPersonCombo.setPromptText("No persons associated with this case");
+                collectedFromPersonCombo.setDisable(true);
+            }
 
             Officer defaultOfficer = CurrentOfficerResolver.resolveDefaultOfficer(officerRepo);
             if (defaultOfficer != null) {
@@ -153,6 +173,10 @@ public class AddEvidenceController implements Initializable {
         boolean show = collectedFromPersonCheck.isSelected();
         collectedFromPersonBox.setVisible(show);
         collectedFromPersonBox.setManaged(show);
+        if (show && collectedFromPersonCombo.getItems().isEmpty()) {
+            Dialogs.warn("No persons on this case",
+                    "Associate a person with this case from the Case page before selecting one here.");
+        }
     }
 
     @FXML
@@ -162,7 +186,6 @@ public class AddEvidenceController implements Initializable {
         if (type == null) return;
 
         statusCombo.setValue("In Dropbox");
-        storageLocationField.setPromptText("Select an approved dropbox location");
 
         switch (type) {
             case "Ammunition"         -> buildAmmunitionPanel();
@@ -300,25 +323,20 @@ public class AddEvidenceController implements Initializable {
     @FXML
     private void onSave() {
         String type = evidenceTypeCombo.getValue();
-        if (type == null) { new Alert(Alert.AlertType.WARNING, "Please select an evidence type.").showAndWait(); return; }
+        if (type == null) { Dialogs.warn("Evidence type required", "Please select an evidence type."); return; }
         if ("Vehicle".equals(type)) {
-            new Alert(Alert.AlertType.WARNING,
-                    "Vehicles must be entered from the separate Impound Vehicle screen.").showAndWait();
+            Dialogs.warn("Wrong screen",
+                    "Vehicles must be entered from the separate Impound Vehicle screen.");
             return;
         }
-        String storageLocation = storageLocationField.getText() == null ? "" : storageLocationField.getText().trim();
-        if (storageLocation.isBlank()) {
-            new Alert(Alert.AlertType.WARNING, "Storage location is required.").showAndWait();
-            return;
-        }
-
-        if (!isApprovedDropboxLocation(storageLocation)) {
-            String approved = getApprovedDropboxLocations().isEmpty()
-                    ? "No approved dropbox locations are configured in Storage Locations."
-                    : "Approved dropbox locations: " + String.join(", ", getApprovedDropboxLocations());
-            new Alert(Alert.AlertType.WARNING,
-                    "Officers can only intake evidence into approved dropbox locations from this screen.\n\n" + approved)
-                    .showAndWait();
+        String storageLocation = storageLocationCombo.getValue();
+        if (storageLocation == null || storageLocation.isBlank()) {
+            if (dropboxLocations.isEmpty()) {
+                Dialogs.warn("No drop box locations configured",
+                        "An administrator must add at least one Intake (Drop Box) location in Lookup Admin before evidence can be intaken.");
+            } else {
+                Dialogs.warn("Drop box required", "Choose the drop box you placed this item into.");
+            }
             return;
         }
 
@@ -470,23 +488,7 @@ public class AddEvidenceController implements Initializable {
 
     private void showError(Exception e) {
         e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        Dialogs.error(e);
     }
 
-    private List<String> getApprovedDropboxLocations() {
-        return storageLocations.stream()
-                .filter(this::looksLikeDropboxLocation)
-                .collect(Collectors.toList());
-    }
-
-    private boolean isApprovedDropboxLocation(String location) {
-        String l = location.trim();
-        return getApprovedDropboxLocations().stream().anyMatch(s -> s.equalsIgnoreCase(l));
-    }
-
-    private boolean looksLikeDropboxLocation(String location) {
-        if (location == null) return false;
-        String v = location.toLowerCase();
-        return v.contains("dropbox") || v.contains("drop box") || v.contains("locker");
-    }
 }

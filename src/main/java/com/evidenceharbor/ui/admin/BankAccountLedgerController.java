@@ -6,8 +6,10 @@ import com.evidenceharbor.app.SessionManager;
 import com.evidenceharbor.domain.BankAccount;
 import com.evidenceharbor.domain.BankTransaction;
 import com.evidenceharbor.persistence.BankAccountRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -43,6 +45,15 @@ public class BankAccountLedgerController implements Initializable {
     @FXML private TableColumn<BankTransaction, String> colBy;
     @FXML private TableColumn<BankTransaction, String> colNotes;
     @FXML private TableColumn<BankTransaction, String> colTxAction;
+
+    @FXML private TableView<String[]> depositedEvidenceTable;
+    @FXML private TableColumn<String[], String> colEvBarcode;
+    @FXML private TableColumn<String[], String> colEvType;
+    @FXML private TableColumn<String[], String> colEvCase;
+    @FXML private TableColumn<String[], String> colEvDate;
+    @FXML private TableColumn<String[], String> colEvBy;
+    @FXML private TableColumn<String[], String> colEvLocation;
+    @FXML private TableColumn<String[], String> colEvDesc;
 
     private final BankAccountRepository repo = new BankAccountRepository();
 
@@ -116,6 +127,15 @@ public class BankAccountLedgerController implements Initializable {
             }
         });
 
+        // Deposited evidence table columns
+        colEvBarcode.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[0]));
+        colEvType.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[1]));
+        colEvLocation.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[2]));
+        colEvDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[3]));
+        colEvBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[4]));
+        colEvCase.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[5]));
+        colEvDesc.setCellValueFactory(c -> new SimpleStringProperty(c.getValue()[6]));
+
         loadAccounts();
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
@@ -153,12 +173,20 @@ public class BankAccountLedgerController implements Initializable {
         lblAccountNumber.setText("");
         btnEditAccount.setDisable(true);
         txTable.getItems().clear();
+        depositedEvidenceTable.getItems().clear();
     }
 
     private void loadTransactions(BankAccount account) {
         try {
             txTable.setItems(FXCollections.observableArrayList(
                     repo.findTransactionsByAccount(account.getId())));
+        } catch (RuntimeException e) {
+            showError(e.getMessage());
+        }
+        try {
+            ObservableList<String[]> evRows = FXCollections.observableArrayList(
+                    repo.getDepositedEvidenceByAccount(account.getId()));
+            depositedEvidenceTable.setItems(evRows);
         } catch (RuntimeException e) {
             showError(e.getMessage());
         }
@@ -180,6 +208,7 @@ public class BankAccountLedgerController implements Initializable {
     private void showAccountDialog(BankAccount existing) {
         Dialog<ButtonType> dlg = new Dialog<>();
         dlg.setTitle(existing == null ? "New Account" : "Edit Account");
+        Dialogs.style(dlg);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -212,12 +241,7 @@ public class BankAccountLedgerController implements Initializable {
                                 + "  • Acct #:  " + (tfNumber.getText().trim().isEmpty() ? "(none)" : tfNumber.getText().trim()) + "\n\n"
                                 + "Bank accounts cannot be deleted. "
                                 + "Are you sure you want to create this account?";
-                        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, summary,
-                                ButtonType.YES, ButtonType.NO);
-                        confirm.setTitle("Confirm New Account");
-                        confirm.setHeaderText("Verify new account details");
-                        java.util.Optional<ButtonType> result = confirm.showAndWait();
-                        if (result.isEmpty() || result.get() != ButtonType.YES) return;
+                        if (!Dialogs.confirm("Verify new account details", summary)) return;
                         repo.createAccount(name, tfNumber.getText().trim(),
                                 tfBank.getText().trim(), taNotes.getText().trim());
                     } else {
@@ -241,6 +265,7 @@ public class BankAccountLedgerController implements Initializable {
 
         Dialog<ButtonType> dlg = new Dialog<>();
         dlg.setTitle("Record Transaction");
+        Dialogs.style(dlg);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -330,6 +355,7 @@ public class BankAccountLedgerController implements Initializable {
         if (tx.isVoided()) return;
         Dialog<ButtonType> dlg = new Dialog<>();
         dlg.setTitle("Void Transaction");
+        Dialogs.style(dlg);
         dlg.setHeaderText("Voiding a transaction preserves the record for audit.\n"
                 + "A reason is required and cannot be changed later.");
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -390,9 +416,7 @@ public class BankAccountLedgerController implements Initializable {
     @FXML private void onBankAccountLedger()     { }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
-        a.setHeaderText("Bank Ledger Error");
-        a.showAndWait();
+        Dialogs.error("Bank Ledger Error", msg);
     }
 
     private String nvl(String s) { return s == null ? "" : s; }

@@ -94,7 +94,7 @@
                 </HBox>
 
                 <!-- Transactions table -->
-                <TableView fx:id="txTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                <TableView fx:id="txTable" styleClass="data-table" VBox.vgrow="ALWAYS" prefHeight="260">
                     <columns>
                         <TableColumn fx:id="colDate"     text="Date"        prefWidth="130"/>
                         <TableColumn fx:id="colAction"   text="Type"        prefWidth="100"/>
@@ -106,6 +106,21 @@
                         <TableColumn fx:id="colTxAction" text=""            prefWidth="90"/>
                     </columns>
                     <placeholder><Label text="No transactions recorded"/></placeholder>
+                </TableView>
+
+                <!-- Deposited Evidence section -->
+                <Label text="Deposited Evidence Items" styleClass="section-title" style="-fx-padding:16 0 8 0;"/>
+                <TableView fx:id="depositedEvidenceTable" styleClass="data-table" VBox.vgrow="ALWAYS" prefHeight="200">
+                    <columns>
+                        <TableColumn fx:id="colEvBarcode"   text="Barcode"         prefWidth="170"/>
+                        <TableColumn fx:id="colEvType"      text="Type"            prefWidth="120"/>
+                        <TableColumn fx:id="colEvCase"      text="Case #"          prefWidth="130"/>
+                        <TableColumn fx:id="colEvDate"      text="Collection Date" prefWidth="140"/>
+                        <TableColumn fx:id="colEvBy"        text="Collected By"    prefWidth="140"/>
+                        <TableColumn fx:id="colEvLocation"  text="Storage Location" prefWidth="160"/>
+                        <TableColumn fx:id="colEvDesc"      text="Description"     prefWidth="240"/>
+                    </columns>
+                    <placeholder><Label text="No deposited evidence linked to this account"/></placeholder>
                 </TableView>
 
             </VBox>

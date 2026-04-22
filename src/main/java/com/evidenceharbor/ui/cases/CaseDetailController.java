@@ -116,6 +116,18 @@ public class CaseDetailController implements Initializable {
             return row;
         });
 
+        // Double-click any evidence row to open the full detail sheet (barcode + CoC).
+        evidenceTable.setRowFactory(tv -> {
+            TableRow<Evidence> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY
+                        && e.getClickCount() == 2 && !row.isEmpty()) {
+                    openEvidenceDetail(row.getItem());
+                }
+            });
+            return row;
+        });
+
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
 
         // Make chargeCombo type-searchable
@@ -269,14 +281,14 @@ public class CaseDetailController implements Initializable {
         Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         ok.setOnAction(e -> {
             if (makeField.getText() == null || makeField.getText().trim().isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Make is required.").showAndWait();
+                warn("Make is required.", "Enter the vehicle make.");
                 e.consume();
                 return;
             }
             String location = locationBox.getEditor().getText();
             if (location == null) location = locationBox.getValue();
             if (location == null || location.trim().isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Location is required.").showAndWait();
+                warn("Location is required.", "Select or enter a storage location.");
                 e.consume();
                 return;
             }
@@ -374,59 +386,216 @@ public class CaseDetailController implements Initializable {
 
     @FXML
     private void onAssociatePerson() {
+        // Load people up-front so we can fail fast if the DB call blows up.
+        List<Person> people;
+        try {
+            people = personRepo.findAllRecent();
+        } catch (Exception e) {
+            showError(e);
+            return;
+        }
+        final ObservableList<Person> allPeople = FXCollections.observableArrayList(people);
+        final List<String> roles = getPersonRolesForDropdown();
+
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Associate Person with Case #" + currentCase.getCaseNumber());
-        GridPane grid = new GridPane();
-        grid.setHgap(10); grid.setVgap(10);
-        grid.setPadding(new Insets(16));
-
-        ComboBox<Person> personBox = new ComboBox<>();
-        ComboBox<String> roleBox = new ComboBox<>();
-        Button createPersonBtn = new Button("+ Create New Person");
-
-        List<Person> people = new ArrayList<>();
-        try { people = personRepo.findAll(); } catch (Exception e) { showError(e); }
-        makeSearchableComboBox(personBox, people, Person::getFullName);
-
-        List<String> roles = getPersonRolesForDropdown();
-        makeSearchableComboBox(roleBox, roles, Function.identity());
-        roleBox.setPromptText("Select role...");
-        createPersonBtn.setOnAction(evt -> {
-            NewPersonSelection created = showCreatePersonDialog(roles);
-            if (created == null || created.person() == null) {
-                return;
-            }
-            personBox.getItems().add(created.person());
-            personBox.getSelectionModel().select(created.person());
-            if (created.role() != null && !created.role().isBlank()) {
-                roleBox.getSelectionModel().select(created.role());
-                roleBox.getEditor().setText(created.role());
-            }
-        });
-
-        grid.add(new Label("Person:"), 0, 0); grid.add(personBox, 1, 0);
-        grid.add(new Label(""), 0, 1); grid.add(createPersonBtn, 1, 1);
-        grid.add(new Label("Role:"), 0, 2); grid.add(roleBox, 1, 2);
-        dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/styles/theme.css").toExternalForm());
-        Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-        ok.setOnAction(e -> {
-            try {
-            String role = roleBox.getEditor().getText().trim();
-                if (role.isEmpty()) { new Alert(Alert.AlertType.WARNING, "Role is required.").showAndWait(); e.consume(); return; }
-                Person p = personBox.getValue();
-                if (p == null) { new Alert(Alert.AlertType.WARNING, "Select a person.").showAndWait(); e.consume(); return; }
-                caseRepo.associatePerson(currentCase.getId(), p.getId(), role);
-                refresh();
-            } catch (Exception ex) { showError(ex); e.consume(); }
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Left column: search + list of matching people
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search by name, DOB, SSN, or address\u2026");
+        HBox.setHgrow(searchField, Priority.ALWAYS);
+
+        Button refreshBtn = new Button("\u21bb Refresh");
+        refreshBtn.setTooltip(new Tooltip("Reload list (sorted by most recently created)"));
+
+        ListView<Person> personList = new ListView<>();
+        personList.setPrefHeight(260);
+        personList.setPrefWidth(360);
+        personList.setPlaceholder(new Label("No people match your search."));
+        personList.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(Person p, boolean empty) {
+                super.updateItem(p, empty);
+                if (empty || p == null) { setText(null); return; }
+                StringBuilder sb = new StringBuilder(p.getFullName() == null ? "(no name)" : p.getFullName());
+                String dob = p.getDob();
+                if (dob != null && !dob.isBlank()) sb.append("   \u2022   DOB ").append(dob);
+                String city = p.getCity();
+                String state = p.getState();
+                if ((city != null && !city.isBlank()) || (state != null && !state.isBlank())) {
+                    sb.append("   \u2022   ");
+                    if (city != null && !city.isBlank()) sb.append(city);
+                    if (state != null && !state.isBlank()) {
+                        if (city != null && !city.isBlank()) sb.append(", ");
+                        sb.append(state);
+                    }
+                }
+                setText(sb.toString());
+            }
         });
+
+        FilteredList<Person> filtered = new FilteredList<>(allPeople, p -> true);
+        personList.setItems(filtered);
+
+        Label matchCount = new Label();
+        Runnable updateCount = () ->
+                matchCount.setText(filtered.size() + " of " + allPeople.size() + " people");
+        updateCount.run();
+        filtered.addListener((javafx.collections.ListChangeListener<Person>) c -> updateCount.run());
+
+        searchField.textProperty().addListener((obs, oldV, newV) -> {
+            final String q = newV == null ? "" : newV.trim().toLowerCase();
+            if (q.isEmpty()) {
+                filtered.setPredicate(p -> true);
+                return;
+            }
+            filtered.setPredicate(p -> {
+                if (p == null) return false;
+                if (p.getFullName() != null && p.getFullName().toLowerCase().contains(q)) return true;
+                if (p.getDob()      != null && p.getDob().toLowerCase().contains(q))      return true;
+                if (p.getSsn()      != null && p.getSsn().toLowerCase().contains(q))      return true;
+                if (p.getStreet()   != null && p.getStreet().toLowerCase().contains(q))   return true;
+                if (p.getCity()     != null && p.getCity().toLowerCase().contains(q))     return true;
+                if (p.getState()    != null && p.getState().toLowerCase().contains(q))    return true;
+                if (p.getZip()      != null && p.getZip().toLowerCase().contains(q))      return true;
+                if (p.getContact()  != null && p.getContact().toLowerCase().contains(q))  return true;
+                return false;
+            });
+        });
+
+        // Auto-select the first row when the filter narrows to something.
+        filtered.addListener((javafx.collections.ListChangeListener<Person>) c -> {
+            if (personList.getSelectionModel().getSelectedItem() == null && !filtered.isEmpty()) {
+                personList.getSelectionModel().selectFirst();
+            }
+        });
+        if (!filtered.isEmpty()) personList.getSelectionModel().selectFirst();
+
+        // Right column: role + action buttons
+        ComboBox<String> roleBox = new ComboBox<>(FXCollections.observableArrayList(roles));
+        roleBox.setPromptText("Select role\u2026");
+        roleBox.setEditable(false);
+        roleBox.setMaxWidth(Double.MAX_VALUE);
+
+        Button createPersonBtn = new Button("+ Create New Person");
+        createPersonBtn.setMaxWidth(Double.MAX_VALUE);
+        createPersonBtn.setOnAction(evt -> {
+            Person created = showCreatePersonDialog();
+            if (created == null) return;
+            // Reload the full list from the DB so search hits the fresh record even
+            // if the name changed during save (e.g. trimming).
+            try {
+                List<Person> fresh = personRepo.findAllRecent();
+                allPeople.setAll(fresh);
+            } catch (Exception ex) {
+                showError(ex);
+                return;
+            }
+            // Clear the search box AND force the predicate to "accept all" so the
+            // new row is visible regardless of what was previously typed.
+            searchField.setText("");
+            filtered.setPredicate(p -> true);
+            // Re-select the newly created person by id.
+            Person match = null;
+            for (Person p : allPeople) {
+                if (p.getId() == created.getId()) { match = p; break; }
+            }
+            if (match != null) {
+                personList.getSelectionModel().select(match);
+                personList.scrollTo(match);
+            }
+        });
+
+        // Manual refresh — reloads the list (newest first) without needing to create a new person.
+        refreshBtn.setOnAction(evt -> {
+            Person keep = personList.getSelectionModel().getSelectedItem();
+            try {
+                allPeople.setAll(personRepo.findAllRecent());
+            } catch (Exception ex) {
+                showError(ex);
+                return;
+            }
+            searchField.setText("");
+            filtered.setPredicate(p -> true);
+            if (keep != null) {
+                for (Person p : allPeople) {
+                    if (p.getId() == keep.getId()) {
+                        personList.getSelectionModel().select(p);
+                        personList.scrollTo(p);
+                        break;
+                    }
+                }
+            } else if (!filtered.isEmpty()) {
+                personList.getSelectionModel().selectFirst();
+            }
+        });
+
+        Label selectedLabel = new Label("No person selected");
+        selectedLabel.setWrapText(true);
+        selectedLabel.setMaxWidth(260);
+        personList.getSelectionModel().selectedItemProperty().addListener((obs, oldP, newP) -> {
+            if (newP == null) {
+                selectedLabel.setText("No person selected");
+            } else {
+                selectedLabel.setText("Selected: " + (newP.getFullName() == null ? "(no name)" : newP.getFullName()));
+            }
+        });
+
+        VBox leftCol = new VBox(6,
+                new Label("Search people:"),
+                new HBox(6, searchField, refreshBtn),
+                personList, matchCount);
+        VBox rightCol = new VBox(10,
+                new Label("Selected person:"), selectedLabel,
+                new Separator(),
+                new Label("Role:"), roleBox,
+                createPersonBtn);
+        VBox.setVgrow(personList, Priority.ALWAYS);
+        rightCol.setPrefWidth(280);
+
+        HBox root = new HBox(16, leftCol, rightCol);
+        root.setPadding(new Insets(16));
+        HBox.setHgrow(leftCol, Priority.ALWAYS);
+        dialog.getDialogPane().setContent(root);
+        dialog.getDialogPane().setPrefWidth(720);
+
+        // OK handler: validate then save
+        Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        // Require both a selected person and a chosen role before OK is enabled.
+        ok.disableProperty().bind(
+                personList.getSelectionModel().selectedItemProperty().isNull()
+                        .or(roleBox.valueProperty().isNull())
+                        .or(roleBox.valueProperty().isEqualTo("")));
+        ok.setOnAction(e -> {
+            Person p = personList.getSelectionModel().getSelectedItem();
+            if (p == null) {
+                warn("Select a person", "Choose a person from the list or click \"+ Create New Person\".");
+                e.consume();
+                return;
+            }
+            String role = roleBox.getValue();
+            if (role == null || role.isBlank()) {
+                warn("Role is required", "Choose a role for this person.");
+                e.consume();
+                return;
+            }
+            try {
+                caseRepo.associatePerson(currentCase.getId(), p.getId(), role.trim());
+                refresh();
+            } catch (Exception ex) {
+                showError(ex);
+                e.consume();
+            }
+        });
+
+        javafx.application.Platform.runLater(searchField::requestFocus);
         dialog.showAndWait();
     }
 
-    private NewPersonSelection showCreatePersonDialog(List<String> roles) {
-        Dialog<NewPersonSelection> dialog = new Dialog<>();
+    private Person showCreatePersonDialog() {
+        Dialog<Person> dialog = new Dialog<>();
         dialog.setTitle("Add New Person");
 
         GridPane grid = new GridPane();
@@ -461,10 +630,6 @@ public class CaseDetailController implements Initializable {
         TextField contactField = new TextField();
         contactField.setPromptText("Contact Info (Phone/Email) - Optional");
 
-        ComboBox<String> roleBox = new ComboBox<>();
-        roleBox.getItems().setAll(roles);
-        roleBox.setPromptText("Select...");
-
         grid.add(new Label("Full Name"), 0, 0); grid.add(fullNameField, 1, 0);
         grid.add(new Label("Date of Birth"), 0, 1); grid.add(dobPicker, 1, 1);
         grid.add(new Label("SSN"), 0, 2); grid.add(ssnField, 1, 2);
@@ -473,7 +638,6 @@ public class CaseDetailController implements Initializable {
         grid.add(new Label("Zip Code"), 0, 5); grid.add(zipField, 1, 5);
         grid.add(new Label("State"), 0, 6); grid.add(stateBox, 1, 6);
         grid.add(new Label("Contact"), 0, 7); grid.add(contactField, 1, 7);
-        grid.add(new Label("Role *"), 0, 8); grid.add(roleBox, 1, 8);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -485,33 +649,54 @@ public class CaseDetailController implements Initializable {
         Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         ok.setOnAction(e -> {
             String fullName = fullNameField.getText().trim();
-            String role = roleBox.getValue();
             if (fullName.isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Full name is required.").showAndWait();
+                warn("Full name is required.", "Enter the person's full name.");
                 e.consume();
                 return;
             }
-            if (role == null || role.isBlank()) {
-                new Alert(Alert.AlertType.WARNING, "Role is required.").showAndWait();
-                e.consume();
-                return;
+            // Pre-check SSN uniqueness so the user gets a friendly warning (dialog
+            // stays open, all typed fields preserved) instead of a DB error.
+            String ssnTyped = ssnField.getText() == null ? "" : ssnField.getText().trim();
+            if (!ssnTyped.isEmpty()) {
+                try {
+                    Person dup = personRepo.findBySsn(ssnTyped);
+                    if (dup != null) {
+                        warn("Duplicate SSN",
+                                "SSN " + ssnTyped + " is already on file for \""
+                                        + (dup.getFullName() == null ? "(no name)" : dup.getFullName())
+                                        + "\". Update the SSN to save this new person, or cancel and associate the existing record.");
+                        ssnField.requestFocus();
+                        ssnField.selectAll();
+                        e.consume();
+                        return;
+                    }
+                } catch (Exception ex) {
+                    showError(ex);
+                    e.consume();
+                    return;
+                }
             }
             try {
                 Person p = new Person();
                 p.setFullName(fullName);
+                if (dobPicker.getValue() != null) {
+                    p.setDob(dobPicker.getValue().format(java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                }
+                p.setSsn(ssnField.getText());
+                p.setStreet(streetField.getText());
+                p.setCity(cityField.getText());
+                p.setState(stateBox.getValue());
+                p.setZip(zipField.getText());
+                p.setContact(contactField.getText());
                 personRepo.save(p);
                 savedHolder[0] = p;
             } catch (Exception ex) {
                 showError(ex);
-                e.consume(); // keep dialog open on DB error
+                e.consume(); // keep dialog open on DB error (e.g. duplicate SSN)
             }
         });
 
-        dialog.setResultConverter(bt -> {
-            if (bt != ButtonType.OK || savedHolder[0] == null) return null;
-            return new NewPersonSelection(savedHolder[0], roleBox.getValue());
-        });
-
+        dialog.setResultConverter(bt -> bt == ButtonType.OK ? savedHolder[0] : null);
         return dialog.showAndWait().orElse(null);
     }
 
@@ -529,11 +714,16 @@ public class CaseDetailController implements Initializable {
                 "Complainant", "Driver", "Passenger", "Other");
     }
 
-    private record NewPersonSelection(Person person, String role) {}
-
     private <T> void makeSearchableComboBox(ComboBox<T> comboBox, List<T> sourceItems, Function<T, String> labelMapper) {
-        ObservableList<T> originalItems = FXCollections.observableArrayList(sourceItems);
+        @SuppressWarnings("unchecked")
+        ObservableList<T> originalItems = (sourceItems instanceof ObservableList)
+                ? (ObservableList<T>) sourceItems
+                : FXCollections.observableArrayList(sourceItems);
         FilteredList<T> filteredItems = new FilteredList<>(originalItems, item -> true);
+
+        // Guard flag so we can tell user-typing apart from programmatic text updates
+        // (selection, focus-loss re-sync, etc.) and skip re-showing the popup.
+        final boolean[] programmaticTextUpdate = { false };
 
         comboBox.setEditable(true);
         comboBox.setItems(filteredItems);
@@ -556,24 +746,65 @@ public class CaseDetailController implements Initializable {
         });
 
         comboBox.getEditor().textProperty().addListener((obs, oldText, newText) -> {
+            if (programmaticTextUpdate[0]) return; // don't filter / re-show on programmatic updates
             String query = newText == null ? "" : newText.trim().toLowerCase();
             filteredItems.setPredicate(item -> labelMapper.apply(item).toLowerCase().contains(query));
-            if (!comboBox.isShowing()) {
+            if (!comboBox.isShowing() && comboBox.isFocused()) {
                 comboBox.show();
             }
         });
 
         comboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                comboBox.getEditor().setText(labelMapper.apply(newVal));
+            // When the user picks an item from the popup we want the editor text to reflect it.
+            // Don't blank the text on null — that would erase a selection after a filter-reset.
+            if (newVal == null) return;
+            programmaticTextUpdate[0] = true;
+            try {
+                String label = labelMapper.apply(newVal);
+                comboBox.getEditor().setText(label);
+                comboBox.getEditor().positionCaret(label.length());
+            } finally {
+                programmaticTextUpdate[0] = false;
+            }
+        });
+
+        // When the popup hides (user picked or dismissed), clear the filter so
+        // the full list is available next time the user focuses the combo.
+        comboBox.showingProperty().addListener((obs, wasShowing, isShowing) -> {
+            if (!isShowing) {
+                programmaticTextUpdate[0] = true;
+                try {
+                    filteredItems.setPredicate(item -> true);
+                } finally {
+                    programmaticTextUpdate[0] = false;
+                }
             }
         });
 
         comboBox.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-            if (!isFocused) {
-                String selectedText = comboBox.getValue() == null ? "" : labelMapper.apply(comboBox.getValue());
-                comboBox.getEditor().setText(selectedText);
+            if (isFocused) return;
+            // On focus loss, try to resolve the typed text to an existing item.
+            // If resolution fails, preserve the typed text instead of blanking it out.
+            T current = comboBox.getValue();
+            String typed = comboBox.getEditor().getText();
+            programmaticTextUpdate[0] = true;
+            try {
+                if (current == null && typed != null && !typed.isBlank()) {
+                    String t = typed.trim();
+                    for (T item : originalItems) {
+                        if (labelMapper.apply(item).equalsIgnoreCase(t)) {
+                            comboBox.setValue(item);
+                            current = item;
+                            break;
+                        }
+                    }
+                }
+                if (current != null) {
+                    comboBox.getEditor().setText(labelMapper.apply(current));
+                }
                 filteredItems.setPredicate(item -> true);
+            } finally {
+                programmaticTextUpdate[0] = false;
             }
         });
     }
@@ -583,9 +814,58 @@ public class CaseDetailController implements Initializable {
         catch (Exception e) { showError(e); }
     }
 
+    private void openEvidenceDetail(Evidence ev) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/fxml/EvidenceDetail.fxml"));
+            javafx.scene.Parent root = loader.load();
+            com.evidenceharbor.ui.inventory.EvidenceDetailController ctrl = loader.getController();
+            ctrl.setEvidence(ev, currentCase == null ? "" : currentCase.getCaseNumber());
+
+            javafx.stage.Stage dialog = new javafx.stage.Stage();
+            dialog.initModality(javafx.stage.Modality.WINDOW_MODAL);
+            dialog.initOwner(evidenceTable.getScene().getWindow());
+            dialog.setTitle("Evidence Detail \u2014 " + nvl(ev.getBarcode()));
+            javafx.scene.Scene scene = new javafx.scene.Scene(root, 860, 640);
+            scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
+            dialog.setScene(scene);
+            dialog.showAndWait();
+            refresh(); // pick up any CoC / status updates
+        } catch (Exception ex) {
+            showError(ex);
+        }
+    }
+
     private void showError(Exception e) {
         e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        String detail = e.getMessage();
+        if (detail == null || detail.isBlank()) {
+            detail = e.getClass().getSimpleName();
+        }
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setTitle("Error");
+        a.setHeaderText("Something went wrong");
+        a.setContentText(detail);
+        applyDialogTheme(a);
+        a.showAndWait();
+    }
+
+    private void warn(String header, String detail) {
+        Alert a = new Alert(Alert.AlertType.WARNING);
+        a.setTitle("Missing Information");
+        a.setHeaderText(header == null || header.isBlank() ? "Missing information" : header);
+        a.setContentText(detail == null || detail.isBlank()
+                ? (header == null || header.isBlank() ? "Please fill in the required fields." : header)
+                : detail);
+        applyDialogTheme(a);
+        a.showAndWait();
+    }
+
+    private void applyDialogTheme(Alert a) {
+        try {
+            a.getDialogPane().getStylesheets().add(
+                    getClass().getResource("/styles/theme.css").toExternalForm());
+        } catch (Exception ignore) {}
     }
 
     private String nvl(String s) { return s == null ? "" : s; }

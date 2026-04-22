@@ -83,7 +83,7 @@ public class CaseRepository {
 
     public void associatePerson(int caseId, int personId, String role) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement(
-                "INSERT OR IGNORE INTO case_persons (case_id, person_id, role) VALUES (?,?,?)")) {
+                "INSERT IGNORE INTO case_persons (case_id, person_id, role) VALUES (?,?,?)")) {
             ps.setInt(1, caseId); ps.setInt(2, personId); ps.setString(3, role); ps.executeUpdate();
         }
     }

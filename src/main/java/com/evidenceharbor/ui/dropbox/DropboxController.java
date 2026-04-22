@@ -11,6 +11,7 @@ import com.evidenceharbor.persistence.ChainOfCustodyRepository;
 import com.evidenceharbor.persistence.EvidenceRepository;
 import com.evidenceharbor.persistence.LookupRepository;
 import com.evidenceharbor.persistence.OfficerRepository;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -208,8 +209,7 @@ public class DropboxController implements Initializable {
                     .toList();
 
             if (inDropbox.isEmpty()) {
-            new Alert(Alert.AlertType.INFORMATION,
-                "No evidence is currently assigned to an approved dropbox location.").showAndWait();
+            Dialogs.info("No evidence is currently assigned to an approved dropbox location.");
             refreshCount();
             showIdleState();
             return;
@@ -248,6 +248,7 @@ public class DropboxController implements Initializable {
         dialog.setTitle("Check In Evidence");
         dialog.setHeaderText("Select storage location for: " + item.evidence.getBarcode());
         dialog.setContentText("Storage Location:");
+        Dialogs.style(dialog);
         dialog.showAndWait().ifPresent(loc -> {
             try {
                 evidenceRepo.updateStatus(item.evidence.getId(), "In Storage", loc);
@@ -273,9 +274,8 @@ public class DropboxController implements Initializable {
         try {
             String actorName = getSelectedOfficerName();
             if (!isEvidenceTechOrAdmin(actorName)) {
-                new Alert(Alert.AlertType.WARNING,
-                        "Only Evidence Tech or Admin may mark evidence as Missing. Enter a valid officer name.")
-                        .showAndWait();
+                Dialogs.warn("Permission required",
+                        "Only Evidence Tech or Admin may mark evidence as Missing. Enter a valid officer name.");
                 return;
             }
 
@@ -283,9 +283,10 @@ public class DropboxController implements Initializable {
             noteDialog.setTitle("Mark Evidence Missing");
             noteDialog.setHeaderText("Missing evidence requires an explanation note.");
             noteDialog.setContentText("Reason / Notes:");
+            Dialogs.style(noteDialog);
             Optional<String> noteOpt = noteDialog.showAndWait();
             if (noteOpt.isEmpty() || noteOpt.get().trim().isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "A note is required when marking evidence as Missing.").showAndWait();
+                Dialogs.warn("Note required", "A note is required when marking evidence as Missing.");
                 return;
             }
 
@@ -318,10 +319,10 @@ public class DropboxController implements Initializable {
     private void onFinishSession() {
         long pending = sessionItems.stream().filter(i -> "Pending".equals(i.action)).count();
         if (pending > 0) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                    pending + " item(s) are still pending. Finish session anyway?",
-                    ButtonType.YES, ButtonType.NO);
-            if (alert.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
+            if (!Dialogs.confirm("Finish session?",
+                    pending + " item(s) are still pending. Finish session anyway?")) {
+                return;
+            }
         }
 
         try {
@@ -331,7 +332,7 @@ public class DropboxController implements Initializable {
             sessionItems.clear();
             refreshCount();
             showIdleState();
-            new Alert(Alert.AlertType.INFORMATION, "Session complete. " + checkedIn + " items processed.").showAndWait();
+            Dialogs.info("Session complete", checkedIn + " items processed.");
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 

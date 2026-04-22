@@ -34,7 +34,7 @@ public class ChargeRepository {
 
     public void addToCase(int caseId, int chargeId) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement(
-                "INSERT OR IGNORE INTO case_charges (case_id, charge_id) VALUES (?,?)")) {
+                "INSERT IGNORE INTO case_charges (case_id, charge_id) VALUES (?,?)")) {
             ps.setInt(1, caseId); ps.setInt(2, chargeId); ps.executeUpdate();
         }
     }

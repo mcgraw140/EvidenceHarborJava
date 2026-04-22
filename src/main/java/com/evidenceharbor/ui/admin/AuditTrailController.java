@@ -6,6 +6,7 @@ import com.evidenceharbor.domain.AuditLog;
 import com.evidenceharbor.persistence.AuditLogRepository;
 import com.evidenceharbor.persistence.LookupRepository;
 import com.evidenceharbor.util.TableExportUtil;
+import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -143,7 +144,7 @@ public class AuditTrailController implements Initializable {
                     "audit_trail_" + LocalDate.now() + ".csv");
             Files.createDirectories(out.getParent());
             Files.writeString(out, sb.toString(), StandardCharsets.UTF_8);
-            new Alert(Alert.AlertType.INFORMATION, "Exported to:\n" + out).showAndWait();
+            Dialogs.info("Export complete", "Exported to:\n" + out);
         } catch (Exception e) { showError(e); }
     }
 
@@ -216,6 +217,6 @@ public class AuditTrailController implements Initializable {
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
+        Dialogs.error(e);
     }
 }

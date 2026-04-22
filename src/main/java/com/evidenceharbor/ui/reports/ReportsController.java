@@ -44,6 +44,7 @@ public class ReportsController implements Initializable {
     @FXML private Button btnOfficerReport;
     @FXML private Button btnLocationReport;
     @FXML private Button btnCasesReport;
+    @FXML private Button btnCaseReport;
 
     @FXML private Label reportTitleLabel;
     @FXML private HBox dateFilterBox;
@@ -84,12 +85,13 @@ public class ReportsController implements Initializable {
         }
     }
 
-    @FXML private void onSelectAllReport()      { selectReport("all",      "All Evidence (Detail)", false); }
-    @FXML private void onSelectStatusReport()   { selectReport("status",   "Evidence by Status",   false); }
-    @FXML private void onSelectTypeReport()     { selectReport("type",     "Evidence by Type",     false); }
-    @FXML private void onSelectOfficerReport()  { selectReport("officer",  "Evidence by Officer",  false); }
-    @FXML private void onSelectLocationReport() { selectReport("location", "Evidence by Location", false); }
-    @FXML private void onSelectCasesReport()    { selectReport("cases",    "Cases Summary",        true);  }
+    @FXML private void onSelectAllReport()      { selectReport("all",       "All Evidence (Detail)", false); }
+    @FXML private void onSelectStatusReport()   { selectReport("status",    "Evidence by Status",   false); }
+    @FXML private void onSelectTypeReport()     { selectReport("type",      "Evidence by Type",     false); }
+    @FXML private void onSelectOfficerReport()  { selectReport("officer",   "Evidence by Officer",  false); }
+    @FXML private void onSelectLocationReport() { selectReport("location",  "Evidence by Location", false); }
+    @FXML private void onSelectCasesReport()    { selectReport("cases",     "Cases Summary",        true);  }
+    @FXML private void onSelectCaseReport()     { selectReport("casedetail","Case Detail Report",   false); }
 
     private void selectReport(String type, String title, boolean showDateFilter) {
         selectedReport = type;
@@ -113,13 +115,14 @@ public class ReportsController implements Initializable {
             if (!b.getStyleClass().contains("btn-secondary")) b.getStyleClass().add("btn-secondary");
         }
         Button active = switch (type) {
-            case "all"      -> btnAllReport;
-            case "status"   -> btnStatusReport;
-            case "type"     -> btnTypeReport;
-            case "officer"  -> btnOfficerReport;
-            case "location" -> btnLocationReport;
-            case "cases"    -> btnCasesReport;
-            default         -> null;
+            case "all"        -> btnAllReport;
+            case "status"     -> btnStatusReport;
+            case "type"       -> btnTypeReport;
+            case "officer"    -> btnOfficerReport;
+            case "location"   -> btnLocationReport;
+            case "cases"      -> btnCasesReport;
+            case "casedetail" -> btnCaseReport;
+            default           -> null;
         };
         if (active != null) {
             active.getStyleClass().remove("btn-secondary");
@@ -159,6 +162,10 @@ public class ReportsController implements Initializable {
                     currentHeaders = new String[]{"Case #", "Incident Date", "Officer", "Badge", "Evidence Count", "Persons"};
                     data = reportRepo.casesSummary(from, to);
                 }
+                case "casedetail" -> {
+                    currentHeaders = ReportRepository.CASE_REPORT_HEADERS;
+                    data = reportRepo.allCasesForReport();
+                }
                 default -> { return; }
             }
             buildTable(currentHeaders, data);
@@ -191,11 +198,20 @@ public class ReportsController implements Initializable {
     @FXML private void onInventory()     { Navigator.get().showInventory(); }
     @FXML private void onDropbox()       { Navigator.get().showDropbox(); }
     @FXML private void onReports()       { }
+    @FXML private void onPeople()        { Navigator.get().showPeople(); }
     @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
     @FXML private void onBack()          { Navigator.get().showCaseList(); }
     @FXML private void onDashboard()     { Navigator.get().showCaseList(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+
+    @FXML
+    private void onExportCsv() {
+        if (reportTable.getItems().isEmpty()) return;
+        String safeName = (selectedReport == null ? "report" : selectedReport) + ".csv";
+        TableExportUtil.exportCsv(
+                reportTable.getScene().getWindow(), safeName, currentHeaders, reportTable.getItems());
+    }
 
     // ── Stat card drill-downs ─────────────────────────────────────────────
     @FXML private void onCardTotalEvidence(MouseEvent e) { showEvidenceList("All Evidence", safe(reportRepo::evidenceDetailsAll)); }
@@ -220,6 +236,7 @@ public class ReportsController implements Initializable {
                                        reportRepo.evidenceDetailsByOfficer(row.get(0), row.size() > 1 ? row.get(1) : ""));
                 case "cases"    -> showEvidenceList("Evidence for case: " + row.get(0),
                                        reportRepo.evidenceDetailsForCase(row.get(0)));
+                case "casedetail" -> showCaseDetailReport(row.get(0));
                 default -> { }
             }
         } catch (Exception ex) {
@@ -303,5 +320,90 @@ public class ReportsController implements Initializable {
             ex.printStackTrace();
             return null;
         }
+    }
+
+    // ── Case Detail Report dialog ─────────────────────────────────────────
+    private void showCaseDetailReport(String caseNumber) {
+        List<String[]> evidenceRows  = safe(() -> reportRepo.caseEvidenceDetail(caseNumber));
+        List<String[]> personsRows   = safe(() -> reportRepo.casePersonsDetail(caseNumber));
+        List<String[]> vehicleRows   = safe(() -> reportRepo.caseVehiclesDetail(caseNumber));
+        if (evidenceRows == null) evidenceRows = List.of();
+        if (personsRows  == null) personsRows  = List.of();
+        if (vehicleRows  == null) vehicleRows  = List.of();
+
+        // Title
+        Label titleLabel = new Label("Case Report: " + caseNumber);
+        titleLabel.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#e2e8f0;");
+
+        // Build section: label + table
+        VBox content = new VBox(14, titleLabel);
+        content.getStyleClass().add("root-pane");
+        content.setPadding(new Insets(16));
+
+        content.getChildren().add(sectionTable("Associated People (" + personsRows.size() + ")",
+                ReportRepository.CASE_PERSONS_HEADERS, personsRows));
+        content.getChildren().add(sectionTable("Evidence (" + evidenceRows.size() + ")",
+                ReportRepository.CASE_EVIDENCE_HEADERS, evidenceRows));
+        content.getChildren().add(sectionTable("Vehicles (" + vehicleRows.size() + ")",
+                ReportRepository.CASE_VEHICLES_HEADERS, vehicleRows));
+
+        Button exportEvidenceBtn = new Button("Export Evidence CSV");
+        exportEvidenceBtn.getStyleClass().add("btn-secondary");
+        Button exportPersonsBtn = new Button("Export Persons CSV");
+        exportPersonsBtn.getStyleClass().add("btn-secondary");
+        Button closeBtn = new Button("Close");
+        closeBtn.getStyleClass().add("btn-secondary");
+
+        HBox footer = new HBox(10, exportEvidenceBtn, exportPersonsBtn,
+                new javafx.scene.layout.Region(), closeBtn);
+        HBox.setHgrow(footer.getChildren().get(2), javafx.scene.layout.Priority.ALWAYS);
+        footer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        content.getChildren().add(footer);
+
+        Stage stage = new Stage();
+        stage.initModality(Modality.WINDOW_MODAL);
+        Window owner = reportTable.getScene() != null ? reportTable.getScene().getWindow() : null;
+        if (owner != null) stage.initOwner(owner);
+        stage.setTitle("Case Report — " + caseNumber);
+        javafx.scene.control.ScrollPane scroll = new javafx.scene.control.ScrollPane(content);
+        scroll.setFitToWidth(true);
+        Scene scene = new Scene(scroll, 1000, 680);
+        if (reportTable.getScene() != null) scene.getStylesheets().addAll(reportTable.getScene().getStylesheets());
+        stage.setScene(scene);
+
+        final List<String[]> finalEvidenceRows = evidenceRows;
+        final List<String[]> finalPersonsRows  = personsRows;
+        exportEvidenceBtn.setOnAction(e ->
+                TableExportUtil.exportCsv(stage, caseNumber + "_evidence.csv",
+                        ReportRepository.CASE_EVIDENCE_HEADERS, toObservable(finalEvidenceRows)));
+        exportPersonsBtn.setOnAction(e ->
+                TableExportUtil.exportCsv(stage, caseNumber + "_persons.csv",
+                        ReportRepository.CASE_PERSONS_HEADERS, toObservable(finalPersonsRows)));
+        closeBtn.setOnAction(e -> stage.close());
+        stage.show();
+    }
+
+    private VBox sectionTable(String sectionTitle, String[] headers, List<String[]> data) {
+        Label lbl = new Label(sectionTitle);
+        lbl.setStyle("-fx-font-size:13px; -fx-font-weight:bold; -fx-text-fill:#94a3b8; -fx-padding: 0 0 4 0;");
+        TableView<ObservableList<String>> table = new TableView<>();
+        table.setPlaceholder(new Label("No records"));
+        table.setPrefHeight(data.isEmpty() ? 80 : Math.min(200, 35 + data.size() * 28));
+        for (int i = 0; i < headers.length; i++) {
+            final int col = i;
+            TableColumn<ObservableList<String>, String> tc = new TableColumn<>(headers[i]);
+            tc.setCellValueFactory(cd ->
+                    new SimpleStringProperty(col < cd.getValue().size() ? cd.getValue().get(col) : ""));
+            tc.setPrefWidth(130);
+            table.getColumns().add(tc);
+        }
+        table.setItems(toObservable(data));
+        return new VBox(4, lbl, table);
+    }
+
+    private ObservableList<ObservableList<String>> toObservable(List<String[]> data) {
+        ObservableList<ObservableList<String>> result = FXCollections.observableArrayList();
+        for (String[] r : data) result.add(FXCollections.observableArrayList(r));
+        return result;
     }
 }

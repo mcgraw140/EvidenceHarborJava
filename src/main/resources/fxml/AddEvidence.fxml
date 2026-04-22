@@ -26,6 +26,7 @@
                 <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
                 <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
                 <Button fx:id="navReportsBtn" text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
             </HBox>
         </VBox>
     </top>
@@ -146,7 +147,7 @@
                 <!-- Metadata card -->
                 <VBox styleClass="card" spacing="12">
                     <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-                    <Label text="Storage &amp; Status" styleClass="section-title"/>
+                    <Label text="Intake (Drop Box)" styleClass="section-title"/>
 
                     <GridPane hgap="24" vgap="12">
                         <columnConstraints>
@@ -154,9 +155,9 @@
                             <ColumnConstraints percentWidth="50"/>
                         </columnConstraints>
                         <VBox spacing="4" GridPane.columnIndex="0">
-                            <Label text="Storage Location" styleClass="field-label"/>
-                            <TextField fx:id="storageLocationField" styleClass="text-field-default"
-                                       promptText="e.g. Evidence Room, Locker 12"/>
+                            <Label text="Drop Box Location" styleClass="field-label"/>
+                            <ComboBox fx:id="storageLocationCombo" styleClass="combo-box-default"
+                                      maxWidth="Infinity" promptText="Select approved drop box"/>
                         </VBox>
                         <VBox spacing="4" GridPane.columnIndex="1">
                             <Label text="Status" styleClass="field-label"/>

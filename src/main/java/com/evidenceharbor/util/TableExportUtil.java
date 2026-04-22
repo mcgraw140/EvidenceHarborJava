@@ -8,7 +8,6 @@ import javafx.print.Printer;
 import javafx.print.PrinterJob;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -41,7 +40,7 @@ public final class TableExportUtil {
     public static void exportCsv(Window owner, String suggestedFileName,
                                  String[] headers, List<ObservableList<String>> rows) {
         if (headers == null || headers.length == 0 || rows == null || rows.isEmpty()) {
-            new Alert(Alert.AlertType.INFORMATION, "Nothing to export.").showAndWait();
+            Dialogs.info("Nothing to export.");
             return;
         }
         FileChooser chooser = new FileChooser();
@@ -59,14 +58,14 @@ public final class TableExportUtil {
                 fw.write("\n");
             }
         } catch (IOException e) {
-            new Alert(Alert.AlertType.ERROR, "Export failed: " + e.getMessage()).showAndWait();
+            Dialogs.error("Export failed", e.getMessage());
         }
     }
 
     /** Print a table's data — opens a print preview first. */
     public static void printTable(Window owner, String title, TableView<?> source) {
         if (source == null || source.getItems().isEmpty()) {
-            new Alert(Alert.AlertType.INFORMATION, "Nothing to print.").showAndWait();
+            Dialogs.info("Nothing to print.");
             return;
         }
         Node printable = buildPrintableTable(title, source);
@@ -132,7 +131,7 @@ public final class TableExportUtil {
     private static boolean doPrint(Window owner, Node node, PageOrientation orientation) {
         PrinterJob job = PrinterJob.createPrinterJob();
         if (job == null) {
-            new Alert(Alert.AlertType.ERROR, "No printer available.").showAndWait();
+            Dialogs.error("No printer available.");
             return false;
         }
         if (!job.showPrintDialog(owner)) return false;

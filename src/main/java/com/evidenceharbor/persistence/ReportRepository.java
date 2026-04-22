@@ -215,4 +215,106 @@ public class ReportRepository {
     private static void setString(PreparedStatement ps, int index, String value) {
         try { ps.setString(index, value); } catch (SQLException e) { throw new RuntimeException(e); }
     }
+
+    // ── Case Report ───────────────────────────────────────────────────────────
+
+    /** All cases for the case report selector. Returns rows: [case_number, incident_date, officer_name, status, evidence_count, persons_count] */
+    public List<String[]> allCasesForReport() throws SQLException {
+        List<String[]> rows = new ArrayList<>();
+        String sql = "SELECT c.case_number, COALESCE(c.incident_date,'') AS incident_date, " +
+                     "COALESCE(o.name,'') AS officer_name, COALESCE(c.status,'') AS status, " +
+                     "COUNT(DISTINCT e.id) AS evidence_count, COUNT(DISTINCT cp.id) AS persons_count " +
+                     "FROM cases c LEFT JOIN officers o ON o.id = c.officer_id " +
+                     "LEFT JOIN evidence e ON e.case_id = c.id " +
+                     "LEFT JOIN case_persons cp ON cp.case_id = c.id " +
+                     "GROUP BY c.id, c.case_number, c.incident_date, o.name, c.status " +
+                     "ORDER BY c.incident_date DESC";
+        try (Statement s = conn().createStatement(); ResultSet rs = s.executeQuery(sql)) {
+            while (rs.next()) rows.add(new String[]{
+                rs.getString("case_number"), rs.getString("incident_date"),
+                rs.getString("officer_name"), rs.getString("status"),
+                String.valueOf(rs.getInt("evidence_count")), String.valueOf(rs.getInt("persons_count"))
+            });
+        }
+        return rows;
+    }
+
+    public static final String[] CASE_REPORT_HEADERS =
+        {"Case #", "Incident Date", "Officer", "Status", "Evidence Count", "Persons"};
+
+    // Evidence for a specific case (drill-down)
+    public static final String[] CASE_EVIDENCE_HEADERS =
+        {"Barcode", "Type", "Status", "Storage Location", "Collection Date", "Collected By", "Description"};
+
+    public List<String[]> caseEvidenceDetail(String caseNumber) throws SQLException {
+        List<String[]> rows = new ArrayList<>();
+        String sql = "SELECT e.barcode, COALESCE(e.evidence_type,'') AS evidence_type, COALESCE(e.status,'') AS status, " +
+                     "COALESCE(e.storage_location,'') AS storage_location, COALESCE(e.collection_date,'') AS collection_date, " +
+                     "COALESCE(o.name,'') AS officer_name, COALESCE(e.description,'') AS description " +
+                     "FROM evidence e " +
+                     "JOIN cases c ON c.id = e.case_id " +
+                     "LEFT JOIN officers o ON o.id = e.collected_by_officer_id " +
+                     "WHERE c.case_number = ? ORDER BY e.collection_date DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, caseNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) rows.add(new String[]{
+                    rs.getString(1), rs.getString(2), rs.getString(3),
+                    rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7)
+                });
+            }
+        }
+        return rows;
+    }
+
+    // Persons associated with a specific case
+    public static final String[] CASE_PERSONS_HEADERS =
+        {"Name", "Role", "DOB", "Address", "City", "State", "Phone"};
+
+    public List<String[]> casePersonsDetail(String caseNumber) throws SQLException {
+        List<String[]> rows = new ArrayList<>();
+        String sql = "SELECT p.full_name, COALESCE(cp.role,'') AS role, COALESCE(p.dob,'') AS dob, " +
+                     "COALESCE(p.address,'') AS address, COALESCE(p.city,'') AS city, " +
+                     "COALESCE(p.state,'') AS state, COALESCE(p.phone,'') AS phone " +
+                     "FROM persons p " +
+                     "JOIN case_persons cp ON cp.person_id = p.id " +
+                     "JOIN cases c ON c.id = cp.case_id " +
+                     "WHERE c.case_number = ? ORDER BY cp.role, p.full_name";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, caseNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) rows.add(new String[]{
+                    rs.getString(1), rs.getString(2), rs.getString(3),
+                    rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7)
+                });
+            }
+        }
+        return rows;
+    }
+
+    // Vehicles (evidence of type Vehicle) for a specific case
+    public static final String[] CASE_VEHICLES_HEADERS =
+        {"Barcode", "Make", "Model", "Year", "Color", "VIN", "License", "State", "Status", "Impounded"};
+
+    public List<String[]> caseVehiclesDetail(String caseNumber) throws SQLException {
+        List<String[]> rows = new ArrayList<>();
+        String sql = "SELECT e.barcode, COALESCE(e.vehicle_make,'') AS make, COALESCE(e.vehicle_model,'') AS model, " +
+                     "COALESCE(e.vehicle_year,'') AS yr, COALESCE(e.vehicle_color,'') AS color, " +
+                     "COALESCE(e.vehicle_vin,'') AS vin, COALESCE(e.vehicle_license_plate,'') AS plate, " +
+                     "COALESCE(e.vehicle_license_state,'') AS plate_state, COALESCE(e.status,'') AS status, " +
+                     "IF(e.vehicle_impounded,1,0) AS impounded " +
+                     "FROM evidence e JOIN cases c ON c.id = e.case_id " +
+                     "WHERE c.case_number = ? AND e.evidence_type = 'Vehicle' ORDER BY e.barcode";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, caseNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) rows.add(new String[]{
+                    rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
+                    rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8),
+                    rs.getString(9), rs.getInt("impounded") == 1 ? "Yes" : "No"
+                });
+            }
+        }
+        return rows;
+    }
 }

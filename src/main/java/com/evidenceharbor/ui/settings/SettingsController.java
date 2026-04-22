@@ -6,6 +6,7 @@ import com.evidenceharbor.domain.AgencySettings;
 import com.evidenceharbor.persistence.DatabaseManager;
 import com.evidenceharbor.persistence.SettingsRepository;
 import com.evidenceharbor.util.TailscaleManager;
+import com.evidenceharbor.util.Dialogs;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -497,14 +498,10 @@ public class SettingsController implements Initializable {
     @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
-        a.setHeaderText(null);
-        a.showAndWait();
+        Dialogs.error(msg);
     }
 
     private void showInfo(String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
-        a.setHeaderText(null);
-        a.showAndWait();
+        Dialogs.info(msg);
     }
 }
