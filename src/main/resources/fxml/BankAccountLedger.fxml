@@ -90,6 +90,7 @@
                 <!-- Transaction toolbar -->
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding:0 0 12 0;">
                     <Label text="Transactions" styleClass="section-title" HBox.hgrow="ALWAYS"/>
+                    <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrintTransactions"/>
                     <Button text="+ Record Transaction" styleClass="btn-primary" onAction="#onAddTransaction"/>
                 </HBox>
 
@@ -113,6 +114,7 @@
                     <Label text="Deposited Evidence Items" styleClass="section-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <TextField fx:id="evidenceSearchField" promptText="Filter by any field (barcode, case, person, SSN, amount...)" prefWidth="420"/>
+                    <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrintDepositedEvidence"/>
                 </HBox>
                 <TableView fx:id="depositedEvidenceTable" styleClass="data-table" VBox.vgrow="ALWAYS" prefHeight="220">
                     <columns>

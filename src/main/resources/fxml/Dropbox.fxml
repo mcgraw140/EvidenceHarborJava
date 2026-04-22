@@ -60,6 +60,7 @@
                     <Label text="Active Session" styleClass="section-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <ComboBox fx:id="officerNameCombo" promptText="Select officer" prefWidth="240"/>
+                    <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrintActive"/>
                     <Button text="✔  Finish Session" styleClass="btn-primary" onAction="#onFinishSession"/>
                     <Button text="✖  Cancel Session" styleClass="btn-secondary" onAction="#onCancelSession"/>
                 </HBox>
@@ -81,6 +82,7 @@
                 <HBox alignment="CENTER_LEFT" spacing="10">
                     <Label text="Session History" styleClass="section-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrintHistory"/>
                     <Button text="◀  Back" styleClass="btn-secondary" onAction="#onBackFromHistory"/>
                 </HBox>
                 <TableView fx:id="historyTable" styleClass="data-table" prefHeight="300">

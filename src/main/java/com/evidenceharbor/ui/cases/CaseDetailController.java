@@ -4,6 +4,7 @@ import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.*;
 import com.evidenceharbor.persistence.*;
+import com.evidenceharbor.util.PrintSheetUtil;
 import com.evidenceharbor.util.TableExportUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
@@ -333,9 +334,62 @@ public class CaseDetailController implements Initializable {
     }
 
     @FXML private void onPrint() {
+        if (currentCase == null) return;
         javafx.stage.Window w = caseContent != null && caseContent.getScene() != null
             ? caseContent.getScene().getWindow() : null;
-        TableExportUtil.printNode(w, caseContent);
+
+        List<PrintSheetUtil.Section> sections = new ArrayList<>();
+
+        // ── Case Overview ────────────────────────────────────────
+        List<String[]> caseMeta = new ArrayList<>();
+        caseMeta.add(new String[]{"Case Number",   nvl(currentCase.getCaseNumber())});
+        caseMeta.add(new String[]{"Incident Date", currentCase.getIncidentDate() != null
+                ? currentCase.getIncidentDate().toString() : ""});
+        Officer primary = currentCase.getOfficer();
+        caseMeta.add(new String[]{"Primary Officer", primary != null ? nvl(primary.getName()) : ""});
+        caseMeta.add(new String[]{"Badge #",         primary != null ? nvl(primary.getBadge()) : ""});
+        sections.add(new PrintSheetUtil.KVSection("Case Overview", caseMeta));
+
+        // ── Charges ──────────────────────────────────────────────
+        if (currentCase.getCharges() != null && !currentCase.getCharges().isEmpty()) {
+            List<String[]> chargeRows = new ArrayList<>();
+            for (Charge c : currentCase.getCharges()) {
+                chargeRows.add(new String[]{nvl(c.getCode()), nvl(c.getDescription())});
+            }
+            sections.add(new PrintSheetUtil.TableSection(
+                    "Charges", new String[]{"Code", "Description"}, chargeRows));
+        }
+
+        // ── Associated People ────────────────────────────────────
+        if (peopleTable != null && !peopleTable.getItems().isEmpty()) {
+            List<String[]> peopleRows = new ArrayList<>();
+            for (CasePerson cp : peopleTable.getItems()) {
+                peopleRows.add(new String[]{
+                        nvl(cp.getPerson() != null ? cp.getPerson().getFullName() : ""),
+                        nvl(cp.getRole())
+                });
+            }
+            sections.add(new PrintSheetUtil.TableSection(
+                    "Associated People", new String[]{"Name", "Role"}, peopleRows));
+        }
+
+        // ── Evidence ─────────────────────────────────────────────
+        if (evidenceTable != null && !evidenceTable.getItems().isEmpty()) {
+            sections.add(new PrintSheetUtil.TableSection(
+                    "Evidence",
+                    PrintSheetUtil.tableHeaders(evidenceTable),
+                    PrintSheetUtil.tableRows(evidenceTable)));
+        }
+
+        // ── Vehicles ─────────────────────────────────────────────
+        if (vehicleTable != null && !vehicleTable.getItems().isEmpty()) {
+            sections.add(new PrintSheetUtil.TableSection(
+                    "Vehicles",
+                    PrintSheetUtil.tableHeaders(vehicleTable),
+                    PrintSheetUtil.tableRows(vehicleTable)));
+        }
+
+        PrintSheetUtil.print(w, "Case Report — " + nvl(currentCase.getCaseNumber()), sections);
     }
 
     @FXML

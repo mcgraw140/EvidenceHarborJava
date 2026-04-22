@@ -15,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
@@ -226,18 +227,54 @@ public class PeopleController implements Initializable {
         Label hint = new Label("Double-click a case to open it.");
         hint.setStyle("-fx-text-fill:#94a3b8;");
 
+        Button printBtn = new Button("🖨 Print");
+        printBtn.getStyleClass().add("btn-secondary");
+        printBtn.setOnAction(e -> printPersonDetail(p, tbl));
+
+        HBox footer = new HBox(12, hint, printBtn);
+        footer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
         Label detailsHdr = new Label("Details:");
         detailsHdr.setStyle("-fx-font-weight:bold;");
         Label casesHdr = new Label("Cases for this person:");
         casesHdr.setStyle("-fx-font-weight:bold;");
 
-        root.getChildren().addAll(detailsHdr, info, new Separator(), casesHdr, tbl, hint);
+        root.getChildren().addAll(detailsHdr, info, new Separator(), casesHdr, tbl, footer);
         VBox.setVgrow(tbl, javafx.scene.layout.Priority.ALWAYS);
 
         dlg.getDialogPane().setContent(root);
         Dialogs.style(dlg);
         dlg.showAndWait();
     }
+
+    private void printPersonDetail(Person p, TableView<PersonRepository.PersonCaseRow> tbl) {
+        java.util.List<String[]> pairs = new java.util.ArrayList<>();
+        pairs.add(new String[]{"Full Name", nz(p.getFullName())});
+        pairs.add(new String[]{"Date of Birth", nz(p.getDob())});
+        pairs.add(new String[]{"SSN", nz(p.getSsn())});
+        pairs.add(new String[]{"Address", nz(buildAddress(p))});
+        pairs.add(new String[]{"Contact", nz(p.getContact())});
+        pairs.add(new String[]{"Person ID", String.valueOf(p.getId())});
+
+        String[] headers = {"CASE #", "DATE", "ROLE", "CASE OFFICER"};
+        java.util.List<String[]> rows = new java.util.ArrayList<>();
+        for (PersonRepository.PersonCaseRow row : tbl.getItems()) {
+            rows.add(new String[]{
+                    nz(row.caseNumber), nz(row.incidentDate),
+                    nz(row.role), nz(row.officerName)
+            });
+        }
+
+        java.util.List<com.evidenceharbor.util.PrintSheetUtil.Section> sections = new java.util.ArrayList<>();
+        sections.add(new com.evidenceharbor.util.PrintSheetUtil.KVSection("Details", pairs));
+        sections.add(new com.evidenceharbor.util.PrintSheetUtil.TableSection(
+                "Cases for this person", headers, rows));
+
+        javafx.stage.Window w = tbl.getScene() != null ? tbl.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.print(w, "Person — " + nz(p.getFullName()), sections);
+    }
+
+    private static String nz(String s) { return s == null ? "" : s; }
 
     private void addInfoRow(GridPane grid, int row, String label, String value) {
         Label l = new Label(label + ":");
@@ -269,6 +306,12 @@ public class PeopleController implements Initializable {
     }
 
     // ── Edit person ───────────────────────────────────────────────────────
+
+    @FXML
+    private void onPrint() {
+        javafx.stage.Window w = peopleTable.getScene() != null ? peopleTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, "People Directory", peopleTable);
+    }
 
     @FXML
     private void onEditPerson() {

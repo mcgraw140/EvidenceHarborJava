@@ -41,6 +41,7 @@
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Label text="Evidence Storage Audit" styleClass="page-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
+                <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrint"/>
                 <Button text="+ New Audit" styleClass="btn-primary" onAction="#onNewAudit"/>
             </HBox>
             <Separator/>

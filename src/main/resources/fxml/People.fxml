@@ -46,6 +46,7 @@
                 <TextField fx:id="searchField" promptText="Search people..." styleClass="search-field" prefWidth="260"/>
                 <Button fx:id="btnEdit"  text="Edit Name"   styleClass="btn-secondary" onAction="#onEditPerson"  disable="true"/>
                 <Button fx:id="btnMerge" text="Combine..."  styleClass="btn-secondary" onAction="#onMergePeople" disable="true"/>
+                <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrint"/>
             </HBox>
 
             <Label text="Double-click a person to view their cases. Admins and Evidence Techs can rename or combine duplicates."

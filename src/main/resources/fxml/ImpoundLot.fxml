@@ -40,6 +40,15 @@
                 <Label text="Vehicle Impound Lot (Evidence)" styleClass="page-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="searchField" promptText="Search vehicles..." styleClass="search-field" prefWidth="240"/>
+                <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrint"/>
+            </HBox>
+
+            <!-- View mode toggle -->
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Button fx:id="btnViewActive" text="Active" styleClass="btn-primary" onAction="#onViewActive"/>
+                <Button fx:id="btnViewInCustody" text="In Custody" styleClass="btn-secondary" onAction="#onViewInCustody"/>
+                <Button fx:id="btnViewHistorical" text="Historical" styleClass="btn-secondary" onAction="#onViewHistorical"/>
+                <Label fx:id="recordCountLabel" styleClass="subtitle" style="-fx-padding: 0 0 0 12;"/>
             </HBox>
 
             <!-- Stat tiles -->

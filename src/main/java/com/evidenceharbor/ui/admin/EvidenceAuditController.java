@@ -87,6 +87,29 @@ public class EvidenceAuditController implements Initializable {
     }
 
     @FXML
+    private void onPrint() {
+        java.util.List<com.evidenceharbor.util.PrintSheetUtil.Section> sections = new java.util.ArrayList<>();
+        if (inProgressTable.getItems() != null && !inProgressTable.getItems().isEmpty()) {
+            sections.add(new com.evidenceharbor.util.PrintSheetUtil.TableSection(
+                    "In Progress",
+                    com.evidenceharbor.util.PrintSheetUtil.tableHeaders(inProgressTable),
+                    com.evidenceharbor.util.PrintSheetUtil.tableRows(inProgressTable)));
+        }
+        if (completedTable.getItems() != null && !completedTable.getItems().isEmpty()) {
+            sections.add(new com.evidenceharbor.util.PrintSheetUtil.TableSection(
+                    "Completed",
+                    com.evidenceharbor.util.PrintSheetUtil.tableHeaders(completedTable),
+                    com.evidenceharbor.util.PrintSheetUtil.tableRows(completedTable)));
+        }
+        if (sections.isEmpty()) {
+            com.evidenceharbor.util.Dialogs.info("Nothing to print.");
+            return;
+        }
+        javafx.stage.Window w = completedTable.getScene() != null ? completedTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.print(w, "Evidence Storage Audits", sections);
+    }
+
+    @FXML
     private void onNewAudit() {
         Dialog<EvidenceAudit> dlg = new Dialog<>();
         dlg.setTitle("New Evidence Audit");

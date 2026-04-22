@@ -5,7 +5,7 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.AuditLog;
 import com.evidenceharbor.persistence.AuditLogRepository;
 import com.evidenceharbor.persistence.LookupRepository;
-import com.evidenceharbor.util.TableExportUtil;
+import com.evidenceharbor.util.PrintSheetUtil;
 import com.evidenceharbor.util.Dialogs;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -151,7 +151,7 @@ public class AuditTrailController implements Initializable {
     @FXML
     private void onPrint() {
         javafx.stage.Window w = logTable.getScene() != null ? logTable.getScene().getWindow() : null;
-        TableExportUtil.printTable(w, "Audit Trail", logTable);
+        PrintSheetUtil.printTable(w, "Audit Trail", logTable);
     }
 
     private void showDetail(AuditLog log) {

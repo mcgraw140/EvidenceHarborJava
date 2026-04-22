@@ -195,6 +195,12 @@ public class InventoryController implements Initializable {
 
     private String nullSafe(String value) { return value == null ? "" : value; }
 
+    @FXML private void onPrint() {
+        String title = "Evidence Inventory (" + (viewMode == null ? "current" : viewMode) + ")";
+        javafx.stage.Window w = inventoryTable.getScene() != null ? inventoryTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, title, inventoryTable);
+    }
+
     @FXML private void onCases()         { Navigator.get().showCaseList(); }
     @FXML private void onInventory()     { }
     @FXML private void onPeople()        { Navigator.get().showPeople(); }

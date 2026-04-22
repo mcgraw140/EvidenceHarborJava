@@ -3,6 +3,7 @@ package com.evidenceharbor.ui.reports;
 import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.persistence.ReportRepository;
+import com.evidenceharbor.util.PrintSheetUtil;
 import com.evidenceharbor.util.TableExportUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -306,7 +307,7 @@ public class ReportsController implements Initializable {
         String safeName = title.toLowerCase().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "") + ".csv";
         exportBtn.setOnAction(e ->
             TableExportUtil.exportCsv(stage, safeName, headers, table.getItems()));
-        printBtn.setOnAction(e -> TableExportUtil.printTable(stage, title, table));
+        printBtn.setOnAction(e -> PrintSheetUtil.printTable(stage, title, table));
         close.setOnAction(e -> stage.close());
         stage.show();
     }

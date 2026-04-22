@@ -44,6 +44,7 @@
                 <Label text="Evidence Inventory" styleClass="page-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="searchField" promptText="Search inventory..." styleClass="search-field" prefWidth="280"/>
+                <Button text="🖨 Print" styleClass="btn-secondary" onAction="#onPrint"/>
             </HBox>
 
             <!-- View mode toggle -->

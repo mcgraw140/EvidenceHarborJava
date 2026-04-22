@@ -76,14 +76,21 @@ public class EvidenceAuditSessionController {
 
     @FXML
     private void onPrint() {
-        String title = "Evidence Audit #" + audit.getId()
-                + "  —  " + nullSafe(audit.getAuditType())
-                + (audit.getScope() != null && !audit.getScope().isBlank()
-                        ? " (" + audit.getScope() + ")" : "")
-                + "  —  Status: " + nullSafe(audit.getStatus());
+        String title = "Evidence Audit #" + audit.getId();
+        List<String[]> meta = new ArrayList<>();
+        meta.add(new String[]{"Audit Type",  nullSafe(audit.getAuditType())});
+        meta.add(new String[]{"Status",      nullSafe(audit.getStatus())});
+        meta.add(new String[]{"Scope",       nullSafe(audit.getScope())});
+        meta.add(new String[]{"Created By",  nullSafe(metaCreatedBy != null ? metaCreatedBy.getText() : "")});
+        meta.add(new String[]{"Created At",  nullSafe(metaCreatedAt != null ? metaCreatedAt.getText() : "")});
+        meta.add(new String[]{"Total Items", nullSafe(summaryTotal  != null ? summaryTotal.getText()  : "")});
+        meta.add(new String[]{"Found",       nullSafe(summaryFound  != null ? summaryFound.getText()  : "")});
+        meta.add(new String[]{"Missing",     nullSafe(summaryMissing!= null ? summaryMissing.getText(): "")});
+        meta.add(new String[]{"Pending",     nullSafe(summaryPending!= null ? summaryPending.getText(): "")});
+
         javafx.stage.Window win = itemsTable.getScene() != null
                 ? itemsTable.getScene().getWindow() : null;
-        com.evidenceharbor.util.TableExportUtil.printTable(win, title, itemsTable);
+        com.evidenceharbor.util.PrintSheetUtil.printTable(win, title, meta, itemsTable);
     }
 
     @FXML

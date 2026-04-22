@@ -28,6 +28,10 @@ public class ImpoundLotController implements Initializable {
     @FXML private Label statTotal;
     @FXML private Label statImpounded;
     @FXML private Label statStolen;
+    @FXML private Label recordCountLabel;
+    @FXML private Button btnViewActive;
+    @FXML private Button btnViewInCustody;
+    @FXML private Button btnViewHistorical;
 
     @FXML private TableView<Evidence> vehicleTable;
     @FXML private TableColumn<Evidence, String> colBarcode;
@@ -44,6 +48,9 @@ public class ImpoundLotController implements Initializable {
     private final CaseRepository caseRepo = new CaseRepository();
     private final Map<Integer, String> caseNumberById = new HashMap<>();
     private List<Evidence> allVehicles = List.of();
+
+    private static final Set<String> HISTORICAL_STATUSES = Set.of("Destroyed", "Disbursed", "Returned to Owner");
+    private String viewMode = "active"; // active, inCustody, historical
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -96,19 +103,67 @@ public class ImpoundLotController implements Initializable {
 
     private void applySearch(String query) {
         String q = query == null ? "" : query.trim().toLowerCase();
-        List<Evidence> filtered = q.isEmpty() ? new ArrayList<>(allVehicles)
-                : allVehicles.stream()
-                    .filter(e -> ns(e.getBarcode()).toLowerCase().contains(q)
-                              || ns(e.getVehicleMake()).toLowerCase().contains(q)
-                              || ns(e.getVehicleModel()).toLowerCase().contains(q)
-                              || ns(e.getVehicleVin()).toLowerCase().contains(q)
-                              || ns(e.getVehicleLicensePlate()).toLowerCase().contains(q)
-                              || caseNumberById.getOrDefault(e.getCaseId(), "").toLowerCase().contains(q))
-                    .collect(Collectors.toList());
+        List<Evidence> filtered = allVehicles.stream()
+                .filter(this::matchesViewMode)
+                .filter(e -> q.isEmpty()
+                        || ns(e.getBarcode()).toLowerCase().contains(q)
+                        || ns(e.getVehicleMake()).toLowerCase().contains(q)
+                        || ns(e.getVehicleModel()).toLowerCase().contains(q)
+                        || ns(e.getVehicleVin()).toLowerCase().contains(q)
+                        || ns(e.getVehicleLicensePlate()).toLowerCase().contains(q)
+                        || caseNumberById.getOrDefault(e.getCaseId(), "").toLowerCase().contains(q))
+                .collect(Collectors.toList());
         vehicleTable.setItems(FXCollections.observableArrayList(filtered));
+        if (recordCountLabel != null) {
+            recordCountLabel.setText(filtered.size() + " vehicle" + (filtered.size() == 1 ? "" : "s"));
+        }
+    }
+
+    private boolean matchesViewMode(Evidence e) {
+        String status = ns(e.getStatus());
+        return switch (viewMode) {
+            case "active"     -> !HISTORICAL_STATUSES.contains(status);
+            case "inCustody"  -> e.isVehicleImpounded() && !HISTORICAL_STATUSES.contains(status);
+            case "historical" -> HISTORICAL_STATUSES.contains(status);
+            default -> true;
+        };
     }
 
     private String ns(String s) { return s == null ? "" : s; }
+
+    @FXML private void onPrint() {
+        javafx.stage.Window w = vehicleTable.getScene() != null ? vehicleTable.getScene().getWindow() : null;
+        String label = switch (viewMode) {
+            case "inCustody"  -> "In Custody";
+            case "historical" -> "Historical";
+            default -> "Active";
+        };
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, "Vehicle Impound Lot (" + label + ")", vehicleTable);
+    }
+
+    @FXML private void onViewActive() {
+        viewMode = "active";
+        btnViewActive.getStyleClass().setAll("btn-primary");
+        btnViewInCustody.getStyleClass().setAll("btn-secondary");
+        btnViewHistorical.getStyleClass().setAll("btn-secondary");
+        applySearch(searchField.getText());
+    }
+
+    @FXML private void onViewInCustody() {
+        viewMode = "inCustody";
+        btnViewActive.getStyleClass().setAll("btn-secondary");
+        btnViewInCustody.getStyleClass().setAll("btn-primary");
+        btnViewHistorical.getStyleClass().setAll("btn-secondary");
+        applySearch(searchField.getText());
+    }
+
+    @FXML private void onViewHistorical() {
+        viewMode = "historical";
+        btnViewActive.getStyleClass().setAll("btn-secondary");
+        btnViewInCustody.getStyleClass().setAll("btn-secondary");
+        btnViewHistorical.getStyleClass().setAll("btn-primary");
+        applySearch(searchField.getText());
+    }
 
     @FXML private void onCases()         { Navigator.get().showCaseList(); }
     @FXML private void onInventory()     { Navigator.get().showInventory(); }

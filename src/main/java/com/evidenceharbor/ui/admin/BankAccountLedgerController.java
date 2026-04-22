@@ -290,6 +290,25 @@ public class BankAccountLedgerController implements Initializable {
         if (sel != null) showAccountDialog(sel);
     }
 
+    @FXML
+    private void onPrintTransactions() {
+        BankAccount sel = accountList.getSelectionModel().getSelectedItem();
+        String title = "Bank Ledger Transactions"
+                + (sel != null ? " — " + sel.getAccountName() : "");
+        javafx.stage.Window w = txTable.getScene() != null ? txTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, title, txTable);
+    }
+
+    @FXML
+    private void onPrintDepositedEvidence() {
+        BankAccount sel = accountList.getSelectionModel().getSelectedItem();
+        String title = "Deposited Evidence"
+                + (sel != null ? " — " + sel.getAccountName() : "");
+        javafx.stage.Window w = depositedEvidenceTable.getScene() != null
+                ? depositedEvidenceTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, title, depositedEvidenceTable);
+    }
+
     private void showAccountDialog(BankAccount existing) {
         Dialog<ButtonType> dlg = new Dialog<>();
         dlg.setTitle(existing == null ? "New Account" : "Edit Account");

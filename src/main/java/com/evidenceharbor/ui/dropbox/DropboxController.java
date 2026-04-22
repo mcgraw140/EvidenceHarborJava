@@ -348,6 +348,18 @@ public class DropboxController implements Initializable {
     @FXML
     private void onBackFromHistory() { showIdleState(); }
 
+    @FXML
+    private void onPrintActive() {
+        javafx.stage.Window w = dropboxTable.getScene() != null ? dropboxTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, "Dropbox Check-In Session", dropboxTable);
+    }
+
+    @FXML
+    private void onPrintHistory() {
+        javafx.stage.Window w = historyTable.getScene() != null ? historyTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.printTable(w, "Dropbox Session History", historyTable);
+    }
+
     // â”€â”€ DB helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void refreshCount() {
