@@ -262,6 +262,13 @@ public class CocTransferController implements Initializable {
                             null, today, performedBy,
                             "CoC — " + (evidence.getBarcode() != null ? evidence.getBarcode() : "evidence"),
                             evidence.getBarcode());
+
+                        // Link evidence to account on deposit; clear on removal
+                        if ("Bank Deposit".equals(action)) {
+                            evidenceRepo.updateBankAccount(evidence.getId(), matchedAccount.getId());
+                        } else {
+                            evidenceRepo.updateBankAccount(evidence.getId(), null);
+                        }
                     }
                 }
             }

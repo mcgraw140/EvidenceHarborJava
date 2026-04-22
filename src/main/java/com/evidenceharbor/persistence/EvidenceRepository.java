@@ -285,6 +285,16 @@ public class EvidenceRepository {
         }
     }
 
+    public void updateBankAccount(int id, Integer bankAccountId) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE evidence SET bank_account_id=? WHERE id=?")) {
+            if (bankAccountId == null) ps.setNull(1, java.sql.Types.INTEGER);
+            else ps.setInt(1, bankAccountId);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+        }
+    }
+
     public void updateVehicleStatus(int id, String status, String storageLocation, boolean impounded) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE evidence SET status=?, storage_location=?, vehicle_impounded=? WHERE id=?")) {
