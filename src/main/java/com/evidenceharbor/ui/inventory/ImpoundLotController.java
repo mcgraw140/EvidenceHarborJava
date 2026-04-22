@@ -29,7 +29,7 @@ public class ImpoundLotController implements Initializable {
     @FXML private Label statImpounded;
     @FXML private Label statStolen;
     @FXML private Label recordCountLabel;
-    @FXML private Button btnViewActive;
+    @FXML private Button btnViewAll;
     @FXML private Button btnViewInCustody;
     @FXML private Button btnViewHistorical;
 
@@ -50,7 +50,7 @@ public class ImpoundLotController implements Initializable {
     private List<Evidence> allVehicles = List.of();
 
     private static final Set<String> HISTORICAL_STATUSES = Set.of("Destroyed", "Disbursed", "Returned to Owner");
-    private String viewMode = "active"; // active, inCustody, historical
+    private String viewMode = "all"; // all, inCustody, historical
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -122,10 +122,9 @@ public class ImpoundLotController implements Initializable {
     private boolean matchesViewMode(Evidence e) {
         String status = ns(e.getStatus());
         return switch (viewMode) {
-            case "active"     -> !HISTORICAL_STATUSES.contains(status);
             case "inCustody"  -> e.isVehicleImpounded() && !HISTORICAL_STATUSES.contains(status);
             case "historical" -> HISTORICAL_STATUSES.contains(status);
-            default -> true;
+            default -> true; // "all"
         };
     }
 
@@ -136,14 +135,14 @@ public class ImpoundLotController implements Initializable {
         String label = switch (viewMode) {
             case "inCustody"  -> "In Custody";
             case "historical" -> "Historical";
-            default -> "Active";
+            default -> "All";
         };
         com.evidenceharbor.util.PrintSheetUtil.printTable(w, "Vehicle Impound Lot (" + label + ")", vehicleTable);
     }
 
-    @FXML private void onViewActive() {
-        viewMode = "active";
-        btnViewActive.getStyleClass().setAll("btn-primary");
+    @FXML private void onViewAll() {
+        viewMode = "all";
+        btnViewAll.getStyleClass().setAll("btn-primary");
         btnViewInCustody.getStyleClass().setAll("btn-secondary");
         btnViewHistorical.getStyleClass().setAll("btn-secondary");
         applySearch(searchField.getText());
@@ -151,7 +150,7 @@ public class ImpoundLotController implements Initializable {
 
     @FXML private void onViewInCustody() {
         viewMode = "inCustody";
-        btnViewActive.getStyleClass().setAll("btn-secondary");
+        btnViewAll.getStyleClass().setAll("btn-secondary");
         btnViewInCustody.getStyleClass().setAll("btn-primary");
         btnViewHistorical.getStyleClass().setAll("btn-secondary");
         applySearch(searchField.getText());
@@ -159,7 +158,7 @@ public class ImpoundLotController implements Initializable {
 
     @FXML private void onViewHistorical() {
         viewMode = "historical";
-        btnViewActive.getStyleClass().setAll("btn-secondary");
+        btnViewAll.getStyleClass().setAll("btn-secondary");
         btnViewInCustody.getStyleClass().setAll("btn-secondary");
         btnViewHistorical.getStyleClass().setAll("btn-primary");
         applySearch(searchField.getText());

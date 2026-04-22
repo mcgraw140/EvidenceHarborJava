@@ -273,6 +273,26 @@ public class CocTransferController implements Initializable {
                 }
             }
 
+            // Auto-create a reversing Withdrawal when currency-linked evidence
+            // leaves custody via a non-Bank path (Return to Owner / Disburse /
+            // Destroy). The funds must come out of the account balance.
+            if ("Return to Owner".equals(action) || "Disburse".equals(action) || "Destroy".equals(action)) {
+                Integer linkedAccountId = bankRepo.findAccountIdForEvidence(evidence.getId());
+                if (linkedAccountId != null) {
+                    double net = bankRepo.getNetDepositForEvidence(linkedAccountId, evidence.getBarcode());
+                    if (net > 0) {
+                        String today = java.time.LocalDate.now().toString();
+                        String note = action + (toPerson != null && !toPerson.isBlank()
+                                ? " — " + toPerson : "");
+                        bankRepo.addTransaction(
+                                linkedAccountId, "Withdrawal", net,
+                                null, today, performedBy,
+                                note, evidence.getBarcode());
+                    }
+                    evidenceRepo.updateBankAccount(evidence.getId(), null);
+                }
+            }
+
             // Update evidence status and storage location
             String newStatus = ACTION_STATUS.getOrDefault(action, evidence.getStatus());
             if ("Bank Removal".equals(action) && toPerson != null) {

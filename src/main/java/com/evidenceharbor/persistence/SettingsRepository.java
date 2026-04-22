@@ -45,6 +45,8 @@ public class SettingsRepository {
         set("evidence_number_pattern",  s.getEvidenceNumberPattern());
         set("evidence_number_example",  s.getEvidenceNumberExample());
         set("barcode_prefix",           s.getBarcodePrefix());
+        AuditLogger.log("System", "UPDATE", "Settings", "agency",
+                "Agency settings saved: " + s.getAgencyName());
     }
 
     private void set(String key, String value) throws SQLException {

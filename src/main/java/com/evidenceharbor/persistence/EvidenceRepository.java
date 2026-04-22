@@ -171,6 +171,11 @@ public class EvidenceRepository {
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) { if (keys.next()) e.setId(keys.getInt(1)); }
         }
+        AuditLogger.log("Evidence", "CREATE", "Evidence", String.valueOf(e.getId()),
+                "Created " + nz(e.getEvidenceType()) + " — barcode " + nz(e.getBarcode())
+                        + (e.getStatus() != null ? ", status " + e.getStatus() : "")
+                        + (e.getStorageLocation() != null && !e.getStorageLocation().isBlank()
+                                ? ", location " + e.getStorageLocation() : ""));
         return e;
     }
 
@@ -276,6 +281,7 @@ public class EvidenceRepository {
     }
 
     public void updateStatus(int id, String status, String storageLocation) throws SQLException {
+        Evidence before = findById(id);
         try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE evidence SET status=?, storage_location=? WHERE id=?")) {
             ps.setString(1, status);
@@ -283,6 +289,7 @@ public class EvidenceRepository {
             ps.setInt(3, id);
             ps.executeUpdate();
         }
+        logDiff(before, id, status, storageLocation, null);
     }
 
     public void updateBankAccount(int id, Integer bankAccountId) throws SQLException {
@@ -293,9 +300,14 @@ public class EvidenceRepository {
             ps.setInt(2, id);
             ps.executeUpdate();
         }
+        AuditLogger.log("Evidence", "UPDATE", "Evidence", String.valueOf(id),
+                bankAccountId == null
+                        ? "Cleared bank account link"
+                        : "Linked to bank account #" + bankAccountId);
     }
 
     public void updateVehicleStatus(int id, String status, String storageLocation, boolean impounded) throws SQLException {
+        Evidence before = findById(id);
         try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE evidence SET status=?, storage_location=?, vehicle_impounded=? WHERE id=?")) {
             ps.setString(1, status);
@@ -304,6 +316,43 @@ public class EvidenceRepository {
             ps.setInt(4, id);
             ps.executeUpdate();
         }
+        logDiff(before, id, status, storageLocation, impounded);
+    }
+
+    private void logDiff(Evidence before, int id, String newStatus, String newLocation, Boolean newImpounded) {
+        StringBuilder sb = new StringBuilder();
+        String bc = before != null ? nz(before.getBarcode()) : "";
+        if (!bc.isBlank()) sb.append("Barcode ").append(bc).append(": ");
+        boolean any = false;
+        if (before == null || !eq(before.getStatus(), newStatus)) {
+            sb.append("status ").append(nz(before == null ? null : before.getStatus()))
+              .append(" → ").append(nz(newStatus));
+            any = true;
+        }
+        if (before == null || !eq(before.getStorageLocation(), newLocation)) {
+            if (any) sb.append("; ");
+            sb.append("location ").append(nz(before == null ? null : before.getStorageLocation()))
+              .append(" → ").append(nz(newLocation));
+            any = true;
+        }
+        if (newImpounded != null && (before == null || before.isVehicleImpounded() != newImpounded)) {
+            if (any) sb.append("; ");
+            sb.append("impounded ").append(before != null && before.isVehicleImpounded())
+              .append(" → ").append(newImpounded);
+            any = true;
+        }
+        if (!any) sb.append("(no changes)");
+        AuditLogger.log("Evidence", "UPDATE", "Evidence", String.valueOf(id), sb.toString());
+    }
+
+    private static boolean eq(String a, String b) {
+        if (a == null) a = "";
+        if (b == null) b = "";
+        return a.equals(b);
+    }
+
+    private static String nz(String s) {
+        return s == null || s.isBlank() ? "(none)" : s;
     }
 
     public List<Evidence> findByStatus(String status) throws SQLException {

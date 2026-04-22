@@ -93,54 +93,26 @@ public class BankAccountLedgerController implements Initializable {
 
         // Transaction table columns
         colDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDate()));
-        colAction.setCellValueFactory(c -> new SimpleStringProperty(
-                c.getValue().isVoided() ? c.getValue().getAction() + " (VOIDED)" : c.getValue().getAction()));
+        colAction.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getAction()));
         colAmount.setCellValueFactory(c -> new SimpleStringProperty(
                 String.format("$%.2f", c.getValue().getAmount())));
         colSlip.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getSlipNumber()));
         colSource.setCellValueFactory(c -> new SimpleStringProperty(
                 c.getValue().getSourceRef() == null ? "" : c.getValue().getSourceRef()));
         colBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPerformedBy()));
-        colNotes.setCellValueFactory(c -> {
-            BankTransaction tx = c.getValue();
-            String n = tx.getNotes() == null ? "" : tx.getNotes();
-            if (tx.isVoided() && tx.getVoidedReason() != null && !tx.getVoidedReason().isBlank()) {
-                String by = tx.getVoidedBy() == null || tx.getVoidedBy().isBlank() ? "" : " by " + tx.getVoidedBy();
-                String voidNote = "[VOIDED" + by + "] " + tx.getVoidedReason();
-                n = n.isBlank() ? voidNote : (n + "  —  " + voidNote);
-            }
-            return new SimpleStringProperty(n);
-        });
-
-        // Dim voided rows with strikethrough
-        txTable.setRowFactory(tv -> new TableRow<>() {
-            @Override
-            protected void updateItem(BankTransaction item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setStyle("");
-                } else if (item.isVoided()) {
-                    setStyle("-fx-text-fill:#94a3b8; -fx-opacity:0.75;");
-                } else {
-                    setStyle("");
-                }
-            }
-        });
+        colNotes.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getNotes() == null ? "" : c.getValue().getNotes()));
 
         colTxAction.setCellFactory(col -> new TableCell<>() {
-            private final Button btnVoid = new Button("Void");
-            { btnVoid.setStyle("-fx-background-color:#e53e3e;-fx-text-fill:white;"); }
+            private final Button btnEdit = new Button("Edit");
+            { btnEdit.getStyleClass().add("btn-secondary"); }
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) { setGraphic(null); return; }
                 BankTransaction tx = getTableView().getItems().get(getIndex());
-                if (tx.isVoided()) {
-                    setGraphic(null);
-                    return;
-                }
-                btnVoid.setOnAction(e -> voidTransaction(tx));
-                setGraphic(btnVoid);
+                btnEdit.setOnAction(e -> editTransaction(tx));
+                setGraphic(btnEdit);
             }
         });
 
@@ -455,49 +427,72 @@ public class BankAccountLedgerController implements Initializable {
         });
     }
 
-    private void voidTransaction(BankTransaction tx) {
-        if (tx.isVoided()) return;
+    private void editTransaction(BankTransaction tx) {
         Dialog<ButtonType> dlg = new Dialog<>();
-        dlg.setTitle("Void Transaction");
+        dlg.setTitle("Edit Transaction");
         Dialogs.style(dlg);
-        dlg.setHeaderText("Voiding a transaction preserves the record for audit.\n"
-                + "A reason is required and cannot be changed later.");
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
-        TextArea taReason = new TextArea();
-        taReason.setPrefRowCount(3);
-        taReason.setPromptText("Explain the error (e.g. wrong amount, duplicate entry, wrong account)");
-        grid.add(new Label("Reason:*"), 0, 0);
-        grid.add(taReason, 1, 0);
-        dlg.getDialogPane().setContent(grid);
 
+        ComboBox<String> cbAction = new ComboBox<>(
+                FXCollections.observableArrayList("Deposit", "Withdrawal"));
+        cbAction.setValue("Deposit".equals(tx.getAction()) ? "Deposit" : "Withdrawal");
+
+        TextField tfAmount = new TextField(String.format("%.2f", tx.getAmount()));
+        TextField tfSlip   = new TextField(tx.getSlipNumber() == null ? "" : tx.getSlipNumber());
+        TextField tfBy     = new TextField(tx.getPerformedBy() == null ? "" : tx.getPerformedBy());
+        TextArea  taNotes  = new TextArea(tx.getNotes() == null ? "" : tx.getNotes());
+        taNotes.setPrefRowCount(2);
+
+        LocalDate initialDate;
+        try {
+            String d = tx.getDate();
+            if (d == null || d.isBlank()) initialDate = LocalDate.now();
+            else if (d.length() >= 10) initialDate = LocalDate.parse(d.substring(0, 10));
+            else initialDate = LocalDate.now();
+        } catch (Exception ignore) { initialDate = LocalDate.now(); }
+        DatePicker dpDate = new DatePicker(initialDate);
+
+        grid.add(new Label("Type:*"),   0, 0); grid.add(cbAction, 1, 0);
+        grid.add(new Label("Amount:*"), 0, 1); grid.add(tfAmount, 1, 1);
+        grid.add(new Label("Date:"),    0, 2); grid.add(dpDate,   1, 2);
+        grid.add(new Label("Slip #:"),  0, 3); grid.add(tfSlip,   1, 3);
+        grid.add(new Label("By:"),      0, 4); grid.add(tfBy,     1, 4);
+        grid.add(new Label("Notes:"),   0, 5); grid.add(taNotes,  1, 5);
+
+        dlg.getDialogPane().setContent(grid);
         dlg.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.OK) {
-                String reason = taReason.getText().trim();
-                if (reason.isEmpty()) {
-                    showError("A reason is required to void a transaction.");
-                    return;
-                }
-                String by = SessionManager.getCurrentOfficer() != null
-                        ? SessionManager.getCurrentOfficer().getName() : "";
-                try {
-                    repo.voidTransaction(tx.getId(), tx.getAccountId(), tx.getAmount(), tx.getAction(), reason, by);
-                } catch (RuntimeException e) {
-                    showError(e.getMessage());
-                    return;
-                }
-                BankAccount sel = accountList.getSelectionModel().getSelectedItem();
-                loadAccounts();
-                if (sel != null) {
-                    accountList.getItems().stream()
-                            .filter(a -> a.getId() == sel.getId())
-                            .findFirst()
-                            .ifPresent(a -> accountList.getSelectionModel().select(a));
-                }
+            if (bt != ButtonType.OK) return;
+            double amount;
+            try {
+                amount = Double.parseDouble(tfAmount.getText().trim());
+                if (amount <= 0) throw new NumberFormatException();
+            } catch (NumberFormatException e) {
+                showError("Amount must be a positive number.");
+                return;
+            }
+            String dateStr = dpDate.getValue() != null
+                    ? dpDate.getValue().toString()
+                    : LocalDate.now().toString();
+            try {
+                repo.updateTransaction(tx.getId(), cbAction.getValue(), amount,
+                        tfSlip.getText().trim(), dateStr,
+                        tfBy.getText().trim(), taNotes.getText().trim());
+            } catch (RuntimeException e) {
+                showError(e.getMessage());
+                return;
+            }
+            BankAccount sel = accountList.getSelectionModel().getSelectedItem();
+            loadAccounts();
+            if (sel != null) {
+                accountList.getItems().stream()
+                        .filter(a -> a.getId() == sel.getId())
+                        .findFirst()
+                        .ifPresent(a -> accountList.getSelectionModel().select(a));
             }
         });
     }

@@ -66,7 +66,8 @@ public class PersonRepository {
                                 + "\" (id #" + existing.getId() + ").");
             }
         }
-        if (p.getId() == 0) {
+        boolean isCreate = p.getId() == 0;
+        if (isCreate) {
             try (PreparedStatement ps = conn().prepareStatement(
                     "INSERT INTO persons (full_name, dob, ssn, street, city, state, zip, contact) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
@@ -83,6 +84,10 @@ public class PersonRepository {
                 ps.executeUpdate();
             }
         }
+        AuditLogger.log("People", isCreate ? "CREATE" : "UPDATE", "Person",
+                String.valueOf(p.getId()),
+                (p.getFullName() == null ? "(no name)" : p.getFullName())
+                        + (p.getSsn() != null && !p.getSsn().isBlank() ? " — SSN " + p.getSsn() : ""));
         return p;
     }
 
@@ -171,6 +176,8 @@ public class PersonRepository {
      */
     public void merge(int keepId, int removeId) throws SQLException {
         if (keepId == removeId) return;
+        AuditLogger.log("People", "MERGE", "Person", String.valueOf(keepId),
+                "Merged person #" + removeId + " into #" + keepId);
         Connection c = conn();
         boolean prevAuto = c.getAutoCommit();
         try {

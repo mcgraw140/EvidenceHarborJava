@@ -45,7 +45,7 @@
 
             <!-- View mode toggle -->
             <HBox spacing="8" alignment="CENTER_LEFT">
-                <Button fx:id="btnViewActive" text="Active" styleClass="btn-primary" onAction="#onViewActive"/>
+                <Button fx:id="btnViewAll" text="All" styleClass="btn-primary" onAction="#onViewAll"/>
                 <Button fx:id="btnViewInCustody" text="In Custody" styleClass="btn-secondary" onAction="#onViewInCustody"/>
                 <Button fx:id="btnViewHistorical" text="Historical" styleClass="btn-secondary" onAction="#onViewHistorical"/>
                 <Label fx:id="recordCountLabel" styleClass="subtitle" style="-fx-padding: 0 0 0 12;"/>

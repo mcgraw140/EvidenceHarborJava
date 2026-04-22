@@ -71,7 +71,8 @@ public class OfficerRepository {
     }
 
     public Officer save(Officer o) throws SQLException {
-        if (o.getId() == 0) {
+        boolean isCreate = o.getId() == 0;
+        if (isCreate) {
             try (PreparedStatement ps = conn().prepareStatement(
                     "INSERT INTO officers (name, badge, username, password_hash, role, status, is_external) VALUES (?,?,?,?,?,?,?)",
                     Statement.RETURN_GENERATED_KEYS)) {
@@ -108,6 +109,11 @@ public class OfficerRepository {
                 ps.executeUpdate();
             }
         }
+        AuditLogger.log("Users", isCreate ? "CREATE" : "UPDATE", "Officer",
+                String.valueOf(o.getId()),
+                (o.getName() == null ? "" : o.getName())
+                        + " (" + (o.getUsername() == null ? "" : o.getUsername()) + ")"
+                        + ", role " + o.getRole() + ", status " + o.getStatus());
         return o;
     }
 
@@ -125,6 +131,7 @@ public class OfficerRepository {
         try (PreparedStatement ps = conn().prepareStatement("DELETE FROM officers WHERE id=?")) {
             ps.setInt(1, id); ps.executeUpdate();
         }
+        AuditLogger.log("Users", "DELETE", "Officer", String.valueOf(id), "Officer deleted");
     }
 
     public void savePermissions(int officerId, String permissions) throws SQLException {
@@ -134,6 +141,8 @@ public class OfficerRepository {
             ps.setInt(2, officerId);
             ps.executeUpdate();
         }
+        AuditLogger.log("Users", "UPDATE", "Officer", String.valueOf(officerId),
+                "Permissions updated: " + (permissions == null ? "" : permissions));
     }
 
     private Officer map(ResultSet rs) throws SQLException {

@@ -34,7 +34,12 @@ public class BankAccountRepository {
             ps.setString(4, notes);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) return findAccountById(keys.getInt(1));
+                if (keys.next()) {
+                    int id = keys.getInt(1);
+                    AuditLogger.log("Bank Ledger", "CREATE", "BankAccount",
+                            String.valueOf(id), "Account \"" + name + "\" (" + (bank == null ? "" : bank) + ")");
+                    return findAccountById(id);
+                }
             }
         } catch (SQLException e) { throw new RuntimeException("Failed to create account: " + e.getMessage(), e); }
         return null;
@@ -50,6 +55,8 @@ public class BankAccountRepository {
             ps.setInt(5, id);
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException("Failed to update account: " + e.getMessage(), e); }
+        AuditLogger.log("Bank Ledger", "UPDATE", "BankAccount",
+                String.valueOf(id), "Account \"" + name + "\" updated");
     }
 
     public void deleteAccount(int id) {
@@ -84,6 +91,33 @@ public class BankAccountRepository {
                 while (rs.next()) result.add(mapTransaction(rs));
             }
         } catch (SQLException e) { throw new RuntimeException("Failed to load transactions: " + e.getMessage(), e); }
+        return result;
+    }
+
+    /** Pair of a transaction and the account name it belongs to, for historical views. */
+    public static class HistoricalTx {
+        public final BankTransaction tx;
+        public final String accountName;
+        public HistoricalTx(BankTransaction tx, String accountName) {
+            this.tx = tx; this.accountName = accountName;
+        }
+    }
+
+    /** Returns every bank transaction across all accounts, newest first. */
+    public List<HistoricalTx> findAllTransactions() {
+        List<HistoricalTx> result = new ArrayList<>();
+        String sql = "SELECT t.*, a.account_name FROM bank_account_transactions t " +
+                     "JOIN bank_accounts a ON a.id = t.account_id " +
+                     "ORDER BY t.date DESC, t.id DESC";
+        try (PreparedStatement ps = conn().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                BankTransaction t = mapTransaction(rs);
+                result.add(new HistoricalTx(t, rs.getString("account_name")));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load historical transactions: " + e.getMessage(), e);
+        }
         return result;
     }
 
@@ -137,7 +171,8 @@ public class BankAccountRepository {
     public void addTransaction(int accountId, String action, double amount, String slip, String date,
                                String performedBy, String notes, String sourceRef) {
         String sql = "INSERT INTO bank_account_transactions (account_id, action, amount, slip_number, date, performed_by, notes, source_ref) VALUES (?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+        int txId = 0;
+        try (PreparedStatement ps = conn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, accountId);
             ps.setString(2, action);
             ps.setDouble(3, amount);
@@ -147,6 +182,7 @@ public class BankAccountRepository {
             ps.setString(7, notes);
             ps.setString(8, sourceRef);
             ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) { if (keys.next()) txId = keys.getInt(1); }
         } catch (SQLException e) { throw new RuntimeException("Failed to record transaction: " + e.getMessage(), e); }
         // Update balance
         String op = "Deposit".equals(action) ? "+" : "-";
@@ -156,6 +192,11 @@ public class BankAccountRepository {
             ps.setInt(2, accountId);
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException("Failed to update balance: " + e.getMessage(), e); }
+        AuditLogger.log("Bank Ledger", "CREATE", "BankTransaction",
+                String.valueOf(txId),
+                action + " $" + String.format("%.2f", amount)
+                        + " on account #" + accountId
+                        + (sourceRef != null && !sourceRef.isBlank() ? " (source: " + sourceRef + ")" : ""));
     }
 
     public void deleteTransaction(int transactionId, int accountId, double amount, String action) {
@@ -172,6 +213,104 @@ public class BankAccountRepository {
             ps.setInt(1, transactionId);
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException("Failed to delete transaction: " + e.getMessage(), e); }
+    }
+
+    /**
+     * Updates a transaction's editable fields. If action or amount change, the
+     * account balance is adjusted: the original effect is reversed first, then
+     * the new effect is applied.
+     */
+    public void updateTransaction(int transactionId, String newAction, double newAmount, String slip,
+                                  String date, String performedBy, String notes) {
+        // Fetch old values
+        String oldAction = null;
+        double oldAmount = 0;
+        int accountId = 0;
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT account_id, action, amount FROM bank_account_transactions WHERE id=?")) {
+            ps.setInt(1, transactionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) throw new RuntimeException("Transaction not found.");
+                accountId = rs.getInt(1);
+                oldAction = rs.getString(2);
+                oldAmount = rs.getDouble(3);
+            }
+        } catch (SQLException e) { throw new RuntimeException("Failed to load transaction: " + e.getMessage(), e); }
+
+        // Reverse old effect
+        String reverseOp = "Deposit".equals(oldAction) ? "-" : "+";
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE bank_accounts SET balance = balance " + reverseOp + " ? WHERE id=?")) {
+            ps.setDouble(1, oldAmount);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException("Failed to reverse old balance: " + e.getMessage(), e); }
+
+        // Update the row
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE bank_account_transactions SET action=?, amount=?, slip_number=?, date=?, performed_by=?, notes=? WHERE id=?")) {
+            ps.setString(1, newAction);
+            ps.setDouble(2, newAmount);
+            ps.setString(3, slip);
+            ps.setString(4, date);
+            ps.setString(5, performedBy);
+            ps.setString(6, notes);
+            ps.setInt(7, transactionId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException("Failed to update transaction: " + e.getMessage(), e); }
+
+        // Apply new effect
+        String applyOp = "Deposit".equals(newAction) ? "+" : "-";
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE bank_accounts SET balance = balance " + applyOp + " ? WHERE id=?")) {
+            ps.setDouble(1, newAmount);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException("Failed to apply new balance: " + e.getMessage(), e); }
+        AuditLogger.log("Bank Ledger", "UPDATE", "BankTransaction",
+                String.valueOf(transactionId),
+                "Edited: was " + oldAction + " $" + String.format("%.2f", oldAmount)
+                        + ", now " + newAction + " $" + String.format("%.2f", newAmount)
+                        + (slip == null || slip.isBlank() ? "" : ", slip " + slip));
+    }
+
+    /** Returns the account id this evidence row is linked to, or null. */
+    public Integer findAccountIdForEvidence(int evidenceId) {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT bank_account_id FROM evidence WHERE id=?")) {
+            ps.setInt(1, evidenceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    if (!rs.wasNull()) return id;
+                }
+            }
+        } catch (SQLException e) { throw new RuntimeException("Failed to look up evidence account: " + e.getMessage(), e); }
+        return null;
+    }
+
+    /**
+     * Computes the net deposited amount (deposits minus withdrawals) for a
+     * specific evidence barcode against the given account.
+     */
+    public double getNetDepositForEvidence(int accountId, String barcode) {
+        if (barcode == null || barcode.isBlank()) return 0;
+        double net = 0;
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT action, SUM(amount) FROM bank_account_transactions " +
+                "WHERE account_id=? AND source_ref=? GROUP BY action")) {
+            ps.setInt(1, accountId);
+            ps.setString(2, barcode);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String action = rs.getString(1);
+                    double amt = rs.getDouble(2);
+                    if ("Deposit".equals(action)) net += amt;
+                    else net -= amt;
+                }
+            }
+        } catch (SQLException e) { throw new RuntimeException("Failed to sum deposits: " + e.getMessage(), e); }
+        return net;
     }
 
     /**

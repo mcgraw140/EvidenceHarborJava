@@ -158,6 +158,17 @@ public class DropboxController implements Initializable {
         histColDate.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().createdAt));
         histColOfficer.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().officerName));
         histColItems.setCellValueFactory(cd -> new SimpleIntegerProperty(cd.getValue().itemCount).asObject());
+
+        historyTable.setRowFactory(tv -> {
+            TableRow<DropboxSession> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY
+                        && e.getClickCount() == 2 && !row.isEmpty()) {
+                    showSessionDetail(row.getItem());
+                }
+            });
+            return row;
+        });
     }
 
     // â”€â”€ State management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -243,31 +254,90 @@ public class DropboxController implements Initializable {
     }
 
     private void onCheckInItem(DropboxItem item) {
-        // Prompt for storage location
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(storageLocations.isEmpty() ? null : storageLocations.get(0), storageLocations);
-        dialog.setTitle("Check In Evidence");
-        dialog.setHeaderText("Select storage location for: " + item.evidence.getBarcode());
-        dialog.setContentText("Storage Location:");
+        String chosen = pickStorageLocation("Check In Evidence",
+                "Select storage location for: " + item.evidence.getBarcode());
+        if (chosen == null) return;
+        try {
+            evidenceRepo.updateStatus(item.evidence.getId(), "In Storage", chosen);
+
+            ChainOfCustody coc = new ChainOfCustody();
+            coc.setEvidenceId(item.evidence.getId());
+            coc.setAction("Check In");
+            coc.setPerformedBy(getSelectedOfficerName());
+            coc.setPerformedByName(getSelectedOfficerName());
+            coc.setFromLocation(nullToEmpty(item.evidence.getStorageLocation()));
+            coc.setToLocation(chosen);
+            coc.setNotes("Checked in via Dropbox session");
+            cocRepo.addEntry(coc);
+
+            item.action = "Checked In";
+            dropboxTable.refresh();
+            updateActiveSummary();
+        } catch (Exception ex) { throw new RuntimeException(ex); }
+    }
+
+    /**
+     * Searchable / sortable ListView picker for storage locations, mirroring the
+     * "Associate Person with Case" dialog pattern.
+     */
+    private String pickStorageLocation(String title, String headerText) {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle(title);
+        dialog.setHeaderText(headerText);
         Dialogs.style(dialog);
-        dialog.showAndWait().ifPresent(loc -> {
-            try {
-                evidenceRepo.updateStatus(item.evidence.getId(), "In Storage", loc);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-                ChainOfCustody coc = new ChainOfCustody();
-                coc.setEvidenceId(item.evidence.getId());
-                coc.setAction("Check In");
-                coc.setPerformedBy(getSelectedOfficerName());
-                coc.setPerformedByName(getSelectedOfficerName());
-                coc.setFromLocation(nullToEmpty(item.evidence.getStorageLocation()));
-                coc.setToLocation(loc);
-                coc.setNotes("Checked in via Dropbox session");
-                cocRepo.addEntry(coc);
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search storage locations\u2026");
 
-                item.action = "Checked In";
-                dropboxTable.refresh();
-                updateActiveSummary();
-            } catch (Exception ex) { throw new RuntimeException(ex); }
+        ObservableList<String> allLocations =
+                FXCollections.observableArrayList(storageLocations);
+        allLocations.sort(String.CASE_INSENSITIVE_ORDER);
+        javafx.collections.transformation.FilteredList<String> filtered =
+                new javafx.collections.transformation.FilteredList<>(allLocations, s -> true);
+
+        ListView<String> list = new ListView<>(filtered);
+        list.setPrefHeight(320);
+        list.setPrefWidth(420);
+        list.setPlaceholder(new Label("No storage locations match your search."));
+
+        Label matchCount = new Label();
+        Runnable updateCount = () ->
+                matchCount.setText(filtered.size() + " of " + allLocations.size() + " locations");
+        updateCount.run();
+        filtered.addListener((javafx.collections.ListChangeListener<String>) c -> updateCount.run());
+
+        searchField.textProperty().addListener((obs, o, n) -> {
+            final String q = n == null ? "" : n.trim().toLowerCase();
+            filtered.setPredicate(q.isEmpty() ? s -> true : s -> s != null && s.toLowerCase().contains(q));
+            if (!filtered.isEmpty()) list.getSelectionModel().selectFirst();
         });
+
+        if (!filtered.isEmpty()) list.getSelectionModel().selectFirst();
+        list.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2 && list.getSelectionModel().getSelectedItem() != null) {
+                Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+                if (ok != null) ok.fire();
+            }
+        });
+
+        VBox root = new VBox(8,
+                new Label("Search:"),
+                searchField,
+                list,
+                matchCount);
+        root.setPadding(new javafx.geometry.Insets(12));
+        VBox.setVgrow(list, javafx.scene.layout.Priority.ALWAYS);
+        dialog.getDialogPane().setContent(root);
+
+        Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        ok.disableProperty().bind(list.getSelectionModel().selectedItemProperty().isNull());
+
+        dialog.setResultConverter(bt -> bt == ButtonType.OK
+                ? list.getSelectionModel().getSelectedItem() : null);
+
+        javafx.application.Platform.runLater(searchField::requestFocus);
+        return dialog.showAndWait().orElse(null);
     }
 
     private void onMarkMissing(DropboxItem item) {
@@ -328,7 +398,7 @@ public class DropboxController implements Initializable {
         try {
             int checkedIn = (int) sessionItems.stream().filter(i -> "Checked In".equals(i.action)).count();
             String officer = getSelectedOfficerName();
-            saveSession(officer, sessionItems.size());
+            saveSession(officer, sessionItems.size(), serializeSessionItems());
             sessionItems.clear();
             refreshCount();
             showIdleState();
@@ -375,14 +445,119 @@ public class DropboxController implements Initializable {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
-    private void saveSession(String officerName, int itemCount) throws SQLException {
+    private void saveSession(String officerName, int itemCount, String itemsJson) throws SQLException {
         Connection conn = com.evidenceharbor.persistence.DatabaseManager.getInstance().getConnection();
         try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO dropbox_sessions (officer_name, item_count) VALUES (?,?)")) {
+                "INSERT INTO dropbox_sessions (officer_name, item_count, items_json) VALUES (?,?,?)")) {
             ps.setString(1, officerName.isEmpty() ? null : officerName);
             ps.setInt(2, itemCount);
+            ps.setString(3, itemsJson);
             ps.executeUpdate();
         }
+    }
+
+    /** Format per line: barcode|case|description|type|action (pipe/newline escaped). */
+    private String serializeSessionItems() {
+        StringBuilder sb = new StringBuilder();
+        for (DropboxItem it : sessionItems) {
+            sb.append(esc(nullToEmpty(it.evidence.getBarcode()))).append('|')
+              .append(esc(caseNumberById.getOrDefault(it.evidence.getCaseId(), ""))).append('|')
+              .append(esc(nullToEmpty(it.evidence.getDescription()))).append('|')
+              .append(esc(nullToEmpty(it.evidence.getEvidenceType()))).append('|')
+              .append(esc(nullToEmpty(it.action))).append('\n');
+        }
+        return sb.toString();
+    }
+
+    private static String esc(String s) {
+        return s == null ? "" : s.replace('|', '\u0001').replace('\n', '\u0002');
+    }
+    private static String unesc(String s) {
+        return s == null ? "" : s.replace('\u0001', '|').replace('\u0002', '\n');
+    }
+
+    private List<String[]> parseSessionItems(String blob) {
+        List<String[]> rows = new ArrayList<>();
+        if (blob == null || blob.isBlank()) return rows;
+        for (String line : blob.split("\n")) {
+            if (line.isBlank()) continue;
+            String[] parts = line.split("\\|", -1);
+            String[] row = new String[]{"", "", "", "", ""};
+            for (int i = 0; i < row.length && i < parts.length; i++) row[i] = unesc(parts[i]);
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private void showSessionDetail(DropboxSession s) {
+        Dialog<Void> dlg = new Dialog<>();
+        dlg.setTitle("Dropbox Session — " + s.createdAt);
+        dlg.setHeaderText("Session on " + s.createdAt
+                + (s.officerName == null || s.officerName.isBlank() ? "" : " by " + s.officerName));
+        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dlg.getDialogPane().setPrefSize(820, 560);
+        Dialogs.style(dlg);
+
+        List<String[]> rows = parseSessionItems(s.itemsJson);
+
+        TableView<String[]> tbl = new TableView<>();
+        tbl.getStyleClass().add("data-table");
+        String[] headers = {"BARCODE", "CASE #", "DESCRIPTION", "TYPE", "ACTION"};
+        int[] widths = {140, 110, 260, 110, 120};
+        for (int i = 0; i < headers.length; i++) {
+            final int idx = i;
+            TableColumn<String[], String> c = new TableColumn<>(headers[i]);
+            c.setPrefWidth(widths[i]);
+            c.setCellValueFactory(cd -> new SimpleStringProperty(
+                    cd.getValue() != null && idx < cd.getValue().length ? cd.getValue()[idx] : ""));
+            tbl.getColumns().add(c);
+        }
+        tbl.setItems(FXCollections.observableArrayList(rows));
+        tbl.setPlaceholder(new Label(
+                rows.isEmpty() && (s.itemsJson == null || s.itemsJson.isBlank())
+                        ? "This session predates per-item history."
+                        : "No items recorded."));
+
+        // Summary label
+        long checkedIn = rows.stream().filter(r -> "Checked In".equals(r[4])).count();
+        long verified  = rows.stream().filter(r -> "Verified".equals(r[4])).count();
+        long missing   = rows.stream().filter(r -> "Missing".equals(r[4])).count();
+        long pending   = rows.stream().filter(r -> "Pending".equals(r[4])).count();
+        Label summary = new Label(s.itemCount + " items — "
+                + checkedIn + " checked in, " + verified + " verified, "
+                + missing + " missing, " + pending + " pending");
+        summary.setStyle("-fx-text-fill:#94a3b8;");
+
+        Button printBtn = new Button("🖨 Print");
+        printBtn.getStyleClass().add("btn-secondary");
+        printBtn.setOnAction(ev -> printSessionDetail(s, rows));
+
+        javafx.scene.layout.HBox footer = new javafx.scene.layout.HBox(12, summary, printBtn);
+        footer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        VBox root = new VBox(10, tbl, footer);
+        root.setPadding(new javafx.geometry.Insets(10));
+        VBox.setVgrow(tbl, javafx.scene.layout.Priority.ALWAYS);
+
+        dlg.getDialogPane().setContent(root);
+        dlg.showAndWait();
+    }
+
+    private void printSessionDetail(DropboxSession s, List<String[]> rows) {
+        List<String[]> meta = new ArrayList<>();
+        meta.add(new String[]{"Date", nullToEmpty(s.createdAt)});
+        meta.add(new String[]{"Officer", nullToEmpty(s.officerName)});
+        meta.add(new String[]{"Session ID", String.valueOf(s.id)});
+        meta.add(new String[]{"Item Count", String.valueOf(s.itemCount)});
+
+        String[] headers = {"BARCODE", "CASE #", "DESCRIPTION", "TYPE", "ACTION"};
+
+        List<com.evidenceharbor.util.PrintSheetUtil.Section> sections = new ArrayList<>();
+        sections.add(new com.evidenceharbor.util.PrintSheetUtil.KVSection("Session", meta));
+        sections.add(new com.evidenceharbor.util.PrintSheetUtil.TableSection("Items", headers, rows));
+
+        javafx.stage.Window w = historyTable.getScene() != null ? historyTable.getScene().getWindow() : null;
+        com.evidenceharbor.util.PrintSheetUtil.print(w, "Dropbox Session " + s.createdAt, sections);
     }
 
     private void loadHistory() {
@@ -391,12 +566,13 @@ public class DropboxController implements Initializable {
             List<DropboxSession> sessions = new ArrayList<>();
             try (Statement s = conn.createStatement();
                  ResultSet rs = s.executeQuery(
-                         "SELECT id, officer_name, item_count, created_at FROM dropbox_sessions ORDER BY created_at DESC")) {
+                         "SELECT id, officer_name, item_count, items_json, created_at FROM dropbox_sessions ORDER BY created_at DESC")) {
                 while (rs.next()) {
                     sessions.add(new DropboxSession(rs.getInt("id"),
-                            rs.getString("officer_name") != null ? rs.getString("officer_name") : "â€”",
+                            rs.getString("officer_name") != null ? rs.getString("officer_name") : "—",
                             rs.getInt("item_count"),
-                            rs.getString("created_at")));
+                            rs.getString("created_at"),
+                            rs.getString("items_json")));
                 }
             }
             historyTable.setItems(FXCollections.observableArrayList(sessions));
@@ -428,9 +604,11 @@ public class DropboxController implements Initializable {
         final String officerName;
         final int itemCount;
         final String createdAt;
-        DropboxSession(int id, String officerName, int itemCount, String createdAt) {
+        final String itemsJson;
+        DropboxSession(int id, String officerName, int itemCount, String createdAt, String itemsJson) {
             this.id = id; this.officerName = officerName;
             this.itemCount = itemCount; this.createdAt = createdAt;
+            this.itemsJson = itemsJson;
         }
     }
 

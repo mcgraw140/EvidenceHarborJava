@@ -532,10 +532,17 @@ public class SetupWizard {
             Officer officer = task.getValue();
             if (officer != null) {
                 SessionManager.setCurrentOfficer(officer);
+                com.evidenceharbor.persistence.AuditLogger.log(
+                        "Users", "LOGIN", "Officer",
+                        String.valueOf(officer.getId()),
+                        "User " + officer.getName() + " signed in");
                 new Navigator(stage).showEvidenceDashboard();
             } else {
                 failedAttempts++;
                 int remaining = 5 - failedAttempts;
+                com.evidenceharbor.persistence.AuditLogger.log(
+                        "Users", "LOGIN_FAILED", "Officer", username,
+                        "Failed login attempt " + failedAttempts + " of 5");
                 if (remaining > 0) {
                     showError("Invalid username or password. " + remaining + " attempt(s) remaining.");
                 } else {

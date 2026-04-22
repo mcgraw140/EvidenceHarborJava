@@ -42,6 +42,20 @@ public class ChainOfCustodyRepository {
                 if (keys.next()) c.setId(keys.getInt(1));
             }
         }
+        StringBuilder d = new StringBuilder();
+        d.append("Chain of custody: ").append(c.getAction() == null ? "entry" : c.getAction());
+        if (c.getFromLocation() != null && !c.getFromLocation().isBlank())
+            d.append("; from ").append(c.getFromLocation());
+        if (c.getToLocation() != null && !c.getToLocation().isBlank())
+            d.append("; to ").append(c.getToLocation());
+        if (c.getToPerson() != null && !c.getToPerson().isBlank())
+            d.append("; to person ").append(c.getToPerson());
+        if (c.getPerformedByName() != null && !c.getPerformedByName().isBlank())
+            d.append("; performed by ").append(c.getPerformedByName());
+        if (c.getNotes() != null && !c.getNotes().isBlank())
+            d.append("; notes: ").append(c.getNotes());
+        AuditLogger.log("Evidence", "UPDATE", "Evidence",
+                String.valueOf(c.getEvidenceId()), d.toString());
         return c;
     }
 

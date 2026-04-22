@@ -48,6 +48,12 @@ public final class SessionManager {
     }
 
     public static void clear() {
+        if (currentOfficer != null) {
+            com.evidenceharbor.persistence.AuditLogger.log(
+                    "Users", "LOGOUT", "Officer",
+                    String.valueOf(currentOfficer.getId()),
+                    "User " + currentOfficer.getName() + " signed out");
+        }
         currentOfficer = null;
         effectivePermissions = null;
     }

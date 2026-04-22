@@ -120,11 +120,19 @@ public class LoginScreen {
             if (officer != null) {
                 SessionManager.setCurrentOfficer(officer);
                 failedAttempts = 0;
+                com.evidenceharbor.persistence.AuditLogger.log(
+                        "Users", "LOGIN", "Officer",
+                        String.valueOf(officer.getId()),
+                        "User " + officer.getName() + " signed in");
                 Navigator nav = new Navigator(stage);
                 nav.showEvidenceDashboard();
             } else {
                 failedAttempts++;
                 int remaining = MAX_ATTEMPTS - failedAttempts;
+                com.evidenceharbor.persistence.AuditLogger.log(
+                        "Users", "LOGIN_FAILED", "Officer",
+                        usernameField.getText().trim(),
+                        "Failed login attempt " + failedAttempts + " of " + MAX_ATTEMPTS);
                 if (remaining > 0) {
                     showError("Invalid username or password. " + remaining + " attempt(s) remaining.");
                 } else {

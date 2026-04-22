@@ -58,7 +58,8 @@ public class CaseRepository {
     }
 
     public Case save(Case c) throws SQLException {
-        if (c.getId() == 0) {
+        boolean isCreate = c.getId() == 0;
+        if (isCreate) {
             try (PreparedStatement ps = conn().prepareStatement(
                     "INSERT INTO cases (case_number, incident_date, officer_id) VALUES (?,?,?)",
                     Statement.RETURN_GENERATED_KEYS)) {
@@ -78,6 +79,10 @@ public class CaseRepository {
                 ps.executeUpdate();
             }
         }
+        AuditLogger.log("Cases", isCreate ? "CREATE" : "UPDATE", "Case",
+                String.valueOf(c.getId()),
+                "Case " + c.getCaseNumber() + ", incident " + c.getIncidentDate()
+                        + ", officer #" + (c.getOfficer() == null ? "?" : c.getOfficer().getId()));
         return c;
     }
 
@@ -86,12 +91,16 @@ public class CaseRepository {
                 "INSERT IGNORE INTO case_persons (case_id, person_id, role) VALUES (?,?,?)")) {
             ps.setInt(1, caseId); ps.setInt(2, personId); ps.setString(3, role); ps.executeUpdate();
         }
+        AuditLogger.log("Cases", "UPDATE", "Case", String.valueOf(caseId),
+                "Associated person #" + personId + " as " + role);
     }
 
     public void removePerson(int casePersonId) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement("DELETE FROM case_persons WHERE id=?")) {
             ps.setInt(1, casePersonId); ps.executeUpdate();
         }
+        AuditLogger.log("Cases", "UPDATE", "Case", "",
+                "Removed case_person #" + casePersonId);
     }
 
     private void populateRelations(Case c) throws SQLException {

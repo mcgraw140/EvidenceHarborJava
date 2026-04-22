@@ -104,7 +104,7 @@
                         <TableColumn fx:id="colSource"   text="Case / Source" prefWidth="150"/>
                         <TableColumn fx:id="colBy"       text="Performed By" prefWidth="140"/>
                         <TableColumn fx:id="colNotes"    text="Notes"       prefWidth="240"/>
-                        <TableColumn fx:id="colTxAction" text=""            prefWidth="90"/>
+                        <TableColumn fx:id="colTxAction" text="Edit"        prefWidth="90"/>
                     </columns>
                     <placeholder><Label text="No transactions recorded"/></placeholder>
                 </TableView>
