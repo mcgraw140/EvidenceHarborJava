@@ -77,6 +77,7 @@ public class Evidence {
     private String narcFieldTestResult;
 
     // Vehicle
+    private String vehicleBodyType;
     private String vehicleMake;
     private String vehicleModel;
     private String vehicleYear;
@@ -232,6 +233,8 @@ public class Evidence {
     public void setNarcFieldTestResult(String s) { this.narcFieldTestResult = s; }
 
     // ── Vehicle ────────────────────────────────────────────────────────────────
+    public String getVehicleBodyType() { return vehicleBodyType; }
+    public void setVehicleBodyType(String s) { this.vehicleBodyType = s; }
     public String getVehicleMake() { return vehicleMake; }
     public void setVehicleMake(String s) { this.vehicleMake = s; }
     public String getVehicleModel() { return vehicleModel; }

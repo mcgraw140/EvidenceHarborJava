@@ -4,6 +4,7 @@ import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.*;
 import com.evidenceharbor.persistence.*;
+import com.evidenceharbor.util.TableExportUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -36,6 +37,7 @@ public class CaseDetailController implements Initializable {
     @FXML private Label caseNumberLabel;
     @FXML private Label officerLabel;
     @FXML private Label assistingLabel;
+    @FXML private VBox caseContent;
 
     @FXML private VBox chargesList;
     @FXML private ComboBox<Charge> chargeCombo;
@@ -52,24 +54,23 @@ public class CaseDetailController implements Initializable {
     @FXML private TableColumn<Evidence, String> colEvidLoc;
     @FXML private TableColumn<Evidence, String> colEvidStatus;
 
-    @FXML private TableView<QmVehicleImpound> vehicleTable;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehicleYear;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehicleMake;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehicleModel;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehiclePlate;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehicleVin;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehicleStatus;
-    @FXML private TableColumn<QmVehicleImpound, String> colVehicleDate;
+    @FXML private TableView<Evidence> vehicleTable;
+    @FXML private TableColumn<Evidence, String> colVehicleYear;
+    @FXML private TableColumn<Evidence, String> colVehicleMake;
+    @FXML private TableColumn<Evidence, String> colVehicleModel;
+    @FXML private TableColumn<Evidence, String> colVehiclePlate;
+    @FXML private TableColumn<Evidence, String> colVehicleVin;
+    @FXML private TableColumn<Evidence, String> colVehicleStatus;
 
     private Case currentCase;
     private final CaseRepository caseRepo = new CaseRepository();
     private final ChargeRepository chargeRepo = new ChargeRepository();
     private final EvidenceRepository evidenceRepo = new EvidenceRepository();
     private final PersonRepository personRepo = new PersonRepository();
-    private final QmRepository qmRepo = new QmRepository();
     private final LookupRepository lookupRepo = new LookupRepository();
 
     @Override
+    @SuppressWarnings("unchecked")
     public void initialize(URL location, ResourceBundle resources) {
         colPersonName.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getPerson().getFullName()));
         colPersonRole.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getRole()));
@@ -92,13 +93,29 @@ public class CaseDetailController implements Initializable {
         colEvidLoc.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getStorageLocation()));
         colEvidStatus.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getStatus()));
 
-        colVehicleYear.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getYear())));
-        colVehicleMake.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getMake())));
-        colVehicleModel.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getModel())));
-        colVehiclePlate.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getPlate())));
-        colVehicleVin.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getVin())));
+        colVehicleYear.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getVehicleYear())));
+        colVehicleMake.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getVehicleMake())));
+        colVehicleModel.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getVehicleModel())));
+        colVehiclePlate.setCellValueFactory(cd -> {
+            Evidence ev = cd.getValue();
+            String s = nvl(ev.getVehicleLicensePlate());
+            String st = nvl(ev.getVehicleLicenseState());
+            return new SimpleStringProperty(st.isEmpty() ? s : (s + " " + st).trim());
+        });
+        colVehicleVin.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getVehicleVin())));
         colVehicleStatus.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getStatus())));
-        colVehicleDate.setCellValueFactory(cd -> new SimpleStringProperty(nvl(cd.getValue().getImpoundDate())));
+
+        vehicleTable.setRowFactory(tv -> {
+            TableRow<Evidence> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY
+                        && e.getClickCount() == 2 && !row.isEmpty()) {
+                    if (com.evidenceharbor.ui.inventory.VehicleDetailsDialog.show(row.getItem())) refresh();
+                }
+            });
+            return row;
+        });
+
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
 
         // Make chargeCombo type-searchable
@@ -173,11 +190,17 @@ public class CaseDetailController implements Initializable {
 
         // Evidence table
         try {
-            evidenceTable.setItems(FXCollections.observableArrayList(evidenceRepo.findByCase(currentCase.getId())));
+            List<Evidence> caseItems = evidenceRepo.findByCase(currentCase.getId());
+            List<Evidence> nonVehicles = new ArrayList<>();
+            List<Evidence> vehicles = new ArrayList<>();
+            for (Evidence ev : caseItems) {
+                if ("Vehicle".equalsIgnoreCase(ev.getEvidenceType())) vehicles.add(ev);
+                else nonVehicles.add(ev);
+            }
+            evidenceTable.setItems(FXCollections.observableArrayList(nonVehicles));
+            vehicleTable.setItems(FXCollections.observableArrayList(vehicles));
         } catch (Exception e) { showError(e); }
 
-        // Vehicles table (impound records linked to this case)
-        vehicleTable.setItems(FXCollections.observableArrayList(qmRepo.findVehiclesByCase(currentCase.getId())));
     }
 
     @FXML private void onBack() { Navigator.get().showCaseList(); }
@@ -189,70 +212,118 @@ public class CaseDetailController implements Initializable {
     @FXML private void onReports()       { Navigator.get().showReports(); }
     @FXML private void onSettings()      { Navigator.get().showSettings(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
-    @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }    @FXML private void onAddEvidence() { Navigator.get().showAddEvidence(currentCase); }
+    @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+    @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
+    @FXML private void onAddEvidence()   { Navigator.get().showAddEvidence(currentCase); }
+
     @FXML
     private void onImpoundVehicle() {
-        Dialog<ButtonType> dlg = new Dialog<>();
-        dlg.setTitle("Impound Vehicle");
-        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        Dialog<Evidence> dialog = new Dialog<>();
+        dialog.setTitle("Impound Vehicle - Case #" + currentCase.getCaseNumber());
+        dialog.setHeaderText("Enter vehicle information");
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(16));
 
-        TextField tfYear = new TextField();
-        TextField tfMake = new TextField();
-        TextField tfModel = new TextField();
-        TextField tfPlate = new TextField();
-        TextField tfVin = new TextField();
-        TextField tfColor = new TextField();
-        TextField tfReason = new TextField();
-        DatePicker dpDate = new DatePicker(LocalDate.now());
-        TextArea taNotes = new TextArea();
-        taNotes.setPrefRowCount(2);
+        ComboBox<String> bodyTypeBox = new ComboBox<>();
+        bodyTypeBox.setEditable(true);
+        bodyTypeBox.setPromptText("Select vehicle type...");
+        try { bodyTypeBox.getItems().setAll(lookupRepo.getVehicleTypes()); } catch (Exception ignored) {}
+        bodyTypeBox.setMaxWidth(Double.MAX_VALUE);
 
-        grid.add(new Label("Year:"), 0, 0); grid.add(tfYear, 1, 0);
-        grid.add(new Label("Make:"), 0, 1); grid.add(tfMake, 1, 1);
-        grid.add(new Label("Model:"), 0, 2); grid.add(tfModel, 1, 2);
-        grid.add(new Label("Plate:"), 0, 3); grid.add(tfPlate, 1, 3);
-        grid.add(new Label("VIN:"), 0, 4); grid.add(tfVin, 1, 4);
-        grid.add(new Label("Color:"), 0, 5); grid.add(tfColor, 1, 5);
-        grid.add(new Label("Impound Date:"), 0, 6); grid.add(dpDate, 1, 6);
-        grid.add(new Label("Reason:"), 0, 7); grid.add(tfReason, 1, 7);
-        grid.add(new Label("Notes:"), 0, 8); grid.add(taNotes, 1, 8);
+        TextField yearField   = new TextField(); yearField.setPromptText("YYYY");
+        TextField makeField   = new TextField(); makeField.setPromptText("e.g. Ford");
+        TextField modelField  = new TextField(); modelField.setPromptText("e.g. F-150");
+        TextField colorField  = new TextField();
+        TextField vinField    = new TextField();
+        TextField plateField  = new TextField();
+        TextField stateField  = new TextField(); stateField.setPromptText("e.g. TX");
+        ComboBox<String> locationBox = new ComboBox<>();
+        locationBox.setEditable(true);
+        locationBox.setPromptText("Select impound location...");
+        try { locationBox.getItems().setAll(lookupRepo.getImpoundLocations()); } catch (Exception ignored) {}
+        locationBox.setMaxWidth(Double.MAX_VALUE);
+        CheckBox stolenBox    = new CheckBox("Reported Stolen");
+        TextArea descField    = new TextArea(); descField.setPromptText("Notes / description");
+        descField.setPrefRowCount(3);
 
-        dlg.getDialogPane().setContent(grid);
-        dlg.getDialogPane().getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
+        int r = 0;
+        grid.add(new Label("Type *"), 0, r);  grid.add(bodyTypeBox, 1, r++);
+        grid.add(new Label("Year"), 0, r);    grid.add(yearField, 1, r++);
+        grid.add(new Label("Make *"), 0, r);  grid.add(makeField, 1, r++);
+        grid.add(new Label("Model"), 0, r);   grid.add(modelField, 1, r++);
+        grid.add(new Label("Color"), 0, r);   grid.add(colorField, 1, r++);
+        grid.add(new Label("VIN"), 0, r);     grid.add(vinField, 1, r++);
+        grid.add(new Label("Plate"), 0, r);   grid.add(plateField, 1, r++);
+        grid.add(new Label("State"), 0, r);   grid.add(stateField, 1, r++);
+        grid.add(new Label("Location *"), 0, r);grid.add(locationBox, 1, r++);
+        grid.add(stolenBox, 1, r++);
+        grid.add(new Label("Notes"), 0, r);   grid.add(descField, 1, r++);
 
-        Button ok = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().getStylesheets().add(
+                getClass().getResource("/styles/theme.css").toExternalForm());
+
+        Button ok = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         ok.setOnAction(e -> {
-            if (tfMake.getText().trim().isEmpty() || tfModel.getText().trim().isEmpty() || tfVin.getText().trim().isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Make, Model, and VIN are required.").showAndWait();
+            if (makeField.getText() == null || makeField.getText().trim().isEmpty()) {
+                new Alert(Alert.AlertType.WARNING, "Make is required.").showAndWait();
                 e.consume();
                 return;
             }
+            String location = locationBox.getEditor().getText();
+            if (location == null) location = locationBox.getValue();
+            if (location == null || location.trim().isEmpty()) {
+                new Alert(Alert.AlertType.WARNING, "Location is required.").showAndWait();
+                e.consume();
+                return;
+            }
+            String loc = location.trim();
+            try {
+                Evidence ev = new Evidence();
+                ev.setCaseId(currentCase.getId());
+                ev.setEvidenceType("Vehicle");
+                ev.setStatus("In Custody");
+                ev.setStorageLocation(loc);
+                ev.setCollectionDate(LocalDate.now().toString());
+                ev.setDescription(descField.getText().trim());
+                ev.setVehicleBodyType(bodyTypeBox.getValue());
+                ev.setVehicleYear(yearField.getText().trim());
+                ev.setVehicleMake(makeField.getText().trim());
+                ev.setVehicleModel(modelField.getText().trim());
+                ev.setVehicleColor(colorField.getText().trim());
+                ev.setVehicleVin(vinField.getText().trim());
+                ev.setVehicleLicensePlate(plateField.getText().trim());
+                ev.setVehicleLicenseState(stateField.getText().trim());
+                ev.setVehicleReportedStolen(stolenBox.isSelected());
+                ev.setVehicleImpounded(true);
+                evidenceRepo.save(ev);
 
-            String date = dpDate.getValue() == null ? LocalDate.now().toString() : dpDate.getValue().toString();
-            qmRepo.createVehicleForCase(
-                    currentCase.getId(),
-                    tfMake.getText().trim(),
-                    tfModel.getText().trim(),
-                    tfYear.getText().trim(),
-                    tfVin.getText().trim(),
-                    tfPlate.getText().trim(),
-                    tfColor.getText().trim(),
-                    date,
-                    tfReason.getText().trim(),
-                    taNotes.getText().trim());
-            refresh();
+                // Chain of custody: Impound
+                com.evidenceharbor.domain.ChainOfCustody coc = new com.evidenceharbor.domain.ChainOfCustody();
+                coc.setEvidenceId(ev.getId());
+                coc.setAction("Impound");
+                com.evidenceharbor.domain.Officer o = com.evidenceharbor.app.SessionManager.getCurrentOfficer();
+                String actor = o == null ? "" : o.getName();
+                coc.setPerformedBy(actor);
+                coc.setPerformedByName(actor);
+                coc.setFromLocation("");
+                coc.setToLocation(loc);
+                coc.setNotes("Vehicle impounded");
+                new com.evidenceharbor.persistence.ChainOfCustodyRepository().addEntry(coc);
+
+                refresh();
+            } catch (Exception ex) { showError(ex); e.consume(); }
         });
-
-        dlg.showAndWait();
+        dialog.showAndWait();
     }
+
     @FXML private void onPrint() {
-        new Alert(Alert.AlertType.INFORMATION, "Print report coming soon.").showAndWait();
+        javafx.stage.Window w = caseContent != null && caseContent.getScene() != null
+            ? caseContent.getScene().getWindow() : null;
+        TableExportUtil.printNode(w, caseContent);
     }
 
     @FXML
@@ -437,8 +508,6 @@ public class CaseDetailController implements Initializable {
         });
 
         dialog.setResultConverter(bt -> {
-            if (bt != ButtonType.OK || savedHolder[0] == null) return null;
-            return new NewPersonSelection(savedHolder[0], roleBox.getValue());g.setResultConverter(bt -> {
             if (bt != ButtonType.OK || savedHolder[0] == null) return null;
             return new NewPersonSelection(savedHolder[0], roleBox.getValue());
         });

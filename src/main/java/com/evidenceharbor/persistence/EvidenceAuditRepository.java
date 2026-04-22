@@ -46,6 +46,14 @@ public class EvidenceAuditRepository {
         }
     }
 
+    public void reopen(int id) throws SQLException {
+        String sql = "UPDATE evidence_audits SET status='In Progress', completed_at=NULL WHERE id=?";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+        }
+    }
+
     public void updateItems(int id, String itemsJson) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement(
                 "UPDATE evidence_audits SET items_json=? WHERE id=?")) {

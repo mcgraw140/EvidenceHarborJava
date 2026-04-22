@@ -20,15 +20,23 @@
             </HBox>
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
-                <Button text="Dashboard" styleClass="nav-tab active" onAction="#onAdmin"/>
-                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onAdmin"/>
+                <Button text="User Management" styleClass="nav-tab" onAction="#onUserManagement"/>
+                <Button text="Lookup Admin" styleClass="nav-tab" onAction="#onLookupAdministration"/>
+                <Button text="Evidence Audit" styleClass="nav-tab active" onAction="#onEvidenceAudit"/>
                 <Button fx:id="navAuditTrailBtn" text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
+                <Button text="Bank Ledger" styleClass="nav-tab" onAction="#onBankAccountLedger"/>
+                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
             </HBox>
         </VBox>
     </top>
     <center>
         <VBox spacing="16">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <HBox spacing="12">
+                <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
             <Label text="Admin &gt; Evidence Storage Audit" styleClass="breadcrumb-text"/>
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Label text="Evidence Storage Audit" styleClass="page-title"/>
@@ -41,7 +49,7 @@
             <Label text="In Progress" styleClass="section-title"/>
             <VBox styleClass="card" spacing="0">
                 <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
-                <TableView fx:id="inProgressTable" prefHeight="180">
+                <TableView fx:id="inProgressTable" styleClass="data-table" prefHeight="180">
                     <columns>
                         <TableColumn fx:id="colIPDate"   text="STARTED"   prefWidth="160"/>
                         <TableColumn fx:id="colIPType"   text="TYPE"       prefWidth="130"/>
@@ -58,7 +66,7 @@
             <Label text="Completed" styleClass="section-title"/>
             <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
                 <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
-                <TableView fx:id="completedTable" VBox.vgrow="ALWAYS" prefHeight="200">
+                <TableView fx:id="completedTable" styleClass="data-table" VBox.vgrow="ALWAYS" prefHeight="200">
                     <columns>
                         <TableColumn fx:id="colCDate"   text="COMPLETED"  prefWidth="160"/>
                         <TableColumn fx:id="colCType"   text="TYPE"        prefWidth="130"/>

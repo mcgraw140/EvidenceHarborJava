@@ -56,9 +56,20 @@ public class NewCaseDialog {
 
         Button okBtn = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.setOnAction(e -> {
+            // Commit any typed text in the officer combo before validating
+            officerBox.getParent().requestFocus();
             String num = caseNumberField.getText().trim();
             if (num.isEmpty() || datePicker.getValue() == null || officerBox.getValue() == null) {
-                new Alert(Alert.AlertType.WARNING, "All fields are required.").showAndWait();
+                Alert warn = new Alert(Alert.AlertType.WARNING);
+                warn.setTitle("Missing Information");
+                warn.setHeaderText("All fields are required");
+                StringBuilder sb = new StringBuilder();
+                if (num.isEmpty())                   sb.append("• Case Number\n");
+                if (datePicker.getValue() == null)   sb.append("• Incident Date\n");
+                if (officerBox.getValue() == null)   sb.append("• Case Officer\n");
+                warn.setContentText("Please fill in:\n" + sb);
+                warn.initOwner(dialog.getDialogPane().getScene().getWindow());
+                warn.showAndWait();
                 e.consume();
                 return;
             }

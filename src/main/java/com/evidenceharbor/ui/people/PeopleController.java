@@ -81,8 +81,8 @@ public class PeopleController implements Initializable {
     @FXML private void onDropbox() { Navigator.get().showDropbox(); }
     @FXML private void onReports() { Navigator.get().showReports(); }
     @FXML private void onSettings() { Navigator.get().showSettings(); }
+    @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }    @FXML private void onBack() { Navigator.get().showCaseList(); }
     @FXML private void onDashboard() { Navigator.get().showCaseList(); }
 }

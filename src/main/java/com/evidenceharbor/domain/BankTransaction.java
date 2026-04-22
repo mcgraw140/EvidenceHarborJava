@@ -9,6 +9,11 @@ public class BankTransaction {
     private String date;
     private String performedBy;
     private String notes;
+    private String sourceRef;
+    private boolean voided;
+    private String voidedReason;
+    private String voidedBy;
+    private String voidedAt;
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -26,4 +31,14 @@ public class BankTransaction {
     public void setPerformedBy(String v) { this.performedBy = v; }
     public String getNotes() { return notes; }
     public void setNotes(String v) { this.notes = v; }
+    public String getSourceRef() { return sourceRef; }
+    public void setSourceRef(String v) { this.sourceRef = v; }
+    public boolean isVoided() { return voided; }
+    public void setVoided(boolean v) { this.voided = v; }
+    public String getVoidedReason() { return voidedReason; }
+    public void setVoidedReason(String v) { this.voidedReason = v; }
+    public String getVoidedBy() { return voidedBy; }
+    public void setVoidedBy(String v) { this.voidedBy = v; }
+    public String getVoidedAt() { return voidedAt; }
+    public void setVoidedAt(String v) { this.voidedAt = v; }
 }

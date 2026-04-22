@@ -54,8 +54,8 @@ public class EvidenceAuditController implements Initializable {
         dateCol.setCellValueFactory(cd -> new SimpleStringProperty(
                 completed ? cd.getValue().getCompletedAt() : cd.getValue().getCreatedAt()));
         typeCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getAuditType()));
-        scopeCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getScope() != null ? cd.getValue().getScope() : "—"));
-        byCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getCreatedBy() != null ? cd.getValue().getCreatedBy() : "—"));
+        scopeCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getScope() != null ? cd.getValue().getScope() : "â€”"));
+        byCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getCreatedBy() != null ? cd.getValue().getCreatedBy() : "â€”"));
         statusCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getStatus()));
         statusCol.setCellFactory(col -> new TableCell<>() {
             @Override protected void updateItem(String s, boolean empty) {
@@ -75,9 +75,7 @@ public class EvidenceAuditController implements Initializable {
                 openBtn.setStyle("-fx-font-size:11; -fx-padding:2 8 2 8;");
                 openBtn.setOnAction(e -> {
                     EvidenceAudit a = getTableView().getItems().get(getIndex());
-                    // Future: open audit session screen
-                    new Alert(Alert.AlertType.INFORMATION, "Audit #" + a.getId() +
-                            " (" + a.getAuditType() + ") — session view coming soon.").showAndWait();
+                    Navigator.get().showEvidenceAuditSession(a);
                 });
             }
             @Override protected void updateItem(String i, boolean empty) {
@@ -150,7 +148,7 @@ public class EvidenceAuditController implements Initializable {
         } catch (Exception e) { showError(e); }
     }
 
-    // ── Nav ───────────────────────────────────────────────────────────────────
+    // â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onCases()     { Navigator.get().showCaseList(); }
     @FXML private void onInventory() { Navigator.get().showInventory(); }
     @FXML private void onPeople()    { Navigator.get().showPeople(); }
@@ -158,7 +156,13 @@ public class EvidenceAuditController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showAdminDashboard(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
+    @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
+    @FXML private void onUserManagement()       { Navigator.get().showUserManagement(); }
+    @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
+    @FXML private void onEvidenceAudit()         { }
+    @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();

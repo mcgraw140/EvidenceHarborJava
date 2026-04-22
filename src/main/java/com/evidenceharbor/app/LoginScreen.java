@@ -6,7 +6,6 @@ import com.evidenceharbor.util.PasswordUtils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -122,7 +121,7 @@ public class LoginScreen {
                 SessionManager.setCurrentOfficer(officer);
                 failedAttempts = 0;
                 Navigator nav = new Navigator(stage);
-                nav.showCaseList();
+                nav.showEvidenceDashboard();
             } else {
                 failedAttempts++;
                 int remaining = MAX_ATTEMPTS - failedAttempts;
@@ -169,3 +168,4 @@ public class LoginScreen {
         return c.getMessage() == null ? c.toString() : c.getMessage();
     }
 }
+

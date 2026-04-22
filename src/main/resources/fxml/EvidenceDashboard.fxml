@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.cases.EvidenceDashboardController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onEvidenceDashboard"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button fx:id="navAdminTab" text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard" styleClass="nav-tab active" onAction="#onEvidenceDashboard"/>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
+                <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button fx:id="navReportsBtn" text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+            <VBox spacing="20">
+                <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+                <!-- Breadcrumb -->
+                <Label text="Evidence" styleClass="breadcrumb-text"/>
+
+                <!-- Page header -->
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <Label text="Evidence Dashboard" styleClass="page-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblOfficerName" styleClass="subtitle"/>
+                    <Button text="+ New Case" styleClass="btn-primary" onAction="#onNewCase"/>
+                </HBox>
+
+                <Separator/>
+
+                <!-- Summary stat cards -->
+                <HBox spacing="12">
+                    <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                          style="-fx-cursor: hand;" onMouseClicked="#onCases">
+                        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                        <Label fx:id="statActiveCases" text="—"
+                               style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#3b82f6;"/>
+                        <Label text="Active Cases" styleClass="subtitle"/>
+                    </VBox>
+                    <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                          style="-fx-cursor: hand;" onMouseClicked="#onInventory">
+                        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                        <Label fx:id="statItemsInCustody" text="—"
+                               style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#10b981;"/>
+                        <Label text="Items in Custody" styleClass="subtitle"/>
+                    </VBox>
+                    <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4"
+                          style="-fx-cursor: hand;" onMouseClicked="#onDropbox">
+                        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                        <Label fx:id="statDropboxItems" text="—"
+                               style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#f59e0b;"/>
+                        <Label text="Dropbox Pending" styleClass="subtitle"/>
+                    </VBox>
+                    <VBox styleClass="card" prefWidth="185" alignment="CENTER" spacing="4">
+                        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+                        <Label fx:id="statTotalEvidence" text="—"
+                               style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#64748b;"/>
+                        <Label text="Total Evidence" styleClass="subtitle"/>
+                    </VBox>
+                </HBox>
+
+                <Separator/>
+
+                <!-- Navigation cards grid (row 1) -->
+                <HBox spacing="16">
+                    <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#onCases" style="-fx-cursor: hand;">
+                        <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                        <Label text="&#x1F4C1;" style="-fx-font-size:28;"/>
+                        <Label text="Cases" styleClass="admin-card-title"/>
+                        <Label text="Browse case files, view case detail, and add new cases."
+                               styleClass="admin-card-desc" wrapText="true"/>
+                    </VBox>
+
+                    <VBox fx:id="cardInventory" styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#onInventory" style="-fx-cursor: hand;">
+                        <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                        <Label text="&#x1F4E6;" style="-fx-font-size:28;"/>
+                        <Label text="Inventory" styleClass="admin-card-title"/>
+                        <Label text="Search and manage the full evidence inventory."
+                               styleClass="admin-card-desc" wrapText="true"/>
+                    </VBox>
+
+                    <VBox fx:id="cardDropbox" styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#onDropbox" style="-fx-cursor: hand;">
+                        <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                        <Label text="&#x1F4E5;" style="-fx-font-size:28;"/>
+                        <Label text="Dropbox Check-in" styleClass="admin-card-title"/>
+                        <Label text="Process items dropped off for intake into custody."
+                               styleClass="admin-card-desc" wrapText="true"/>
+                    </VBox>
+
+                    <VBox fx:id="cardReports" styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#onReports" style="-fx-cursor: hand;">
+                        <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                        <Label text="&#x1F4CA;" style="-fx-font-size:28;"/>
+                        <Label text="Reports" styleClass="admin-card-title"/>
+                        <Label text="Generate summary and detail reports across evidence."
+                               styleClass="admin-card-desc" wrapText="true"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Navigation cards grid (row 2) -->
+                <HBox spacing="16">
+                    <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#onPeople" style="-fx-cursor: hand;">
+                        <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                        <Label text="&#x1F464;" style="-fx-font-size:28;"/>
+                        <Label text="People" styleClass="admin-card-title"/>
+                        <Label text="Manage suspects, witnesses, victims, and other persons."
+                               styleClass="admin-card-desc" wrapText="true"/>
+                    </VBox>
+
+                    <VBox styleClass="card admin-nav-card" spacing="10" HBox.hgrow="ALWAYS"
+                          onMouseClicked="#onImpound" style="-fx-cursor: hand;">
+                        <padding><Insets top="28" right="24" bottom="28" left="24"/></padding>
+                        <Label text="&#x1F697;" style="-fx-font-size:28;"/>
+                        <Label text="Impound Lot" styleClass="admin-card-title"/>
+                        <Label text="Vehicles and property held in the impound lot."
+                               styleClass="admin-card-desc" wrapText="true"/>
+                    </VBox>
+
+                    <!-- Spacers so row 2 lines up with row 1 -->
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <bottom><fx:include source="DbStatusBar.fxml"/></bottom>
+</BorderPane>

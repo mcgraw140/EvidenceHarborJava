@@ -18,14 +18,14 @@ public class AdminDashboardController {
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
-    // ── Admin card actions ────────────────────────────────────────────────────
+    // â”€â”€ Admin card actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onUserManagement()    { Navigator.get().showUserManagement(); }
     @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
     @FXML private void onEvidenceAudit()     { Navigator.get().showEvidenceAudit(); }
     @FXML private void onAuditTrail()        { Navigator.get().showAuditTrail(); }
     @FXML private void onBankAccountLedger() { Navigator.get().showBankAccountLedger(); }
 
-    // ── Nav bar ───────────────────────────────────────────────────────────────
+    // â”€â”€ Nav bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onCases()     { Navigator.get().showCaseList(); }
     @FXML private void onInventory() { Navigator.get().showInventory(); }
     @FXML private void onPeople()    { Navigator.get().showPeople(); }
@@ -33,5 +33,6 @@ public class AdminDashboardController {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { /* already here */ }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showCaseList(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }}

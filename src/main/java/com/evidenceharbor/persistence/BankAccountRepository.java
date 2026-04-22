@@ -21,7 +21,7 @@ public class BankAccountRepository {
                 "SELECT * FROM bank_accounts ORDER BY account_name");
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) result.add(mapAccount(rs));
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to load bank accounts: " + e.getMessage(), e); }
         return result;
     }
 
@@ -36,7 +36,7 @@ public class BankAccountRepository {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return findAccountById(keys.getInt(1));
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to create account: " + e.getMessage(), e); }
         return null;
     }
 
@@ -49,14 +49,18 @@ public class BankAccountRepository {
             ps.setString(4, notes);
             ps.setInt(5, id);
             ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to update account: " + e.getMessage(), e); }
     }
 
     public void deleteAccount(int id) {
+        try (PreparedStatement ps1 = conn().prepareStatement("DELETE FROM bank_account_transactions WHERE account_id=?")) {
+            ps1.setInt(1, id);
+            ps1.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException("Failed to delete transactions: " + e.getMessage(), e); }
         try (PreparedStatement ps = conn().prepareStatement("DELETE FROM bank_accounts WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to delete account: " + e.getMessage(), e); }
     }
 
     public BankAccount findAccountById(int id) {
@@ -65,7 +69,7 @@ public class BankAccountRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return mapAccount(rs);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to find account: " + e.getMessage(), e); }
         return null;
     }
 
@@ -79,12 +83,17 @@ public class BankAccountRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) result.add(mapTransaction(rs));
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to load transactions: " + e.getMessage(), e); }
         return result;
     }
 
     public void addTransaction(int accountId, String action, double amount, String slip, String date, String performedBy, String notes) {
-        String sql = "INSERT INTO bank_account_transactions (account_id, action, amount, slip_number, date, performed_by, notes) VALUES (?,?,?,?,?,?,?)";
+        addTransaction(accountId, action, amount, slip, date, performedBy, notes, null);
+    }
+
+    public void addTransaction(int accountId, String action, double amount, String slip, String date,
+                               String performedBy, String notes, String sourceRef) {
+        String sql = "INSERT INTO bank_account_transactions (account_id, action, amount, slip_number, date, performed_by, notes, source_ref) VALUES (?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
             ps.setInt(1, accountId);
             ps.setString(2, action);
@@ -93,8 +102,9 @@ public class BankAccountRepository {
             ps.setString(5, date);
             ps.setString(6, performedBy);
             ps.setString(7, notes);
+            ps.setString(8, sourceRef);
             ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to record transaction: " + e.getMessage(), e); }
         // Update balance
         String op = "Deposit".equals(action) ? "+" : "-";
         try (PreparedStatement ps = conn().prepareStatement(
@@ -102,7 +112,7 @@ public class BankAccountRepository {
             ps.setDouble(1, amount);
             ps.setInt(2, accountId);
             ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to update balance: " + e.getMessage(), e); }
     }
 
     public void deleteTransaction(int transactionId, int accountId, double amount, String action) {
@@ -113,12 +123,37 @@ public class BankAccountRepository {
             ps.setDouble(1, amount);
             ps.setInt(2, accountId);
             ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to reverse balance: " + e.getMessage(), e); }
         try (PreparedStatement ps = conn().prepareStatement(
                 "DELETE FROM bank_account_transactions WHERE id=?")) {
             ps.setInt(1, transactionId);
             ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { throw new RuntimeException("Failed to delete transaction: " + e.getMessage(), e); }
+    }
+
+    /**
+     * Marks a transaction as voided. Preserves the row for audit purposes and
+     * reverses the balance effect. A reason is required.
+     */
+    public void voidTransaction(int transactionId, int accountId, double amount, String action,
+                                String reason, String voidedBy) {
+        if (reason == null || reason.isBlank()) {
+            throw new RuntimeException("A reason is required to void a transaction.");
+        }
+        String op = "Deposit".equals(action) ? "-" : "+";
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE bank_accounts SET balance = balance " + op + " ? WHERE id=?")) {
+            ps.setDouble(1, amount);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException("Failed to reverse balance: " + e.getMessage(), e); }
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE bank_account_transactions SET voided=1, voided_reason=?, voided_by=?, voided_at=CURRENT_TIMESTAMP WHERE id=?")) {
+            ps.setString(1, reason);
+            ps.setString(2, voidedBy == null ? "" : voidedBy);
+            ps.setInt(3, transactionId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException("Failed to void transaction: " + e.getMessage(), e); }
     }
 
     // ── Mappers ───────────────────────────────────────────────────────────────
@@ -145,6 +180,15 @@ public class BankAccountRepository {
         t.setDate(rs.getString("date"));
         t.setPerformedBy(rs.getString("performed_by"));
         t.setNotes(rs.getString("notes"));
+        try {
+            t.setVoided(rs.getInt("voided") != 0);
+            t.setVoidedReason(rs.getString("voided_reason"));
+            t.setVoidedBy(rs.getString("voided_by"));
+            t.setVoidedAt(rs.getString("voided_at"));
+            t.setSourceRef(rs.getString("source_ref"));
+        } catch (SQLException ignore) {
+            // Columns may not exist on legacy schemas
+        }
         return t;
     }
 }

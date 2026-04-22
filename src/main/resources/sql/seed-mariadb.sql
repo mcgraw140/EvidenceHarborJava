@@ -105,3 +105,6 @@ INSERT IGNORE INTO user_roles_lookup (name) VALUES
 
 INSERT IGNORE INTO user_statuses_lookup (name) VALUES
     ('Active'), ('Inactive');
+-- Default bank account for Evidence Fund
+INSERT IGNORE INTO bank_accounts (id, account_name, bank_name, account_number, balance, notes) VALUES
+    (1, 'Evidence Fund', 'Primary Bank', '***-0000', 0, 'Default agency evidence funds account. Rename or delete as needed.');

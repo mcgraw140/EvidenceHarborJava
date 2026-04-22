@@ -233,8 +233,13 @@ public class UserManagementController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showAdminDashboard(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
     @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onUserManagement()       { }
+    @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
+    @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
+    @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();

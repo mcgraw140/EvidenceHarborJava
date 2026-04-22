@@ -2,6 +2,7 @@ package com.evidenceharbor.ui.admin;
 
 import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
+import com.evidenceharbor.app.SessionManager;
 import com.evidenceharbor.domain.BankAccount;
 import com.evidenceharbor.domain.BankTransaction;
 import com.evidenceharbor.persistence.BankAccountRepository;
@@ -33,12 +34,12 @@ public class BankAccountLedgerController implements Initializable {
     @FXML private Label lblBank;
     @FXML private Label lblAccountNumber;
     @FXML private Button btnEditAccount;
-    @FXML private Button btnDeleteAccount;
     @FXML private TableView<BankTransaction> txTable;
     @FXML private TableColumn<BankTransaction, String> colDate;
     @FXML private TableColumn<BankTransaction, String> colAction;
     @FXML private TableColumn<BankTransaction, String> colAmount;
     @FXML private TableColumn<BankTransaction, String> colSlip;
+    @FXML private TableColumn<BankTransaction, String> colSource;
     @FXML private TableColumn<BankTransaction, String> colBy;
     @FXML private TableColumn<BankTransaction, String> colNotes;
     @FXML private TableColumn<BankTransaction, String> colTxAction;
@@ -64,23 +65,54 @@ public class BankAccountLedgerController implements Initializable {
 
         // Transaction table columns
         colDate.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDate()));
-        colAction.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getAction()));
+        colAction.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().isVoided() ? c.getValue().getAction() + " (VOIDED)" : c.getValue().getAction()));
         colAmount.setCellValueFactory(c -> new SimpleStringProperty(
                 String.format("$%.2f", c.getValue().getAmount())));
         colSlip.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getSlipNumber()));
+        colSource.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getSourceRef() == null ? "" : c.getValue().getSourceRef()));
         colBy.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getPerformedBy()));
-        colNotes.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getNotes()));
+        colNotes.setCellValueFactory(c -> {
+            BankTransaction tx = c.getValue();
+            String n = tx.getNotes() == null ? "" : tx.getNotes();
+            if (tx.isVoided() && tx.getVoidedReason() != null && !tx.getVoidedReason().isBlank()) {
+                String by = tx.getVoidedBy() == null || tx.getVoidedBy().isBlank() ? "" : " by " + tx.getVoidedBy();
+                String voidNote = "[VOIDED" + by + "] " + tx.getVoidedReason();
+                n = n.isBlank() ? voidNote : (n + "  —  " + voidNote);
+            }
+            return new SimpleStringProperty(n);
+        });
+
+        // Dim voided rows with strikethrough
+        txTable.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(BankTransaction item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else if (item.isVoided()) {
+                    setStyle("-fx-text-fill:#94a3b8; -fx-opacity:0.75;");
+                } else {
+                    setStyle("");
+                }
+            }
+        });
 
         colTxAction.setCellFactory(col -> new TableCell<>() {
-            private final Button btnDel = new Button("Delete");
-            { btnDel.setStyle("-fx-background-color:#e53e3e;-fx-text-fill:white;"); }
+            private final Button btnVoid = new Button("Void");
+            { btnVoid.setStyle("-fx-background-color:#e53e3e;-fx-text-fill:white;"); }
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) { setGraphic(null); return; }
                 BankTransaction tx = getTableView().getItems().get(getIndex());
-                btnDel.setOnAction(e -> deleteTransaction(tx));
-                setGraphic(btnDel);
+                if (tx.isVoided()) {
+                    setGraphic(null);
+                    return;
+                }
+                btnVoid.setOnAction(e -> voidTransaction(tx));
+                setGraphic(btnVoid);
             }
         });
 
@@ -89,12 +121,18 @@ public class BankAccountLedgerController implements Initializable {
     }
 
     private void loadAccounts() {
-        List<BankAccount> accounts = repo.findAllAccounts();
-        accountList.setItems(FXCollections.observableArrayList(accounts));
-        if (!accounts.isEmpty()) {
-            accountList.getSelectionModel().selectFirst();
-        } else {
-            clearDetail();
+        try {
+            List<BankAccount> accounts = repo.findAllAccounts();
+            accountList.setItems(FXCollections.observableArrayList(accounts));
+            accountList.setPlaceholder(new Label(
+                    "No bank accounts yet.\nClick \"+ New\" above to create one."));
+            if (!accounts.isEmpty()) {
+                accountList.getSelectionModel().selectFirst();
+            } else {
+                clearDetail();
+            }
+        } catch (RuntimeException e) {
+            showError(e.getMessage());
         }
     }
 
@@ -105,7 +143,6 @@ public class BankAccountLedgerController implements Initializable {
         lblBank.setText(account.getBankName() != null ? account.getBankName() : "");
         lblAccountNumber.setText(account.getAccountNumber() != null ? account.getAccountNumber() : "");
         btnEditAccount.setDisable(false);
-        btnDeleteAccount.setDisable(false);
         loadTransactions(account);
     }
 
@@ -115,16 +152,19 @@ public class BankAccountLedgerController implements Initializable {
         lblBank.setText("");
         lblAccountNumber.setText("");
         btnEditAccount.setDisable(true);
-        btnDeleteAccount.setDisable(true);
         txTable.getItems().clear();
     }
 
     private void loadTransactions(BankAccount account) {
-        txTable.setItems(FXCollections.observableArrayList(
-                repo.findTransactionsByAccount(account.getId())));
+        try {
+            txTable.setItems(FXCollections.observableArrayList(
+                    repo.findTransactionsByAccount(account.getId())));
+        } catch (RuntimeException e) {
+            showError(e.getMessage());
+        }
     }
 
-    // ── Account CRUD ─────────────────────────────────────────────────────────
+    // â”€â”€ Account CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML
     private void onNewAccount() {
@@ -135,22 +175,6 @@ public class BankAccountLedgerController implements Initializable {
     private void onEditAccount() {
         BankAccount sel = accountList.getSelectionModel().getSelectedItem();
         if (sel != null) showAccountDialog(sel);
-    }
-
-    @FXML
-    private void onDeleteAccount() {
-        BankAccount sel = accountList.getSelectionModel().getSelectedItem();
-        if (sel == null) return;
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Delete account \"" + sel.getAccountName() + "\" and all its transactions?",
-                ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Confirm Delete");
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                repo.deleteAccount(sel.getId());
-                loadAccounts();
-            }
-        });
     }
 
     private void showAccountDialog(BankAccount existing) {
@@ -179,19 +203,36 @@ public class BankAccountLedgerController implements Initializable {
             if (bt == ButtonType.OK) {
                 String name = tfName.getText().trim();
                 if (name.isEmpty()) { showError("Account name is required."); return; }
-                if (existing == null) {
-                    repo.createAccount(name, tfNumber.getText().trim(),
-                            tfBank.getText().trim(), taNotes.getText().trim());
-                } else {
-                    repo.updateAccount(existing.getId(), name, tfNumber.getText().trim(),
-                            tfBank.getText().trim(), taNotes.getText().trim());
+                try {
+                    if (existing == null) {
+                        // Two-step verification: confirm creation with a summary
+                        String summary = "You are about to create a new bank account:\n\n"
+                                + "  • Name:    " + name + "\n"
+                                + "  • Bank:    " + (tfBank.getText().trim().isEmpty() ? "(none)" : tfBank.getText().trim()) + "\n"
+                                + "  • Acct #:  " + (tfNumber.getText().trim().isEmpty() ? "(none)" : tfNumber.getText().trim()) + "\n\n"
+                                + "Bank accounts cannot be deleted. "
+                                + "Are you sure you want to create this account?";
+                        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, summary,
+                                ButtonType.YES, ButtonType.NO);
+                        confirm.setTitle("Confirm New Account");
+                        confirm.setHeaderText("Verify new account details");
+                        java.util.Optional<ButtonType> result = confirm.showAndWait();
+                        if (result.isEmpty() || result.get() != ButtonType.YES) return;
+                        repo.createAccount(name, tfNumber.getText().trim(),
+                                tfBank.getText().trim(), taNotes.getText().trim());
+                    } else {
+                        repo.updateAccount(existing.getId(), name, tfNumber.getText().trim(),
+                                tfBank.getText().trim(), taNotes.getText().trim());
+                    }
+                    loadAccounts();
+                } catch (RuntimeException e) {
+                    showError(e.getMessage());
                 }
-                loadAccounts();
             }
         });
     }
 
-    // ── Transaction recording ─────────────────────────────────────────────────
+    // â”€â”€ Transaction recording â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML
     private void onAddTransaction() {
@@ -213,17 +254,36 @@ public class BankAccountLedgerController implements Initializable {
 
         TextField tfAmount  = new TextField();
         TextField tfSlip    = new TextField();
+        TextField tfSource  = new TextField();
+        tfSource.setPromptText("Case # or source of funds (required for deposits)");
         TextField tfBy      = new TextField();
+        // Default to current officer
+        if (SessionManager.getCurrentOfficer() != null) {
+            tfBy.setText(SessionManager.getCurrentOfficer().getName());
+        }
         TextArea  taNotes   = new TextArea();
         taNotes.setPrefRowCount(2);
         DatePicker dpDate = new DatePicker(LocalDate.now());
 
+        Label lblSource = new Label("Case / Source:*");
+        // When type changes between Deposit/Withdrawal, the source asterisk hints required
+        cbAction.valueProperty().addListener((obs, oldV, newV) -> {
+            if ("Withdrawal".equals(newV)) {
+                lblSource.setText("Case / Source:");
+                tfSource.setPromptText("Optional for withdrawals");
+            } else {
+                lblSource.setText("Case / Source:*");
+                tfSource.setPromptText("Case # or source of funds (required for deposits)");
+            }
+        });
+
         grid.add(new Label("Type:*"),    0, 0); grid.add(cbAction, 1, 0);
         grid.add(new Label("Amount:*"),  0, 1); grid.add(tfAmount, 1, 1);
         grid.add(new Label("Date:"),     0, 2); grid.add(dpDate,   1, 2);
-        grid.add(new Label("Slip #:"),   0, 3); grid.add(tfSlip,   1, 3);
-        grid.add(new Label("By:"),       0, 4); grid.add(tfBy,     1, 4);
-        grid.add(new Label("Notes:"),    0, 5); grid.add(taNotes,  1, 5);
+        grid.add(lblSource,              0, 3); grid.add(tfSource, 1, 3);
+        grid.add(new Label("Slip #:"),   0, 4); grid.add(tfSlip,   1, 4);
+        grid.add(new Label("By:"),       0, 5); grid.add(tfBy,     1, 5);
+        grid.add(new Label("Notes:"),    0, 6); grid.add(taNotes,  1, 6);
 
         dlg.getDialogPane().setContent(grid);
         dlg.showAndWait().ifPresent(bt -> {
@@ -240,9 +300,20 @@ public class BankAccountLedgerController implements Initializable {
                 String dateStr = dpDate.getValue() != null
                         ? dpDate.getValue().toString()
                         : LocalDate.now().toString();
-                repo.addTransaction(sel.getId(), cbAction.getValue(), amount,
-                        tfSlip.getText().trim(), dateStr,
-                        tfBy.getText().trim(), taNotes.getText().trim());
+                String source = tfSource.getText().trim();
+                if ("Deposit".equals(cbAction.getValue()) && source.isEmpty()) {
+                    showError("Deposits require a Case # or source of funds.");
+                    return;
+                }
+                try {
+                    repo.addTransaction(sel.getId(), cbAction.getValue(), amount,
+                            tfSlip.getText().trim(), dateStr,
+                            tfBy.getText().trim(), taNotes.getText().trim(),
+                            source.isEmpty() ? null : source);
+                } catch (RuntimeException ex) {
+                    showError(ex.getMessage());
+                    return;
+                }
 
                 // Reload both lists
                 loadAccounts();
@@ -255,13 +326,40 @@ public class BankAccountLedgerController implements Initializable {
         });
     }
 
-    private void deleteTransaction(BankTransaction tx) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Delete this transaction?", ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Confirm Delete");
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.YES) {
-                repo.deleteTransaction(tx.getId(), tx.getAccountId(), tx.getAmount(), tx.getAction());
+    private void voidTransaction(BankTransaction tx) {
+        if (tx.isVoided()) return;
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle("Void Transaction");
+        dlg.setHeaderText("Voiding a transaction preserves the record for audit.\n"
+                + "A reason is required and cannot be changed later.");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+        TextArea taReason = new TextArea();
+        taReason.setPrefRowCount(3);
+        taReason.setPromptText("Explain the error (e.g. wrong amount, duplicate entry, wrong account)");
+        grid.add(new Label("Reason:*"), 0, 0);
+        grid.add(taReason, 1, 0);
+        dlg.getDialogPane().setContent(grid);
+
+        dlg.showAndWait().ifPresent(bt -> {
+            if (bt == ButtonType.OK) {
+                String reason = taReason.getText().trim();
+                if (reason.isEmpty()) {
+                    showError("A reason is required to void a transaction.");
+                    return;
+                }
+                String by = SessionManager.getCurrentOfficer() != null
+                        ? SessionManager.getCurrentOfficer().getName() : "";
+                try {
+                    repo.voidTransaction(tx.getId(), tx.getAccountId(), tx.getAmount(), tx.getAction(), reason, by);
+                } catch (RuntimeException e) {
+                    showError(e.getMessage());
+                    return;
+                }
                 BankAccount sel = accountList.getSelectionModel().getSelectedItem();
                 loadAccounts();
                 if (sel != null) {
@@ -274,7 +372,7 @@ public class BankAccountLedgerController implements Initializable {
         });
     }
 
-    // ── Nav bar ───────────────────────────────────────────────────────────────
+    // â”€â”€ Nav bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML private void onCases()     { Navigator.get().showCaseList(); }
     @FXML private void onInventory() { Navigator.get().showInventory(); }
@@ -283,11 +381,18 @@ public class BankAccountLedgerController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showAdminDashboard(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
     @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onUserManagement()       { Navigator.get().showUserManagement(); }
+    @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
+    @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
+    @FXML private void onBankAccountLedger()     { }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(String msg) {
-        new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
+        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
+        a.setHeaderText("Bank Ledger Error");
+        a.showAndWait();
     }
 
     private String nvl(String s) { return s == null ? "" : s; }

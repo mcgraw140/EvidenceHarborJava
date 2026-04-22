@@ -21,6 +21,7 @@
             </HBox>
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onEvidenceDashboard"/>
                 <Button text="Cases" styleClass="nav-tab active" onAction="#onCases"/>
                 <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
                 <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
@@ -126,13 +127,12 @@
                     </HBox>
                     <TableView fx:id="vehicleTable" prefHeight="180" styleClass="data-table">
                         <columns>
-                            <TableColumn fx:id="colVehicleYear"   text="YEAR"          prefWidth="90"/>
-                            <TableColumn fx:id="colVehicleMake"   text="MAKE"          prefWidth="140"/>
-                            <TableColumn fx:id="colVehicleModel"  text="MODEL"         prefWidth="150"/>
-                            <TableColumn fx:id="colVehiclePlate"  text="PLATE"         prefWidth="140"/>
-                            <TableColumn fx:id="colVehicleVin"    text="VIN"           prefWidth="220"/>
-                            <TableColumn fx:id="colVehicleStatus" text="STATUS"        prefWidth="120"/>
-                            <TableColumn fx:id="colVehicleDate"   text="IMPOUND DATE"  prefWidth="140"/>
+                            <TableColumn fx:id="colVehicleYear"   text="YEAR"     prefWidth="80"/>
+                            <TableColumn fx:id="colVehicleMake"   text="MAKE"     prefWidth="120"/>
+                            <TableColumn fx:id="colVehicleModel"  text="MODEL"    prefWidth="140"/>
+                            <TableColumn fx:id="colVehiclePlate"  text="PLATE"    prefWidth="120"/>
+                            <TableColumn fx:id="colVehicleVin"    text="VIN"      prefWidth="200"/>
+                            <TableColumn fx:id="colVehicleStatus" text="STATUS"   prefWidth="110"/>
                         </columns>
                         <placeholder><Label text="No vehicles impounded for this case." styleClass="placeholder-label"/></placeholder>
                     </TableView>

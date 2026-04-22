@@ -90,7 +90,7 @@ public class SettingsController implements Initializable {
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
-    // ──────────────────────── LOAD ────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LOAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void loadAgencySettings() {
         try {
@@ -110,7 +110,7 @@ public class SettingsController implements Initializable {
         }
     }
 
-    // ──────────────────────── LIVE VALIDATION WIRING ────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LIVE VALIDATION WIRING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void wirePatternValidation() {
         casePatternField.textProperty().addListener((o, old, val) -> validatePattern(val, casePatternStatus));
@@ -134,10 +134,10 @@ public class SettingsController implements Initializable {
         }
         try {
             Pattern.compile(pattern);
-            statusLabel.setText("✓ Valid regex");
+            statusLabel.setText("âœ“ Valid regex");
             statusLabel.setTextFill(Color.GREEN);
         } catch (PatternSyntaxException e) {
-            statusLabel.setText("✗ Invalid regex");
+            statusLabel.setText("âœ— Invalid regex");
             statusLabel.setTextFill(Color.RED);
         }
     }
@@ -149,7 +149,7 @@ public class SettingsController implements Initializable {
         }
         try {
             boolean matches = example.matches(pattern);
-            label.setText(matches ? "✓ Matches" : "✗ No match");
+            label.setText(matches ? "âœ“ Matches" : "âœ— No match");
             label.setTextFill(matches ? Color.GREEN : Color.RED);
         } catch (PatternSyntaxException e) {
             label.setText("");
@@ -169,7 +169,7 @@ public class SettingsController implements Initializable {
         barcodePreviewLabel.setText("Preview: " + prefix + today + "00001");
     }
 
-    // ──────────────────────── SAVE ────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SAVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML
     private void onSaveAgency() {
@@ -192,7 +192,7 @@ public class SettingsController implements Initializable {
         }
     }
 
-    // ──────────────────────── TAILSCALE ────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ TAILSCALE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void refreshTailscaleStatus() {
         runTailscaleTask(() -> TailscaleManager.getStatus(), result -> {
@@ -302,7 +302,6 @@ public class SettingsController implements Initializable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void runTailscaleTask(java.util.concurrent.Callable<T> action, java.util.function.Consumer<T> onSuccess) {
         Task<T> task = new Task<>() {
             @Override
@@ -321,7 +320,7 @@ public class SettingsController implements Initializable {
         });
     }
 
-    // ──────────────────────── DATABASE CONNECTION ────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ DATABASE CONNECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void loadDbConnectionSettings() {
         try {
@@ -389,7 +388,7 @@ public class SettingsController implements Initializable {
         };
 
         task.setOnSucceeded(e -> {
-            String msg = testOnly ? "Test successful — connection is working." : "Reconnected successfully.";
+            String msg = testOnly ? "Test successful â€” connection is working." : "Reconnected successfully.";
             dbTestResultLabel.setText(msg);
             dbTestResultLabel.setTextFill(Color.GREEN);
             appendDbLog("[" + timestamp() + "] " + msg);
@@ -480,7 +479,7 @@ public class SettingsController implements Initializable {
         return t.getMessage() == null ? t.toString() : t.getMessage();
     }
 
-    // ──────────────────────── NAV ────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML private void onCases()     { Navigator.get().showCaseList(); }
     @FXML private void onInventory() { Navigator.get().showInventory(); }
@@ -489,8 +488,13 @@ public class SettingsController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showAdminDashboard(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
     @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onUserManagement()       { Navigator.get().showUserManagement(); }
+    @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
+    @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
+    @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);

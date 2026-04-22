@@ -62,6 +62,16 @@ public class ImpoundLotController implements Initializable {
                 cd.getValue().isVehicleImpounded() ? "Yes" : "No"));
 
         searchField.textProperty().addListener((obs, o, n) -> applySearch(n));
+        vehicleTable.setRowFactory(tv -> {
+            TableRow<Evidence> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY
+                        && e.getClickCount() == 2 && !row.isEmpty()) {
+                    if (VehicleDetailsDialog.show(row.getItem())) loadData();
+                }
+            });
+            return row;
+        });
         loadData();
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
@@ -107,7 +117,8 @@ public class ImpoundLotController implements Initializable {
     @FXML private void onReports()       { Navigator.get().showReports(); }
     @FXML private void onSettings()      { Navigator.get().showSettings(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
-    @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }    @FXML private void onBack()          { Navigator.get().showQmDashboard(); }
-    @FXML private void onDashboard()     { Navigator.get().showCaseList(); }
+    @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+    @FXML private void onBack()          { Navigator.get().showEvidenceDashboard(); }
+    @FXML private void onDashboard()     { Navigator.get().showEvidenceDashboard(); }
+    @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
 }

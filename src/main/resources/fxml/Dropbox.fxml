@@ -21,6 +21,7 @@
             </HBox>
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onEvidenceDashboard"/>
                 <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
                 <Button fx:id="navInventoryBtn" text="Inventory" styleClass="nav-tab" onAction="#onInventory"/>
                 <Button fx:id="navDropboxBtn" text="Dropbox Check-in" styleClass="nav-tab active" onAction="#onDropbox"/>

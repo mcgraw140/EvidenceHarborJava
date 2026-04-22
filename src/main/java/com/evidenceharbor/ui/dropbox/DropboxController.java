@@ -28,7 +28,7 @@ import java.util.*;
 
 public class DropboxController implements Initializable {
 
-    // ── FXML bindings ────────────────────────────────────────────────────────
+    // â”€â”€ FXML bindings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private Button navAdminTab;
     @FXML private Button navAuditTrailBtn;
     @FXML private Button navSettingsBtn;
@@ -58,7 +58,7 @@ public class DropboxController implements Initializable {
     @FXML private TableColumn<DropboxSession, String> histColOfficer;
     @FXML private TableColumn<DropboxSession, Integer> histColItems;
 
-    // ── Repos ────────────────────────────────────────────────────────────────
+    // â”€â”€ Repos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private final EvidenceRepository evidenceRepo = new EvidenceRepository();
     private final CaseRepository caseRepo = new CaseRepository();
     private final ChainOfCustodyRepository cocRepo   = new ChainOfCustodyRepository();
@@ -70,6 +70,7 @@ public class DropboxController implements Initializable {
     private List<String> storageLocations = List.of();
     private List<String> intakeLocations = List.of();
     private final ObservableList<DropboxItem> sessionItems = FXCollections.observableArrayList();
+    @SuppressWarnings("unused")
     private boolean sessionActive = false;
 
     @Override
@@ -104,7 +105,7 @@ public class DropboxController implements Initializable {
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, navDropboxBtn);
     }
 
-    // ── Table setup ──────────────────────────────────────────────────────────
+    // â”€â”€ Table setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void setupDropboxTable() {
         dbColBarcode.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().evidence.getBarcode()));
@@ -158,7 +159,7 @@ public class DropboxController implements Initializable {
         histColItems.setCellValueFactory(cd -> new SimpleIntegerProperty(cd.getValue().itemCount).asObject());
     }
 
-    // ── State management ─────────────────────────────────────────────────────
+    // â”€â”€ State management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void showIdleState() {
         sessionActive = false;
@@ -173,7 +174,7 @@ public class DropboxController implements Initializable {
         idlePane.setVisible(false);   idlePane.setManaged(false);
         activePane.setVisible(true);  activePane.setManaged(true);
         historyPane.setVisible(false); historyPane.setManaged(false);
-        sessionStateLabel.setText("● Session Active");
+        sessionStateLabel.setText("â— Session Active");
         sessionStateLabel.setStyle("-fx-text-fill: #22c55e; -fx-font-weight: bold;");
         updateActiveSummary();
     }
@@ -190,11 +191,11 @@ public class DropboxController implements Initializable {
         long verified  = sessionItems.stream().filter(i -> "Verified".equals(i.action)).count();
         long missing   = sessionItems.stream().filter(i -> "Missing".equals(i.action)).count();
         long pending   = sessionItems.stream().filter(i -> "Pending".equals(i.action)).count();
-        activeSummaryLabel.setText(sessionItems.size() + " items in session — "
+        activeSummaryLabel.setText(sessionItems.size() + " items in session â€” "
             + checkedIn + " checked in, " + verified + " verified, " + missing + " missing, " + pending + " pending");
     }
 
-    // ── Actions ──────────────────────────────────────────────────────────────
+    // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML
     private void onStartSession() {
@@ -346,7 +347,7 @@ public class DropboxController implements Initializable {
     @FXML
     private void onBackFromHistory() { showIdleState(); }
 
-    // ── DB helpers ───────────────────────────────────────────────────────────
+    // â”€â”€ DB helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void refreshCount() {
         try {
@@ -380,7 +381,7 @@ public class DropboxController implements Initializable {
                          "SELECT id, officer_name, item_count, created_at FROM dropbox_sessions ORDER BY created_at DESC")) {
                 while (rs.next()) {
                     sessions.add(new DropboxSession(rs.getInt("id"),
-                            rs.getString("officer_name") != null ? rs.getString("officer_name") : "—",
+                            rs.getString("officer_name") != null ? rs.getString("officer_name") : "â€”",
                             rs.getInt("item_count"),
                             rs.getString("created_at")));
                 }
@@ -389,17 +390,19 @@ public class DropboxController implements Initializable {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
-    // ── Nav ──────────────────────────────────────────────────────────────────
+    // â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onCases()         { Navigator.get().showCaseList(); }
     @FXML private void onInventory()     { Navigator.get().showInventory(); }
     @FXML private void onPeople()        { Navigator.get().showPeople(); }
     @FXML private void onDropbox()       { }
     @FXML private void onReports()       { Navigator.get().showReports(); }
     @FXML private void onSettings()      { Navigator.get().showSettings(); }
+    @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
+    @FXML private void onBack()          { Navigator.get().showCaseList(); }
+    @FXML private void onDashboard()     { Navigator.get().showCaseList(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
-    // ── Helper records ───────────────────────────────────────────────────────
+    // â”€â”€ Helper records â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     static class DropboxItem {
         final Evidence evidence;

@@ -21,19 +21,28 @@
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
                 <Button text="Dashboard" styleClass="nav-tab" onAction="#onAdmin"/>
-                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="User Management" styleClass="nav-tab" onAction="#onUserManagement"/>
+                <Button text="Lookup Admin" styleClass="nav-tab" onAction="#onLookupAdministration"/>
+                <Button text="Evidence Audit" styleClass="nav-tab" onAction="#onEvidenceAudit"/>
                 <Button fx:id="navAuditTrailBtn" text="Audit Trail" styleClass="nav-tab active" onAction="#onAuditTrail"/>
+                <Button text="Bank Ledger" styleClass="nav-tab" onAction="#onBankAccountLedger"/>
+                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
             </HBox>
         </VBox>
     </top>
     <center>
         <VBox spacing="16">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <HBox spacing="12">
+                <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
             <Label text="Admin &gt; Audit Trail" styleClass="breadcrumb-text"/>
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Label text="Audit Trail" styleClass="page-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="Export CSV" styleClass="btn-secondary" onAction="#onExportCsv"/>
+                <Button text="Print" styleClass="btn-secondary" onAction="#onPrint"/>
             </HBox>
             <Separator/>
 
@@ -60,7 +69,7 @@
             <!-- Log table -->
             <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
                 <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
-                <TableView fx:id="logTable" VBox.vgrow="ALWAYS">
+                <TableView fx:id="logTable" styleClass="data-table" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="colTimestamp" text="TIMESTAMP"      prefWidth="160"/>
                         <TableColumn fx:id="colUser"      text="USER"           prefWidth="160"/>

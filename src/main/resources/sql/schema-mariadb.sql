@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS evidence (
     narc_packaging VARCHAR(255),
     narc_field_test_performed TINYINT(1) DEFAULT 0,
     narc_field_test_result VARCHAR(255),
+    vehicle_body_type VARCHAR(100),
     vehicle_make VARCHAR(100),
     vehicle_model VARCHAR(100),
     vehicle_year VARCHAR(20),
@@ -150,6 +151,14 @@ CREATE TABLE IF NOT EXISTS evidence (
 );
 
 CREATE TABLE IF NOT EXISTS weapon_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS vehicle_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+CREATE TABLE IF NOT EXISTS impound_locations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
 );
@@ -282,6 +291,11 @@ CREATE TABLE IF NOT EXISTS bank_account_transactions (
     date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     performed_by VARCHAR(255),
     notes TEXT,
+    voided TINYINT(1) NOT NULL DEFAULT 0,
+    voided_reason TEXT,
+    voided_by VARCHAR(255),
+    voided_at DATETIME,
+    source_ref VARCHAR(255),
     FOREIGN KEY (account_id) REFERENCES bank_accounts(id)
 );
 

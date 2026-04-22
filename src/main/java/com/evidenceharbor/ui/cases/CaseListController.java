@@ -78,7 +78,7 @@ public class CaseListController implements Initializable {
     }
 
     @FXML
-    private void onNewCase() {
+    public void onNewCase() {
         NewCaseDialog.show(caseRepo, () -> loadCases(searchField.getText()));
     }
 
@@ -107,8 +107,8 @@ public class CaseListController implements Initializable {
         Navigator.get().showReports();
     }
 
+    @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     @FXML
     private void onSettings() {

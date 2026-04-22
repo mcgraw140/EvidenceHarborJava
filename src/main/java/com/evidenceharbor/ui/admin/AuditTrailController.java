@@ -5,6 +5,7 @@ import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.AuditLog;
 import com.evidenceharbor.persistence.AuditLogRepository;
 import com.evidenceharbor.persistence.LookupRepository;
+import com.evidenceharbor.util.TableExportUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -146,6 +147,12 @@ public class AuditTrailController implements Initializable {
         } catch (Exception e) { showError(e); }
     }
 
+    @FXML
+    private void onPrint() {
+        javafx.stage.Window w = logTable.getScene() != null ? logTable.getScene().getWindow() : null;
+        TableExportUtil.printTable(w, "Audit Trail", logTable);
+    }
+
     private void showDetail(AuditLog log) {
         Dialog<Void> dlg = new Dialog<>();
         dlg.setTitle("Audit Log Detail #" + log.getId());
@@ -199,8 +206,13 @@ public class AuditTrailController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showAdminDashboard(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
     @FXML private void onAuditTrail()     { }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onUserManagement()       { Navigator.get().showUserManagement(); }
+    @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
+    @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
+    @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();

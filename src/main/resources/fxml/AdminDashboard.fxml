@@ -22,8 +22,12 @@
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
                 <Button text="Dashboard" styleClass="nav-tab active" onAction="#onAdmin"/>
-                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="User Management" styleClass="nav-tab" onAction="#onUserManagement"/>
+                <Button text="Lookup Admin" styleClass="nav-tab" onAction="#onLookupAdministration"/>
+                <Button text="Evidence Audit" styleClass="nav-tab" onAction="#onEvidenceAudit"/>
                 <Button fx:id="navAuditTrailBtn" text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
+                <Button text="Bank Ledger" styleClass="nav-tab" onAction="#onBankAccountLedger"/>
+                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
             </HBox>
         </VBox>
     </top>
@@ -31,6 +35,11 @@
     <center>
         <VBox spacing="20">
             <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <HBox spacing="12">
+                <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
 
             <!-- Breadcrumb -->
             <Label text="Admin" styleClass="breadcrumb-text"/>

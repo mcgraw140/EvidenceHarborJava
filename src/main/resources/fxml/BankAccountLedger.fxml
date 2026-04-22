@@ -21,9 +21,13 @@
             </HBox>
             <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
                 <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
-                <Button text="Dashboard" styleClass="nav-tab active" onAction="#onAdmin"/>
-                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onAdmin"/>
+                <Button text="User Management" styleClass="nav-tab" onAction="#onUserManagement"/>
+                <Button text="Lookup Admin" styleClass="nav-tab" onAction="#onLookupAdministration"/>
+                <Button text="Evidence Audit" styleClass="nav-tab" onAction="#onEvidenceAudit"/>
                 <Button fx:id="navAuditTrailBtn" text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
+                <Button text="Bank Ledger" styleClass="nav-tab active" onAction="#onBankAccountLedger"/>
+                <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
             </HBox>
         </VBox>
     </top>
@@ -31,9 +35,10 @@
     <center>
         <HBox spacing="0">
             <!-- Left: Account List -->
-            <VBox spacing="0" prefWidth="260" style="-fx-border-color:#e2e8f0; -fx-border-width:0 1 0 0;">
-                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color:#f7fafc; -fx-padding:14 16 14 16;">
-                    <Label text="Accounts" styleClass="section-title" HBox.hgrow="ALWAYS"/>
+            <VBox spacing="0" prefWidth="260" style="-fx-background-color:#1e2d40; -fx-border-color:#2d4059; -fx-border-width:0 1 0 0;">
+                <HBox alignment="CENTER_LEFT" spacing="10"
+                      style="-fx-background-color:#243447; -fx-padding:14 16 14 16; -fx-border-color:transparent transparent #2d4059 transparent; -fx-border-width:0 0 1 0;">
+                    <Label text="Accounts" styleClass="section-title" style="-fx-text-fill:#e2e8f0;" HBox.hgrow="ALWAYS"/>
                     <Button text="+ New" styleClass="btn-primary" onAction="#onNewAccount"/>
                 </HBox>
                 <ListView fx:id="accountList" VBox.vgrow="ALWAYS"/>
@@ -43,8 +48,22 @@
             <VBox spacing="0" HBox.hgrow="ALWAYS">
                 <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
 
+                <HBox spacing="12" style="-fx-padding:0 0 16 0;">
+                    <Button text="◀  Previous Page" styleClass="btn-secondary" onAction="#onBack"/>
+                    <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+                </HBox>
+
                 <!-- Breadcrumb -->
                 <Label text="Admin  /  Bank Account Ledger" styleClass="breadcrumb-text"/>
+
+                <!-- CoC notice -->
+                <HBox alignment="CENTER_LEFT" spacing="10"
+                      style="-fx-background-color:#3b2f14; -fx-border-color:#b7791f; -fx-border-width:1; -fx-border-radius:6; -fx-background-radius:6; -fx-padding:10 14 10 14;">
+                    <Label text="⚠"  style="-fx-font-size:16; -fx-text-fill:#f6ad55;"/>
+                    <Label wrapText="true" style="-fx-text-fill:#fbd38d;"
+                           text="All collected currency from suspects must be logged as evidence and deposited via the Chain of Custody (Bank Deposit action). Do not record these deposits here manually."/>
+                </HBox>
+                <Region prefHeight="12"/>
 
                 <!-- Account header card -->
                 <VBox styleClass="card" spacing="6" style="-fx-margin:16 0 16 0;">
@@ -60,14 +79,11 @@
                         </VBox>
                         <VBox alignment="CENTER_RIGHT" spacing="4">
                             <Label text="Balance" styleClass="muted-text"/>
-                            <Label fx:id="lblBalance" text="$0.00"
+                            <Label fx:id="lblBalance" text="\$0.00"
                                    style="-fx-font-size:22; -fx-font-weight:bold; -fx-text-fill:#2f855a;"/>
                         </VBox>
                         <Button fx:id="btnEditAccount" text="Edit" styleClass="btn-secondary"
                                 onAction="#onEditAccount" disable="true"/>
-                        <Button fx:id="btnDeleteAccount" text="Delete"
-                                style="-fx-background-color:#e53e3e;-fx-text-fill:white;"
-                                onAction="#onDeleteAccount" disable="true"/>
                     </HBox>
                 </VBox>
 
@@ -78,15 +94,16 @@
                 </HBox>
 
                 <!-- Transactions table -->
-                <TableView fx:id="txTable" VBox.vgrow="ALWAYS">
+                <TableView fx:id="txTable" styleClass="data-table" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="colDate"     text="Date"        prefWidth="130"/>
                         <TableColumn fx:id="colAction"   text="Type"        prefWidth="100"/>
                         <TableColumn fx:id="colAmount"   text="Amount"      prefWidth="110"/>
                         <TableColumn fx:id="colSlip"     text="Slip #"      prefWidth="100"/>
+                        <TableColumn fx:id="colSource"   text="Case / Source" prefWidth="150"/>
                         <TableColumn fx:id="colBy"       text="Performed By" prefWidth="140"/>
-                        <TableColumn fx:id="colNotes"    text="Notes"       prefWidth="200"/>
-                        <TableColumn fx:id="colTxAction" text=""            prefWidth="80"/>
+                        <TableColumn fx:id="colNotes"    text="Notes"       prefWidth="240"/>
+                        <TableColumn fx:id="colTxAction" text=""            prefWidth="90"/>
                     </columns>
                     <placeholder><Label text="No transactions recorded"/></placeholder>
                 </TableView>

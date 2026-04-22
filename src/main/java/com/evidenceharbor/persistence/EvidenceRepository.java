@@ -66,7 +66,7 @@ public class EvidenceRepository {
                 "jewelry_type,jewelry_material,jewelry_estimated_value,jewelry_engraving_or_id," +
                 "narc_equip_type,narc_equip_description,narc_equip_suspected_residue,narc_equip_field_test_kit_used," +
                 "narc_drug_type,narc_net_weight,narc_form,narc_packaging,narc_field_test_performed,narc_field_test_result," +
-                "vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_vin,vehicle_license_plate,vehicle_license_state,vehicle_reported_stolen,vehicle_impounded," +
+                "vehicle_body_type,vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_vin,vehicle_license_plate,vehicle_license_state,vehicle_reported_stolen,vehicle_impounded," +
                 "weapon_type,weapon_make,weapon_model,weapon_serial_number,weapon_length,weapon_reported_stolen) " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?," +
                 "?,?,?,?,?," +
@@ -77,7 +77,7 @@ public class EvidenceRepository {
                 "?,?,?,?," +
                 "?,?,?,?," +
                 "?,?,?,?,?,?," +
-                "?,?,?,?,?,?,?,?,?," +
+                "?,?,?,?,?,?,?,?,?,?," +
                 "?,?,?,?,?,?)";
         try (PreparedStatement ps = conn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             int i = 1;
@@ -147,6 +147,7 @@ public class EvidenceRepository {
             ps.setInt(i++, e.isNarcFieldTestPerformed() ? 1 : 0);
             ps.setString(i++, e.getNarcFieldTestResult());
             // Vehicle
+            ps.setString(i++, e.getVehicleBodyType());
             ps.setString(i++, e.getVehicleMake());
             ps.setString(i++, e.getVehicleModel());
             ps.setString(i++, e.getVehicleYear());
@@ -241,6 +242,7 @@ public class EvidenceRepository {
         e.setNarcFieldTestPerformed(rs.getInt("narc_field_test_performed") == 1);
         e.setNarcFieldTestResult(rs.getString("narc_field_test_result"));
 
+        try { e.setVehicleBodyType(rs.getString("vehicle_body_type")); } catch (SQLException ignored) {}
         e.setVehicleMake(rs.getString("vehicle_make"));
         e.setVehicleModel(rs.getString("vehicle_model"));
         e.setVehicleYear(rs.getString("vehicle_year"));
@@ -276,6 +278,17 @@ public class EvidenceRepository {
             ps.setString(1, status);
             ps.setString(2, storageLocation);
             ps.setInt(3, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public void updateVehicleStatus(int id, String status, String storageLocation, boolean impounded) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "UPDATE evidence SET status=?, storage_location=?, vehicle_impounded=? WHERE id=?")) {
+            ps.setString(1, status);
+            ps.setString(2, storageLocation);
+            ps.setInt(3, impounded ? 1 : 0);
+            ps.setInt(4, id);
             ps.executeUpdate();
         }
     }

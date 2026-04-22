@@ -11,7 +11,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
@@ -137,9 +136,9 @@ public class SetupWizard {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  STEP 1 — DATABASE
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private void showDbStep() {
         stepLabel.setText("Step 1 of 2  ·  Database Connection");
@@ -246,9 +245,9 @@ public class SetupWizard {
         new Thread(task, "wizard-db").start();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  STEP 2a — CREATE FIRST ADMIN
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private void showCreateAdminStep() {
         stepLabel.setText("Step 2 of 2  ·  Create Administrator Account");
@@ -279,7 +278,7 @@ public class SetupWizard {
         form.add(fl("Password"),          0, 3); form.add(adminPassField,  1, 3);
         form.add(fl("Confirm Password"),  0, 4); form.add(adminConfField,  1, 4);
 
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("â† Back");
         backBtn.getStyleClass().add("btn-secondary");
         backBtn.setOnAction(e -> showDbStep());
 
@@ -339,7 +338,7 @@ public class SetupWizard {
 
         task.setOnSucceeded(e -> {
             SessionManager.setCurrentOfficer(task.getValue());
-            new Navigator(stage).showCaseList();
+            new Navigator(stage).showEvidenceDashboard();
         });
 
         task.setOnFailed(e -> {
@@ -351,9 +350,9 @@ public class SetupWizard {
         new Thread(task, "wizard-admin").start();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  STEP 2b — SIGN IN
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private void showLoginStep() {
         stepLabel.setText("Step 2 of 2  ·  Sign In");
@@ -378,15 +377,11 @@ public class SetupWizard {
         form.add(fl("Username"), 0, 0); form.add(loginUserField, 1, 0);
         form.add(fl("Password"), 0, 1); form.add(loginPassField, 1, 1);
 
-        Button backBtn = new Button("← Back");
-        backBtn.getStyleClass().add("btn-secondary");
-        backBtn.setOnAction(e -> showDbStep());
-
         loginBtn.getStyleClass().add("btn-primary");
         loginBtn.setDefaultButton(true);
         loginBtn.setOnAction(e -> doLogin());
 
-        HBox btns = new HBox(10, backBtn, loginBtn);
+        HBox btns = new HBox(10, loginBtn);
         btns.setAlignment(Pos.CENTER_RIGHT);
 
         contentBox.getChildren().setAll(heading, sub, form, btns);
@@ -427,7 +422,7 @@ public class SetupWizard {
             Officer officer = task.getValue();
             if (officer != null) {
                 SessionManager.setCurrentOfficer(officer);
-                new Navigator(stage).showCaseList();
+                new Navigator(stage).showEvidenceDashboard();
             } else {
                 failedAttempts++;
                 int remaining = 5 - failedAttempts;
@@ -451,9 +446,9 @@ public class SetupWizard {
         new Thread(task, "wizard-login").start();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     //  HELPERS
-    // ══════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     private void showError(String msg) {
         Platform.runLater(() -> { errorLabel.setText(msg); errorLabel.setVisible(true); });
@@ -482,3 +477,4 @@ public class SetupWizard {
         return t.getMessage() == null ? t.toString() : t.getMessage();
     }
 }
+

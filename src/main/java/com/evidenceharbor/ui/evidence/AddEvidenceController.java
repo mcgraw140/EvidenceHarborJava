@@ -177,7 +177,7 @@ public class AddEvidenceController implements Initializable {
         }
     }
 
-    // ──────────────────────────────── PANEL BUILDERS ────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PANEL BUILDERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void buildAmmunitionPanel() {
         GridPane g = grid();
@@ -267,6 +267,7 @@ public class AddEvidenceController implements Initializable {
         dynamicPanel.getChildren().add(g);
     }
 
+    @SuppressWarnings("unused")
     private void buildVehiclePanel() {
         GridPane g = grid();
         vehicleMakeField         = textField("e.g. Ford, Honda");
@@ -294,7 +295,7 @@ public class AddEvidenceController implements Initializable {
         dynamicPanel.getChildren().add(g);
     }
 
-    // ──────────────────────────────── SAVE ────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SAVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @FXML
     private void onSave() {
@@ -417,10 +418,10 @@ public class AddEvidenceController implements Initializable {
     @FXML private void onDropbox()       { Navigator.get().showDropbox(); }
     @FXML private void onReports()       { Navigator.get().showReports(); }
     @FXML private void onSettings()      { Navigator.get().showSettings(); }
+    @FXML private void onEvidenceDashboard() { Navigator.get().showEvidenceDashboard(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
-    // ──────────────────────────────── HELPERS ────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private GridPane grid() {
         GridPane g = new GridPane();
@@ -447,6 +448,7 @@ public class AddEvidenceController implements Initializable {
         return cb;
     }
 
+    @SuppressWarnings("unused")
     private CheckBox checkField(String text) {
         CheckBox cb = new CheckBox(text);
         cb.getStyleClass().add("check-box-default");

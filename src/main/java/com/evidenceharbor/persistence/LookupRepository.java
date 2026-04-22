@@ -35,7 +35,34 @@ public class LookupRepository {
     public List<String>     getWeaponTypes()                  throws SQLException { return getNames("weapon_types"); }
     public LookupItem       addWeaponType(String name)        throws SQLException { return addTo("weapon_types", name); }
     public void             deleteWeaponType(int id)          throws SQLException { deleteFrom("weapon_types", id); }
-
+    // ── Vehicle Types ──────────────────────────────────────────────────────────────
+    public List<LookupItem> getVehicleTypeItems()             throws SQLException { return getAll("vehicle_types"); }
+    public List<String>     getVehicleTypes()                 throws SQLException {
+        return getNamesSeeded("vehicle_types", Arrays.asList(
+                "Car (Sedan)",
+                "Truck (Pickup)",
+                "SUV",
+                "Van (Passenger)",
+                "Van (Cargo)",
+                "Motorcycle",
+                "Scooter / Moped",
+                "ATV (4-Wheeler)",
+                "UTV / SxS",
+                "Bus",
+                "Semi Truck (Tractor Trailer)",
+                "Trailer",
+                "RV / Motorhome",
+                "Boat",
+                "Bicycle",
+                "Agricultural Tractor",
+                "Heavy Equipment (Construction)",
+                "Emergency Vehicle (Police/Fire/EMS)",
+                "Tow Truck / Wrecker",
+                "Utility Vehicle (Work Cart / Industrial)"
+        ));
+    }
+    public LookupItem       addVehicleType(String name)       throws SQLException { return addTo("vehicle_types", name); }
+    public void             deleteVehicleType(int id)         throws SQLException { deleteFrom("vehicle_types", id); }
     // ── Biological Sources ────────────────────────────────────────────────────
     public List<LookupItem> getBiologicalSourceItems()        throws SQLException { return getAll("biological_sources"); }
     public List<String>     getBiologicalSources()            throws SQLException { return getNames("biological_sources"); }
@@ -89,7 +116,17 @@ public class LookupRepository {
     public List<String>     getIntakeLocations()              throws SQLException { return getNames("intake_locations"); }
     public LookupItem       addIntakeLocation(String name)    throws SQLException { return addTo("intake_locations", name); }
     public void             deleteIntakeLocation(int id)      throws SQLException { deleteFrom("intake_locations", id); }
-
+    // ── Impound Locations ────────────────────────────────────────────────────────────
+    public List<LookupItem> getImpoundLocationItems()         throws SQLException { return getAll("impound_locations"); }
+    public List<String>     getImpoundLocations()             throws SQLException {
+        return getNamesSeeded("impound_locations", Arrays.asList(
+                "Main Impound Lot",
+                "Secure Impound Yard",
+                "Outside Tow Yard"
+        ));
+    }
+    public LookupItem       addImpoundLocation(String name)   throws SQLException { return addTo("impound_locations", name); }
+    public void             deleteImpoundLocation(int id)     throws SQLException { deleteFrom("impound_locations", id); }
     // ── Evidence Types / Statuses ────────────────────────────────────────────
     public List<String> getEvidenceTypes() throws SQLException {
         return getNamesSeeded("evidence_types", Arrays.asList(
@@ -108,7 +145,7 @@ public class LookupRepository {
     // ── Audit lookups ────────────────────────────────────────────────────────
     public List<String> getAuditModules() throws SQLException {
         return getNamesSeeded("audit_modules", Arrays.asList(
-                "Evidence", "Cases", "Users", "Narcotics", "Quartermaster", "System"
+                "Evidence", "Cases", "Users", "Narcotics", "System"
         ));
     }
 
@@ -129,29 +166,6 @@ public class LookupRepository {
 
     public List<String> getUserStatuses() throws SQLException {
         return getNamesSeeded("user_statuses_lookup", Arrays.asList("Active", "Inactive"));
-    }
-
-    // ── QM lookups ───────────────────────────────────────────────────────────
-    public List<String> getQmEquipmentCategories() throws SQLException {
-        return getNamesSeeded("qm_equipment_categories_lookup", Arrays.asList(
-                "Weapon", "Uniform", "Equipment", "Vehicle", "Other"
-        ));
-    }
-
-    public List<String> getQmEquipmentStatuses() throws SQLException {
-        return getNamesSeeded("qm_equipment_statuses_lookup", Arrays.asList(
-                "Available", "Assigned", "Maintenance"
-        ));
-    }
-
-    public List<String> getQmVehicleStatuses() throws SQLException {
-        return getNamesSeeded("qm_vehicle_statuses_lookup", Arrays.asList("Impounded", "Released"));
-    }
-
-    public List<String> getQmStorageLocations() throws SQLException {
-        return getNamesSeeded("qm_storage_locations", Arrays.asList(
-                "QM Main Cage", "QM Armory", "QM Uniform Room", "QM Ammo Locker", "QM Vehicle Bay"
-        ));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

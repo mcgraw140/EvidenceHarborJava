@@ -28,7 +28,7 @@ public class PermissionManagementController implements Initializable {
     private Officer officer;
     private final OfficerRepository repo = new OfficerRepository();
 
-    // ── Permission flag definitions ────────────────────────────────────────────
+    // â”€â”€ Permission flag definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     record PermFlag(String flag, String label, String description) {}
 
     private static final List<PermFlag> ALL_FLAGS = List.of(
@@ -46,7 +46,7 @@ public class PermissionManagementController implements Initializable {
         new PermFlag("can_manage_settings",         "Manage Settings",          "Configure system settings, dropboxes, and lookup lists")
     );
 
-    // ── Role default presets ───────────────────────────────────────────────────
+    // â”€â”€ Role default presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public static final Set<String> OFFICER_DEFAULTS = Set.of(
         "can_create_evidence",
         "can_edit_own_evidence",
@@ -92,8 +92,8 @@ public class PermissionManagementController implements Initializable {
     /**
      * Computes the effective permission set for an officer:
      *   Base   = role defaults
-     *   +flag  → added over role default
-     *   -flag  → removed from role default
+     *   +flag  â†’ added over role default
+     *   -flag  â†’ removed from role default
      */
     public static Set<String> computeEffective(Officer officer) {
         Set<String> effective = new HashSet<>(defaultsForRole(officer.getRole()));
@@ -119,7 +119,7 @@ public class PermissionManagementController implements Initializable {
 
     public void setOfficer(Officer officer) {
         this.officer = officer;
-        pageTitle.setText("Permissions — " + officer.getName());
+        pageTitle.setText("Permissions â€” " + officer.getName());
         Set<String> effective = computeEffective(officer);
         checkboxMap.forEach((flag, cb) -> cb.setSelected(effective.contains(flag)));
     }
@@ -153,7 +153,7 @@ public class PermissionManagementController implements Initializable {
         }
     }
 
-    // ── Preset buttons ─────────────────────────────────────────────────────────
+    // â”€â”€ Preset buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onOfficerPreset()      { applyPreset(OFFICER_DEFAULTS); }
     @FXML private void onEvidenceTechPreset() { applyPreset(EVIDENCE_TECH_DEFAULTS); }
     @FXML private void onAdminPreset()        { applyPreset(ADMIN_DEFAULTS); }
@@ -164,7 +164,7 @@ public class PermissionManagementController implements Initializable {
         checkboxMap.forEach((flag, cb) -> cb.setSelected(preset.contains(flag)));
     }
 
-    // ── Save ───────────────────────────────────────────────────────────────────
+    // â”€â”€ Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML
     private void onSave() {
         if (officer == null) return;
@@ -186,16 +186,17 @@ public class PermissionManagementController implements Initializable {
         }
     }
 
-    // ── Nav ───────────────────────────────────────────────────────────────────
+    // â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onCases()         { Navigator.get().showCaseList(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     @FXML private void onAdmin()         { Navigator.get().showAdminDashboard(); }
+    @FXML private void onBack()          { Navigator.get().showUserManagement(); }
+    @FXML private void onDashboard()     { Navigator.get().showAdminDashboard(); }
     @FXML private void onSettings()      { Navigator.get().showSettings(); }
     @FXML private void onAuditTrail()    { Navigator.get().showAuditTrail(); }
+    @FXML private void onUserManagement()       { Navigator.get().showUserManagement(); }
+    @FXML private void onLookupAdministration() { Navigator.get().showLookupAdmin(); }
+    @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
+    @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onReports()       { Navigator.get().showReports(); }
-    @FXML private void onQuartermaster() { Navigator.get().showQmDashboard(); }
-    private void showError(Exception e) {
-        e.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
-    }
 }

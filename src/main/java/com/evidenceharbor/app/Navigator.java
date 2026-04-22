@@ -31,6 +31,18 @@ public class Navigator {
         loadScene("/fxml/CaseList.fxml", null);
     }
 
+    public void showCaseListAndCreate() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/CaseList.fxml"));
+            Parent root = loader.load();
+            applyScene(root);
+            com.evidenceharbor.ui.cases.CaseListController ctrl = loader.getController();
+            javafx.application.Platform.runLater(ctrl::onNewCase);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void showInventory() {
         if (!SessionManager.can("can_view_all_evidence")) { showCaseList(); return; }
         loadScene("/fxml/Inventory.fxml", null);
@@ -89,58 +101,42 @@ public class Navigator {
         loadScene("/fxml/EvidenceAudit.fxml", null);
     }
 
+    public void showEvidenceAuditSession(com.evidenceharbor.domain.EvidenceAudit audit) {
+        if (!SessionManager.can("can_view_audit_logs")) { showAdminDashboard(); return; }
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/EvidenceAuditSession.fxml"));
+        try {
+            Parent root = loader.load();
+            com.evidenceharbor.ui.admin.EvidenceAuditSessionController ctrl = loader.getController();
+            ctrl.setAudit(audit);
+            applyScene(root);
+        } catch (IOException e) { throw new RuntimeException(e); }
+    }
+
     public void showAuditTrail() {
         if (!SessionManager.can("can_view_audit_logs")) { showAdminDashboard(); return; }
         loadScene("/fxml/AuditTrail.fxml", null);
     }
 
     public void showBankAccountLedger() {
-        if (!SessionManager.can("can_manage_settings")) { showAdminDashboard(); return; }
+        if (!SessionManager.isAdmin() && !SessionManager.can("can_manage_settings")) {
+            javafx.scene.control.Alert a = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.WARNING,
+                    "You do not have permission to access the Bank Ledger.\n\n"
+                            + "Required: can_manage_settings",
+                    javafx.scene.control.ButtonType.OK);
+            a.setHeaderText("Access Denied");
+            a.showAndWait();
+            return;
+        }
         loadScene("/fxml/BankAccountLedger.fxml", null);
-    }
-
-    public void showQmDashboard() {
-        showCaseList();
-    }
-
-    public void showQmAssignEquipment() {
-        showCaseList();
-    }
-
-    public void showQmEquipment() {
-        showCaseList();
-    }
-
-    public void showQmWeapons() {
-        showCaseList();
-    }
-
-    public void showQmUniforms() {
-        showCaseList();
-    }
-
-    public void showQmAmmunition() {
-        showCaseList();
-    }
-
-    public void showQmInventoryLevels() {
-        showCaseList();
-    }
-
-    public void showQmOfficerLoadouts() {
-        showCaseList();
-    }
-
-    public void showQmVehicleImpound() {
-        showCaseList();
-    }
-
-    public void showQmInventoryAudit() {
-        showCaseList();
     }
 
     public void showImpoundLot() {
         loadScene("/fxml/ImpoundLot.fxml", null);
+    }
+
+    public void showEvidenceDashboard() {
+        loadScene("/fxml/EvidenceDashboard.fxml", null);
     }
 
     public void showCaseDetail(Case c) {

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.admin.EvidenceAuditSessionController"
+            styleClass="root-pane">
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button text="Admin" styleClass="nav-tab active" onAction="#onAdmin"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onAdmin"/>
+                <Button text="User Management" styleClass="nav-tab" onAction="#onUserManagement"/>
+                <Button text="Lookup Admin" styleClass="nav-tab" onAction="#onLookupAdministration"/>
+                <Button text="Evidence Audit" styleClass="nav-tab active" onAction="#onEvidenceAudit"/>
+                <Button text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
+                <Button text="Bank Ledger" styleClass="nav-tab" onAction="#onBankAccountLedger"/>
+                <Button text="Settings" styleClass="nav-tab" onAction="#onSettings"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            <HBox spacing="12">
+                <Button text="◀  Back to Audits" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
+            <Label fx:id="breadcrumb" text="Admin &gt; Evidence Audit &gt; Session" styleClass="breadcrumb-text"/>
+
+            <HBox alignment="CENTER_LEFT" spacing="16">
+                <Label fx:id="titleLabel" text="Audit Session" styleClass="page-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="printBtn"    text="Print"           styleClass="btn-secondary" onAction="#onPrint"/>
+                <Button fx:id="editBtn"     text="Edit"            styleClass="btn-secondary" onAction="#onEdit" visible="false" managed="false"/>
+                <Button fx:id="saveBtn"     text="Save Progress"   styleClass="btn-secondary" onAction="#onSave"/>
+                <Button fx:id="completeBtn" text="Complete Audit"  styleClass="btn-primary"   onAction="#onComplete"/>
+            </HBox>
+            <Separator/>
+
+            <!-- Metadata card -->
+            <VBox styleClass="card" spacing="8">
+                <padding><Insets top="14" right="16" bottom="14" left="16"/></padding>
+                <HBox spacing="30">
+                    <VBox spacing="4">
+                        <Label text="TYPE" styleClass="field-label"/>
+                        <Label fx:id="metaType" text="—" styleClass="field-value"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="SCOPE" styleClass="field-label"/>
+                        <Label fx:id="metaScope" text="—" styleClass="field-value"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="CREATED BY" styleClass="field-label"/>
+                        <Label fx:id="metaCreatedBy" text="—" styleClass="field-value"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="STARTED" styleClass="field-label"/>
+                        <Label fx:id="metaCreatedAt" text="—" styleClass="field-value"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="STATUS" styleClass="field-label"/>
+                        <Label fx:id="metaStatus" text="—" styleClass="field-value"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Summary bar -->
+            <HBox spacing="24" alignment="CENTER_LEFT">
+                <Label fx:id="summaryTotal"   text="Total: 0" styleClass="section-title"/>
+                <Label fx:id="summaryFound"   text="Found: 0"/>
+                <Label fx:id="summaryMissing" text="Missing: 0"/>
+                <Label fx:id="summaryPending" text="Pending: 0"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="Filter barcode/type/desc/location..." prefWidth="260"
+                           styleClass="search-field" onKeyReleased="#onFilter"/>
+            </HBox>
+
+            <!-- Quick scan bar -->
+            <HBox styleClass="card" spacing="10" alignment="CENTER_LEFT">
+                <padding><Insets top="10" right="12" bottom="10" left="12"/></padding>
+                <Label text="Scan / enter barcode:" styleClass="field-label"/>
+                <TextField fx:id="scanField" promptText="Scan barcode, press Enter = mark Found"
+                           prefWidth="280" styleClass="search-field" onAction="#onScanFound"/>
+                <Button text="Mark Found" styleClass="btn-primary" onAction="#onScanFound"/>
+                <Button text="Mark Missing" styleClass="btn-secondary" onAction="#onScanMissing"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Reset All to Pending" styleClass="btn-secondary" onAction="#onResetAll"/>
+            </HBox>
+
+            <!-- Items table -->
+            <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
+                <padding><Insets top="8" right="8" bottom="8" left="8"/></padding>
+                <TableView fx:id="itemsTable" styleClass="data-table" VBox.vgrow="ALWAYS" editable="true">
+                    <columns>
+                        <TableColumn fx:id="colBarcode"  text="BARCODE"     prefWidth="150"/>
+                        <TableColumn fx:id="colType"     text="TYPE"        prefWidth="110"/>
+                        <TableColumn fx:id="colDesc"     text="DESCRIPTION" prefWidth="240"/>
+                        <TableColumn fx:id="colLocation" text="LOCATION"    prefWidth="150"/>
+                        <TableColumn fx:id="colSysStatus" text="SYS STATUS" prefWidth="100"/>
+                        <TableColumn fx:id="colResult"   text="RESULT"      prefWidth="120"/>
+                        <TableColumn fx:id="colAction"   text="MARK"        prefWidth="280"/>
+                        <TableColumn fx:id="colNotes"    text="NOTES"       prefWidth="220"/>
+                    </columns>
+                    <placeholder><Label text="No evidence items to audit." styleClass="empty-placeholder"/></placeholder>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+    <bottom><fx:include source="DbStatusBar.fxml"/></bottom>
+</BorderPane>

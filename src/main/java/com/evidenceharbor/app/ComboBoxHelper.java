@@ -45,21 +45,58 @@ public final class ComboBoxHelper {
             }
         });
 
+        // Track whether edits are user-driven (typing) vs programmatic (setValue / selection).
+        final boolean[] suppressFilter = { false };
+
         comboBox.getEditor().textProperty().addListener((obs, oldText, newText) -> {
+            if (suppressFilter[0]) return;
+            if (!comboBox.getEditor().isFocused()) return; // ignore programmatic text changes
             String query = newText == null ? "" : newText.trim().toLowerCase();
             filtered.setPredicate(item -> labelMapper.apply(item).toLowerCase().contains(query));
-            if (!comboBox.isShowing()) comboBox.show();
+
+            // Keep value in sync: if editor text exactly matches an item, update the selection.
+            T match = null;
+            for (T item : original) {
+                if (labelMapper.apply(item).equalsIgnoreCase(query.trim())) { match = item; break; }
+            }
+            if (match != null && match != comboBox.getValue()) {
+                suppressFilter[0] = true;
+                try { comboBox.setValue(match); } finally { suppressFilter[0] = false; }
+            } else if (match == null && comboBox.getValue() != null) {
+                // Text no longer matches the selected value - clear selection so OK validation catches it.
+                suppressFilter[0] = true;
+                try { comboBox.setValue(null); } finally { suppressFilter[0] = false; }
+            }
+
+            if (!comboBox.isShowing() && comboBox.getEditor().isFocused()) comboBox.show();
         });
 
         comboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) comboBox.getEditor().setText(labelMapper.apply(newVal));
+            suppressFilter[0] = true;
+            try {
+                comboBox.getEditor().setText(newVal == null ? "" : labelMapper.apply(newVal));
+            } finally { suppressFilter[0] = false; }
         });
 
         comboBox.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
             if (!isFocused) {
-                String selectedText = comboBox.getValue() == null ? "" : labelMapper.apply(comboBox.getValue());
-                comboBox.getEditor().setText(selectedText);
-                filtered.setPredicate(item -> true);
+                // On blur: if editor text matches an item, keep the match; otherwise snap back.
+                String typed = comboBox.getEditor().getText();
+                T match = null;
+                if (typed != null && !typed.isBlank()) {
+                    for (T item : original) {
+                        if (labelMapper.apply(item).equalsIgnoreCase(typed.trim())) { match = item; break; }
+                    }
+                }
+                suppressFilter[0] = true;
+                try {
+                    if (match != null) {
+                        comboBox.setValue(match);
+                    } else {
+                        comboBox.getEditor().setText(comboBox.getValue() == null ? "" : labelMapper.apply(comboBox.getValue()));
+                    }
+                    filtered.setPredicate(item -> true);
+                } finally { suppressFilter[0] = false; }
             }
         });
     }

@@ -183,13 +183,20 @@ public class DatabaseManager {
         String[] alters = {
             "ALTER TABLE evidence ADD COLUMN elec_device_username TEXT",
             "ALTER TABLE evidence ADD COLUMN elec_device_password TEXT",
+            "ALTER TABLE evidence ADD COLUMN vehicle_body_type VARCHAR(100)",
+            "CREATE TABLE IF NOT EXISTS vehicle_types (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL UNIQUE)",
+            "CREATE TABLE IF NOT EXISTS impound_locations (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL UNIQUE)",
             "ALTER TABLE officers ADD COLUMN username VARCHAR(100)",
             "ALTER TABLE officers ADD COLUMN password_hash TEXT",
             "ALTER TABLE officers ADD COLUMN role VARCHAR(50) NOT NULL DEFAULT 'officer'",
             "ALTER TABLE officers ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'Active'",
             "ALTER TABLE officers ADD COLUMN is_external INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE officers ADD COLUMN permissions TEXT",
-            "ALTER TABLE qm_vehicle_impound ADD COLUMN case_id INTEGER"
+            "ALTER TABLE bank_account_transactions ADD COLUMN voided TINYINT(1) NOT NULL DEFAULT 0",
+            "ALTER TABLE bank_account_transactions ADD COLUMN voided_reason TEXT",
+            "ALTER TABLE bank_account_transactions ADD COLUMN voided_by VARCHAR(255)",
+            "ALTER TABLE bank_account_transactions ADD COLUMN voided_at DATETIME",
+            "ALTER TABLE bank_account_transactions ADD COLUMN source_ref VARCHAR(255)"
         };
         for (String alter : alters) {
             try (Statement s = connection.createStatement()) {

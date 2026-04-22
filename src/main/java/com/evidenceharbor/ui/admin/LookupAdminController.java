@@ -15,7 +15,6 @@ import javafx.scene.layout.HBox;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.function.Supplier;
 
 public class LookupAdminController implements Initializable {
 
@@ -40,6 +39,8 @@ public class LookupAdminController implements Initializable {
         CATEGORIES.put("Electronic Types",           "electronic_types");
         CATEGORIES.put("Narcotics Types",            "narcotics_types");
         CATEGORIES.put("Weapon Types",               "weapon_types");
+        CATEGORIES.put("Vehicle Types",              "vehicle_types");
+        CATEGORIES.put("Impound Locations",          "impound_locations");
         CATEGORIES.put("Biological Sources",         "biological_sources");
         CATEGORIES.put("Narcotics Unit Types",       "narcotics_unit_types");
         CATEGORIES.put("Evidence Storage Locations", "evidence_storage_locations");
@@ -58,10 +59,6 @@ public class LookupAdminController implements Initializable {
         CATEGORIES.put("Audit Types",                "audit_types");
         CATEGORIES.put("User Roles",                 "user_roles_lookup");
         CATEGORIES.put("User Statuses",              "user_statuses_lookup");
-        CATEGORIES.put("QM Equipment Categories",    "qm_equipment_categories_lookup");
-        CATEGORIES.put("QM Equipment Statuses",     "qm_equipment_statuses_lookup");
-        CATEGORIES.put("QM Vehicle Statuses",       "qm_vehicle_statuses_lookup");
-        CATEGORIES.put("QM Storage Locations",      "qm_storage_locations");
     }
 
     private String activeTable = null;
@@ -129,7 +126,7 @@ public class LookupAdminController implements Initializable {
         });
     }
 
-    // ── Nav ───────────────────────────────────────────────────────────────────
+    // â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @FXML private void onCases()     { Navigator.get().showCaseList(); }
     @FXML private void onInventory() { Navigator.get().showInventory(); }
     @FXML private void onPeople()    { Navigator.get().showPeople(); }
@@ -137,15 +134,20 @@ public class LookupAdminController implements Initializable {
     @FXML private void onReports()   { Navigator.get().showReports(); }
     @FXML private void onSettings()  { Navigator.get().showSettings(); }
     @FXML private void onAdmin()          { Navigator.get().showAdminDashboard(); }
+    @FXML private void onBack()           { Navigator.get().showAdminDashboard(); }
+    @FXML private void onDashboard()      { Navigator.get().showAdminDashboard(); }
     @FXML private void onAuditTrail()     { Navigator.get().showAuditTrail(); }
-    @FXML private void onQuartermaster()  { Navigator.get().showQmDashboard(); }
+    @FXML private void onUserManagement()       { Navigator.get().showUserManagement(); }
+    @FXML private void onLookupAdministration() { }
+    @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
+    @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
     private void showError(Exception e) {
         e.printStackTrace();
         new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage()).showAndWait();
     }
 
-    // ── Cell factory ──────────────────────────────────────────────────────────
+    // â”€â”€ Cell factory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private class ItemCell extends ListCell<LookupItem> {
         private final Label nameLabel = new Label();
         private final Button deleteBtn = new Button("Delete");
