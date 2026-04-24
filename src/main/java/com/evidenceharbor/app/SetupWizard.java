@@ -11,7 +11,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.File;
+import java.util.Properties;
 
 /**
  * Single-window wizard that handles:
@@ -296,7 +300,7 @@ public class SetupWizard {
         createDbBtn.getStyleClass().add("btn-primary");
         connectDbBtn.getStyleClass().add("btn-secondary");
         createDbBtn.setOnAction(e -> doDbConnect(true));
-        connectDbBtn.setOnAction(e -> doDbConnect(false));
+        connectDbBtn.setOnAction(e -> browseForDbProps());
 
         HBox btns = new HBox(10, connectDbBtn, createDbBtn);
         btns.setAlignment(Pos.CENTER_RIGHT);
@@ -305,6 +309,42 @@ public class SetupWizard {
         setStatus(DatabaseManager.hasConfigFile()
                 ? "Saved settings loaded. Click Connect or update and reconnect."
                 : "No saved configuration — enter your MariaDB details above.");
+    }
+
+    private void browseForDbProps() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Browse for db.properties or MariaDB folder");
+        chooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Properties Files", "*.properties"),
+            new FileChooser.ExtensionFilter("All Files", "*.*")
+        );
+        
+        // Start in EvidenceHarbor config folder
+        File initialDir = new File(System.getenv("USERPROFILE"), "EvidenceHarbor");
+        if (initialDir.exists()) {
+            chooser.setInitialDirectory(initialDir);
+        }
+        
+        File selected = chooser.showOpenDialog(stage);
+        if (selected != null) {
+            try {
+                // If it's db.properties, load it
+                if (selected.getName().equals("db.properties")) {
+                    Properties props = new Properties();
+                    props.load(new java.io.FileInputStream(selected));
+                    dbHostField.setText(props.getProperty("mariadb.host", "127.0.0.1"));
+                    dbPortField.setText(props.getProperty("mariadb.port", "3306"));
+                    dbNameField.setText(props.getProperty("mariadb.database", "evidence_harbor"));
+                    dbUserField.setText(props.getProperty("mariadb.user", "root"));
+                    dbPassField.setText(props.getProperty("mariadb.password", ""));
+                    setStatus("Configuration loaded from: " + selected.getAbsolutePath());
+                } else {
+                    setStatus("Selected: " + selected.getAbsolutePath() + " — enter password and click Connect.");
+                }
+            } catch (Exception ex) {
+                showError("Failed to load config: " + ex.getMessage());
+            }
+        }
     }
 
     private void doDbConnect(boolean createDb) {

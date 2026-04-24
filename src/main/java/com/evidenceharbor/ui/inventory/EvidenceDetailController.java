@@ -399,33 +399,12 @@ public class EvidenceDetailController implements Initializable {
      *   - Case #, Collection Date, Storage Location printed below
      */
     private byte[] buildZpl() {
-        String barcode  = ns(evidence.getBarcode());
-        String caseNum  = ns(caseNumber);
-        String date     = ns(evidence.getCollectionDate());
-        String location = ns(evidence.getStorageLocation());
-
-        // Truncate long strings to fit 2" width at 203dpi with A0 font ~15px
-        if (caseNum.length()  > 28) caseNum  = caseNum.substring(0, 28);
-        if (date.length()     > 28) date      = date.substring(0, 28);
-        if (location.length() > 28) location  = location.substring(0, 28);
-
-        String zpl = "^XA\n"
-                // Label size: 406 wide, 203 tall; 1 label per roll
-                + "^PW406\n"
-                + "^LL203\n"
-                + "^LH0,0\n"
-                // Code 128 barcode: x=10, y=5, module width 2, height 55 dots, human-readable below
-                + "^FO10,5^BY2,3,55^BCN,55,Y,N,N\n"
-                + "^FD" + barcode + "^FS\n"
-                // Case number: y=75
-                + "^FO10,75^A0N,16,16^FDCase: " + caseNum + "^FS\n"
-                // Collection date: y=93
-                + "^FO10,93^A0N,16,16^FDDate: " + date + "^FS\n"
-                // Storage location: y=111
-                + "^FO10,111^A0N,16,16^FDLoc:  " + location + "^FS\n"
-                + "^XZ\n";
-
-        return zpl.getBytes(StandardCharsets.UTF_8);
+        return com.evidenceharbor.util.LabelPrintUtil.build(
+                evidence.getScanCode(),
+                evidence.getBarcode(),
+                caseNumber,
+                evidence.getCollectionDate(),
+                evidence.getStorageLocation());
     }
 
     @FXML

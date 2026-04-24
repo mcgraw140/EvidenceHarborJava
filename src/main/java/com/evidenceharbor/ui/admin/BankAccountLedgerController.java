@@ -281,6 +281,214 @@ public class BankAccountLedgerController implements Initializable {
         com.evidenceharbor.util.PrintSheetUtil.printTable(w, title, depositedEvidenceTable);
     }
 
+    @FXML
+    private void onShowHistorical() {
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle("Historical Transactions — All Accounts");
+        Dialogs.style(dlg);
+        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dlg.getDialogPane().setPrefSize(1100, 600);
+
+        TableView<BankAccountRepository.HistoricalTx> table = new TableView<>();
+        table.getStyleClass().add("data-table");
+
+        TableColumn<BankAccountRepository.HistoricalTx, String> cDate    = new TableColumn<>("Date");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cAccount = new TableColumn<>("Account");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cAction  = new TableColumn<>("Type");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cAmount  = new TableColumn<>("Amount");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cSlip    = new TableColumn<>("Slip #");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cSource  = new TableColumn<>("Case / Source");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cBy      = new TableColumn<>("Performed By");
+        TableColumn<BankAccountRepository.HistoricalTx, String> cNotes   = new TableColumn<>("Notes");
+
+        cDate.setCellValueFactory(c    -> new SimpleStringProperty(c.getValue().tx.getDate()));
+        cAccount.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().accountName));
+        cAction.setCellValueFactory(c  -> new SimpleStringProperty(c.getValue().tx.getAction()));
+        cAmount.setCellValueFactory(c  -> new SimpleStringProperty(String.format("$%.2f", c.getValue().tx.getAmount())));
+        cSlip.setCellValueFactory(c    -> new SimpleStringProperty(c.getValue().tx.getSlipNumber()));
+        cSource.setCellValueFactory(c  -> new SimpleStringProperty(
+                c.getValue().tx.getSourceRef() == null ? "" : c.getValue().tx.getSourceRef()));
+        cBy.setCellValueFactory(c      -> new SimpleStringProperty(c.getValue().tx.getPerformedBy()));
+        cNotes.setCellValueFactory(c   -> new SimpleStringProperty(
+                c.getValue().tx.getNotes() == null ? "" : c.getValue().tx.getNotes()));
+
+        cDate.setPrefWidth(140);
+        cAccount.setPrefWidth(160);
+        cAction.setPrefWidth(90);
+        cAmount.setPrefWidth(100);
+        cSlip.setPrefWidth(100);
+        cSource.setPrefWidth(140);
+        cBy.setPrefWidth(130);
+        cNotes.setPrefWidth(220);
+
+        table.getColumns().addAll(java.util.List.of(cDate, cAccount, cAction, cAmount, cSlip, cSource, cBy, cNotes));
+        java.util.List<BankAccountRepository.HistoricalTx> all;
+        try {
+            all = repo.findAllTransactions();
+        } catch (RuntimeException e) {
+            showError(e.getMessage());
+            return;
+        }
+        javafx.collections.ObservableList<BankAccountRepository.HistoricalTx> master =
+                FXCollections.observableArrayList(all);
+        javafx.collections.transformation.FilteredList<BankAccountRepository.HistoricalTx> filtered =
+                new javafx.collections.transformation.FilteredList<>(master, r -> true);
+        table.setItems(filtered);
+        table.setPlaceholder(new Label("No transactions match the current filter."));
+
+        // ── Filter controls ──────────────────────────────────────────────────
+        ComboBox<String> cbYear = new ComboBox<>();
+        cbYear.getItems().add("All Years");
+        java.util.TreeSet<Integer> years = new java.util.TreeSet<>(java.util.Collections.reverseOrder());
+        for (BankAccountRepository.HistoricalTx h : all) {
+            Integer y = parseYear(h.tx.getDate());
+            if (y != null) years.add(y);
+        }
+        for (Integer y : years) cbYear.getItems().add(String.valueOf(y));
+        cbYear.setValue("All Years");
+
+        ComboBox<String> cbMonth = new ComboBox<>(FXCollections.observableArrayList(
+                "All Months", "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"));
+        cbMonth.setValue("All Months");
+
+        ComboBox<String> cbAccountFilter = new ComboBox<>();
+        cbAccountFilter.getItems().add("All Accounts");
+        java.util.TreeSet<String> acctNames = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (BankAccountRepository.HistoricalTx h : all) if (h.accountName != null) acctNames.add(h.accountName);
+        cbAccountFilter.getItems().addAll(acctNames);
+        cbAccountFilter.setValue("All Accounts");
+
+        ComboBox<String> cbTypeFilter = new ComboBox<>(FXCollections.observableArrayList(
+                "All Types", "Deposit", "Withdrawal"));
+        cbTypeFilter.setValue("All Types");
+
+        TextField tfSearch = new TextField();
+        tfSearch.setPromptText("Search notes, source, slip, performer…");
+        tfSearch.setPrefWidth(240);
+
+        Label lblSummary = new Label();
+        lblSummary.getStyleClass().add("muted-text");
+
+        Runnable applyFilter = () -> {
+            Integer year = "All Years".equals(cbYear.getValue()) ? null : Integer.parseInt(cbYear.getValue());
+            int monthIdx = cbMonth.getSelectionModel().getSelectedIndex(); // 0 = All, 1..12 = Jan..Dec
+            String acctSel = cbAccountFilter.getValue();
+            String typeSel = cbTypeFilter.getValue();
+            String q = tfSearch.getText() == null ? "" : tfSearch.getText().trim().toLowerCase();
+
+            filtered.setPredicate(h -> {
+                if (h == null) return false;
+                Integer hy = parseYear(h.tx.getDate());
+                Integer hm = parseMonth(h.tx.getDate());
+                if (year != null && (hy == null || !hy.equals(year))) return false;
+                if (monthIdx > 0 && (hm == null || hm != monthIdx)) return false;
+                if (acctSel != null && !"All Accounts".equals(acctSel)
+                        && !acctSel.equalsIgnoreCase(h.accountName)) return false;
+                if (typeSel != null && !"All Types".equals(typeSel)
+                        && !typeSel.equalsIgnoreCase(h.tx.getAction())) return false;
+                if (!q.isEmpty()) {
+                    String haystack = (
+                            nullToEmpty(h.tx.getDate()) + " " +
+                            nullToEmpty(h.accountName) + " " +
+                            nullToEmpty(h.tx.getAction()) + " " +
+                            nullToEmpty(h.tx.getSlipNumber()) + " " +
+                            nullToEmpty(h.tx.getSourceRef()) + " " +
+                            nullToEmpty(h.tx.getPerformedBy()) + " " +
+                            nullToEmpty(h.tx.getNotes())
+                    ).toLowerCase();
+                    if (!haystack.contains(q)) return false;
+                }
+                return true;
+            });
+
+            // Summary
+            double deposits = 0, withdrawals = 0;
+            int count = 0;
+            for (BankAccountRepository.HistoricalTx h : filtered) {
+                count++;
+                if ("Deposit".equalsIgnoreCase(h.tx.getAction())) deposits += h.tx.getAmount();
+                else withdrawals += h.tx.getAmount();
+            }
+            lblSummary.setText(String.format(
+                    "Showing %d of %d — Deposits: $%.2f | Withdrawals: $%.2f | Net: $%.2f",
+                    count, all.size(), deposits, withdrawals, deposits - withdrawals));
+        };
+
+        cbYear.valueProperty().addListener((o, a, b) -> applyFilter.run());
+        cbMonth.valueProperty().addListener((o, a, b) -> applyFilter.run());
+        cbAccountFilter.valueProperty().addListener((o, a, b) -> applyFilter.run());
+        cbTypeFilter.valueProperty().addListener((o, a, b) -> applyFilter.run());
+        tfSearch.textProperty().addListener((o, a, b) -> applyFilter.run());
+
+        Button btnClear = new Button("Clear Filters");
+        btnClear.getStyleClass().add("btn-secondary");
+        btnClear.setOnAction(e -> {
+            cbYear.setValue("All Years");
+            cbMonth.setValue("All Months");
+            cbAccountFilter.setValue("All Accounts");
+            cbTypeFilter.setValue("All Types");
+            tfSearch.clear();
+        });
+
+        javafx.scene.layout.VBox box = new javafx.scene.layout.VBox(10);
+        box.setPadding(new Insets(12));
+        Label note = new Label("Bank records are permanent. This view shows every transaction across all accounts — including ones linked to evidence that has since been returned, disbursed, or destroyed.");
+        note.setWrapText(true);
+        note.getStyleClass().add("muted-text");
+
+        Button printBtn = new Button("🖨 Print");
+        printBtn.getStyleClass().add("btn-secondary");
+        printBtn.setOnAction(e -> com.evidenceharbor.util.PrintSheetUtil.printTable(
+                dlg.getDialogPane().getScene().getWindow(),
+                buildHistoricalPrintTitle(cbYear.getValue(), cbMonth.getValue(),
+                        cbAccountFilter.getValue(), cbTypeFilter.getValue()),
+                table));
+
+        javafx.scene.layout.HBox filterRow1 = new javafx.scene.layout.HBox(8,
+                new Label("Year:"), cbYear,
+                new Label("Month:"), cbMonth,
+                new Label("Account:"), cbAccountFilter,
+                new Label("Type:"), cbTypeFilter);
+        filterRow1.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        javafx.scene.layout.HBox filterRow2 = new javafx.scene.layout.HBox(8,
+                tfSearch, btnClear, new javafx.scene.layout.Region(), printBtn);
+        filterRow2.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        javafx.scene.layout.HBox.setHgrow(filterRow2.getChildren().get(2), javafx.scene.layout.Priority.ALWAYS);
+
+        box.getChildren().addAll(note, filterRow1, filterRow2, lblSummary, table);
+        javafx.scene.layout.VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
+        dlg.getDialogPane().setContent(box);
+        applyFilter.run();
+        dlg.showAndWait();
+    }
+
+    private static Integer parseYear(String date) {
+        if (date == null || date.length() < 4) return null;
+        try { return Integer.parseInt(date.substring(0, 4)); }
+        catch (NumberFormatException e) { return null; }
+    }
+
+    private static Integer parseMonth(String date) {
+        if (date == null || date.length() < 7) return null;
+        try { return Integer.parseInt(date.substring(5, 7)); }
+        catch (NumberFormatException e) { return null; }
+    }
+
+    private static String nullToEmpty(String s) { return s == null ? "" : s; }
+
+    private static String buildHistoricalPrintTitle(String year, String month, String account, String type) {
+        StringBuilder sb = new StringBuilder("Bank Ledger — Historical");
+        boolean any = false;
+        if (year != null && !"All Years".equals(year))       { sb.append(any ? ", " : " (").append(year);    any = true; }
+        if (month != null && !"All Months".equals(month))    { sb.append(any ? ", " : " (").append(month);   any = true; }
+        if (account != null && !"All Accounts".equals(account)) { sb.append(any ? ", " : " (").append(account); any = true; }
+        if (type != null && !"All Types".equals(type))       { sb.append(any ? ", " : " (").append(type);    any = true; }
+        if (any) sb.append(")");
+        return sb.toString();
+    }
+
     private void showAccountDialog(BankAccount existing) {
         Dialog<ButtonType> dlg = new Dialog<>();
         dlg.setTitle(existing == null ? "New Account" : "Edit Account");

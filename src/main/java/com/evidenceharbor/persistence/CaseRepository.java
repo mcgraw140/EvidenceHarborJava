@@ -82,7 +82,9 @@ public class CaseRepository {
         AuditLogger.log("Cases", isCreate ? "CREATE" : "UPDATE", "Case",
                 String.valueOf(c.getId()),
                 "Case " + c.getCaseNumber() + ", incident " + c.getIncidentDate()
-                        + ", officer #" + (c.getOfficer() == null ? "?" : c.getOfficer().getId()));
+                        + ", officer " + (c.getOfficer() == null ? "?"
+                                : (c.getOfficer().getName() == null ? "#" + c.getOfficer().getId()
+                                        : c.getOfficer().getName() + " (#" + c.getOfficer().getId() + ")")));
         return c;
     }
 
@@ -92,15 +94,59 @@ public class CaseRepository {
             ps.setInt(1, caseId); ps.setInt(2, personId); ps.setString(3, role); ps.executeUpdate();
         }
         AuditLogger.log("Cases", "UPDATE", "Case", String.valueOf(caseId),
-                "Associated person #" + personId + " as " + role);
+                "Associated person " + describePerson(personId)
+                        + " as " + role + " with case " + describeCase(caseId));
     }
 
     public void removePerson(int casePersonId) throws SQLException {
+        // Capture case + person details BEFORE delete so audit has names.
+        int caseId = 0;
+        int personId = 0;
+        String role = null;
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT case_id, person_id, role FROM case_persons WHERE id=?")) {
+            ps.setInt(1, casePersonId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    caseId = rs.getInt(1);
+                    personId = rs.getInt(2);
+                    role = rs.getString(3);
+                }
+            }
+        }
         try (PreparedStatement ps = conn().prepareStatement("DELETE FROM case_persons WHERE id=?")) {
             ps.setInt(1, casePersonId); ps.executeUpdate();
         }
-        AuditLogger.log("Cases", "UPDATE", "Case", "",
-                "Removed case_person #" + casePersonId);
+        AuditLogger.log("Cases", "UPDATE", "Case", String.valueOf(caseId),
+                "Removed person " + describePerson(personId)
+                        + (role == null ? "" : " (" + role + ")")
+                        + " from case " + describeCase(caseId));
+    }
+
+    private String describePerson(int personId) {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT full_name FROM persons WHERE id=?")) {
+            ps.setInt(1, personId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String name = rs.getString(1);
+                    return (name == null || name.isBlank() ? "(no name)" : name)
+                            + " (#" + personId + ")";
+                }
+            }
+        } catch (SQLException ignore) {}
+        return "#" + personId;
+    }
+
+    private String describeCase(int caseId) {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT case_number FROM cases WHERE id=?")) {
+            ps.setInt(1, caseId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString(1) + " (#" + caseId + ")";
+            }
+        } catch (SQLException ignore) {}
+        return "#" + caseId;
     }
 
     private void populateRelations(Case c) throws SQLException {

@@ -19,3 +19,8 @@ Thumbs.db
 #   Tailscale: https://tailscale.com/download/windows — tailscale-setup-1.96.3.exe
 Mariadb/
 Tailscale/
+Install These/
+dist/
+
+# Runtime db config (contains credentials)
+/db.properties

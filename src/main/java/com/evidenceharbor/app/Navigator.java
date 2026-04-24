@@ -48,6 +48,11 @@ public class Navigator {
         loadScene("/fxml/Inventory.fxml", null);
     }
 
+    public void showBatchCocTransfer() {
+        if (!SessionManager.can("can_view_all_evidence")) { showCaseList(); return; }
+        loadScene("/fxml/BatchCocTransfer.fxml", null);
+    }
+
     public void showPeople() {
         loadScene("/fxml/People.fxml", null);
     }

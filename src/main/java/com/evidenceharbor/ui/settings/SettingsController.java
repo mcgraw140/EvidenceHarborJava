@@ -88,6 +88,7 @@ public class SettingsController implements Initializable {
         loadDbConnectionSettings();
         refreshDbStatus();
         refreshTailscaleStatus();
+        initLabelPrinterTab();
         NavHelper.applyNavVisibility(navAdminTab, navAuditTrailBtn, navSettingsBtn, navInventoryBtn, navReportsBtn, null);
     }
 
@@ -293,8 +294,6 @@ public class SettingsController implements Initializable {
             if (s.selfIp != null && !s.selfIp.isBlank()) {
                 dbHostField.setText(s.selfIp);
                 appendTsLog("[" + timestamp() + "] DB Host set to Tailscale IP: " + s.selfIp);
-                // Switch to Database Connection tab (index 2)
-                tabPane.getSelectionModel().select(2);
             } else {
                 appendTsLog("[" + timestamp() + "] Could not get Tailscale IP. Are you connected?");
             }
@@ -497,6 +496,116 @@ public class SettingsController implements Initializable {
     @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
     @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+
+    // ─────────────────────── LABEL PRINTER TAB ──────────────────────────
+
+    @FXML private ComboBox<javax.print.PrintService> labelPrinterCombo;
+    @FXML private ComboBox<String> labelSizeCombo;
+    @FXML private TextField labelCustomWidthField;
+    @FXML private TextField labelCustomHeightField;
+
+    // Preset label sizes → width/height in dots @ 203 dpi
+    private static final java.util.Map<String, int[]> LABEL_PRESETS = new java.util.LinkedHashMap<>();
+    static {
+        LABEL_PRESETS.put("2\" × 1\" (406 × 203)",   new int[]{406, 203});
+        LABEL_PRESETS.put("3\" × 1\" (609 × 203)",   new int[]{609, 203});
+        LABEL_PRESETS.put("3\" × 2\" (609 × 406)",   new int[]{609, 406});
+        LABEL_PRESETS.put("4\" × 1\" (812 × 203)",   new int[]{812, 203});
+        LABEL_PRESETS.put("4\" × 2\" (812 × 406)",   new int[]{812, 406});
+        LABEL_PRESETS.put("4\" × 3\" (812 × 609)",   new int[]{812, 609});
+        LABEL_PRESETS.put("4\" × 6\" (812 × 1218)",  new int[]{812, 1218});
+        LABEL_PRESETS.put("Custom (use fields below)", null);
+    }
+
+    private void initLabelPrinterTab() {
+        labelSizeCombo.getItems().setAll(LABEL_PRESETS.keySet());
+        labelSizeCombo.getSelectionModel().selectFirst();
+        labelSizeCombo.valueProperty().addListener((o, a, b) -> {
+            int[] dim = LABEL_PRESETS.get(b);
+            if (dim != null) {
+                labelCustomWidthField.setText(String.valueOf(dim[0]));
+                labelCustomHeightField.setText(String.valueOf(dim[1]));
+                labelCustomWidthField.setDisable(true);
+                labelCustomHeightField.setDisable(true);
+            } else {
+                labelCustomWidthField.setDisable(false);
+                labelCustomHeightField.setDisable(false);
+            }
+        });
+        // Seed custom fields with first preset
+        int[] first = LABEL_PRESETS.get(labelSizeCombo.getValue());
+        if (first != null) {
+            labelCustomWidthField.setText(String.valueOf(first[0]));
+            labelCustomHeightField.setText(String.valueOf(first[1]));
+            labelCustomWidthField.setDisable(true);
+            labelCustomHeightField.setDisable(true);
+        }
+        refreshLabelPrinters();
+    }
+
+    @FXML
+    private void onRefreshLabelPrinters() { refreshLabelPrinters(); }
+
+    private void refreshLabelPrinters() {
+        javax.print.PrintService[] all = javax.print.PrintServiceLookup.lookupPrintServices(null, null);
+        java.util.List<javax.print.PrintService> sorted = new java.util.ArrayList<>();
+        if (all != null) {
+            for (javax.print.PrintService ps : all) {
+                String n = ps.getName().toLowerCase();
+                if (n.contains("zebra") || n.contains("zlp") || n.contains("zpl")) sorted.add(0, ps);
+                else sorted.add(ps);
+            }
+        }
+        labelPrinterCombo.getItems().setAll(sorted);
+        labelPrinterCombo.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(javax.print.PrintService item, boolean empty) {
+                super.updateItem(item, empty); setText(empty || item == null ? null : item.getName());
+            }
+        });
+        labelPrinterCombo.setButtonCell(new ListCell<>() {
+            @Override protected void updateItem(javax.print.PrintService item, boolean empty) {
+                super.updateItem(item, empty); setText(empty || item == null ? null : item.getName());
+            }
+        });
+        if (!sorted.isEmpty()) labelPrinterCombo.getSelectionModel().selectFirst();
+    }
+
+    @FXML
+    private void onPrintCalibrationLabel() {
+        javax.print.PrintService service = labelPrinterCombo.getValue();
+        if (service == null) {
+            Dialogs.warn("No printer", "Please select a printer.");
+            return;
+        }
+        int w, h;
+        try {
+            w = Integer.parseInt(labelCustomWidthField.getText().trim());
+            h = Integer.parseInt(labelCustomHeightField.getText().trim());
+        } catch (NumberFormatException ex) {
+            Dialogs.warn("Invalid size", "Width and height must be integers (dots).");
+            return;
+        }
+        if (w < 50 || w > 3000 || h < 50 || h > 3000) {
+            Dialogs.warn("Invalid size", "Width and height must be between 50 and 3000 dots.");
+            return;
+        }
+        try {
+            byte[] zpl = com.evidenceharbor.util.LabelPrintUtil.buildCalibration(w, h);
+            javax.print.DocPrintJob job = service.createPrintJob();
+            javax.print.Doc doc = new javax.print.SimpleDoc(
+                    zpl, javax.print.DocFlavor.BYTE_ARRAY.AUTOSENSE, null);
+            job.print(doc, new javax.print.attribute.HashPrintRequestAttributeSet());
+            Dialogs.info("Calibration Sent",
+                    "Calibration grid sent to: " + service.getName() + "\n"
+                    + "Declared size: " + w + " × " + h + " dots ("
+                    + String.format("%.2f", w / 203.0) + "\" × "
+                    + String.format("%.2f", h / 203.0) + "\" @ 203 dpi)");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Dialogs.error(ex);
+        }
+    }
+
     private void showError(String msg) {
         Dialogs.error(msg);
     }

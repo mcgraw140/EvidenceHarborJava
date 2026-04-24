@@ -1,6 +1,7 @@
 package com.evidenceharbor.persistence;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -20,8 +21,9 @@ import java.util.stream.Collectors;
 
 public class DatabaseManager {
 
-    private static final String DB_DIR = System.getProperty("user.home") + "/EvidenceHarbor";
-    private static final String CONFIG_FILE = DB_DIR + "/db.properties";
+    private static final Path LEGACY_CONFIG_DIR = Paths.get(System.getProperty("user.home"), "EvidenceHarbor");
+    private static final Path LEGACY_CONFIG_FILE = LEGACY_CONFIG_DIR.resolve("db.properties");
+    private static final Path INSTALLED_CONFIG_FILE = Paths.get(System.getProperty("user.dir"), "db.properties");
     private static final String SEED_VERSION = "4";
     private static DatabaseManager instance;
 
@@ -33,7 +35,6 @@ public class DatabaseManager {
     }
 
     private DatabaseManager(Properties config, boolean createDatabase) throws Exception {
-        Files.createDirectories(Paths.get(DB_DIR));
         this.config = config;
         writeConfig(config);
         this.connection = openMariaDbConnection(config, createDatabase);
@@ -81,9 +82,11 @@ public class DatabaseManager {
     }
 
     public static Properties loadSavedConfigSnapshot() throws Exception {
-        Files.createDirectories(Paths.get(DB_DIR));
         Properties props = defaultConfig();
-        Path path = Paths.get(CONFIG_FILE);
+
+        // Prefer config saved in the installed app location.
+        // If absent, fall back to legacy user-profile location.
+        Path path = resolveReadConfigFile();
         if (Files.exists(path)) {
             try (InputStream in = Files.newInputStream(path)) {
                 props.load(in);
@@ -102,11 +105,42 @@ public class DatabaseManager {
         props.setProperty("mariadb.database", "evidence_harbor");
         props.setProperty("mariadb.user", "root");
         props.setProperty("mariadb.password", "");
+        
+        // Try loading bundled db.properties from resources (lower priority than user's home config)
+        try {
+            InputStream bundledConfig = DatabaseManager.class.getResourceAsStream("/db.properties");
+            if (bundledConfig != null) {
+                Properties bundled = new Properties();
+                bundled.load(bundledConfig);
+                // Merge bundled config, but don't override properties already set
+                if (bundled.getProperty("mariadb.host") != null && !bundled.getProperty("mariadb.host").isEmpty()) {
+                    props.setProperty("mariadb.host", bundled.getProperty("mariadb.host"));
+                }
+                if (bundled.getProperty("mariadb.port") != null && !bundled.getProperty("mariadb.port").isEmpty()) {
+                    props.setProperty("mariadb.port", bundled.getProperty("mariadb.port"));
+                }
+                if (bundled.getProperty("mariadb.database") != null && !bundled.getProperty("mariadb.database").isEmpty()) {
+                    props.setProperty("mariadb.database", bundled.getProperty("mariadb.database"));
+                }
+                if (bundled.getProperty("mariadb.user") != null && !bundled.getProperty("mariadb.user").isEmpty()) {
+                    props.setProperty("mariadb.user", bundled.getProperty("mariadb.user"));
+                }
+                if (bundled.getProperty("mariadb.password") != null) {
+                    props.setProperty("mariadb.password", bundled.getProperty("mariadb.password"));
+                }
+                bundledConfig.close();
+            }
+        } catch (Exception ignored) {}
+        
         return props;
     }
 
     private static void writeConfig(Properties props) throws Exception {
-        Path path = Paths.get(CONFIG_FILE);
+        Path path = resolveWriteConfigFile();
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
         try (OutputStream out = Files.newOutputStream(path,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             props.store(out, "Evidence Harbor database configuration");
@@ -205,7 +239,9 @@ public class DatabaseManager {
             "ALTER TABLE persons ADD COLUMN zip VARCHAR(20)",
             "ALTER TABLE persons ADD COLUMN contact VARCHAR(255)",
             "ALTER TABLE evidence ADD COLUMN bank_account_id INT",
-            "UPDATE evidence SET bank_account_id = (SELECT id FROM bank_accounts ORDER BY id LIMIT 1) WHERE status = 'Deposited' AND bank_account_id IS NULL"
+            "UPDATE evidence SET bank_account_id = (SELECT id FROM bank_accounts ORDER BY id LIMIT 1) WHERE status = 'Deposited' AND bank_account_id IS NULL",
+            "ALTER TABLE evidence ADD COLUMN scan_code VARCHAR(20)",
+            "CREATE UNIQUE INDEX idx_evidence_scan_code_unique ON evidence(scan_code)"
         };
         for (String alter : alters) {
             try (Statement s = connection.createStatement()) {
@@ -218,6 +254,51 @@ public class DatabaseManager {
             s.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_officers_username_unique ON officers(username)");
         } catch (SQLException ignored) {
         }
+
+        backfillScanCodes();
+    }
+
+    /** Assign a short YY-NNNNN scan code to any evidence row that doesn't have one yet. */
+    private void backfillScanCodes() {
+        // Find the highest existing suffix per year so we continue the sequence
+        java.util.Map<String,Integer> nextByYear = new java.util.HashMap<>();
+        try (Statement s = connection.createStatement();
+             ResultSet rs = s.executeQuery("SELECT scan_code FROM evidence WHERE scan_code IS NOT NULL")) {
+            while (rs.next()) {
+                String code = rs.getString(1);
+                if (code == null) continue;
+                String[] parts = code.split("-");
+                if (parts.length != 2) continue;
+                try {
+                    int seq = Integer.parseInt(parts[1]);
+                    nextByYear.merge(parts[0], seq, Math::max);
+                } catch (NumberFormatException ignored) {}
+            }
+        } catch (SQLException ignored) { return; }
+
+        try (PreparedStatement sel = connection.prepareStatement(
+                     "SELECT id, barcode FROM evidence WHERE scan_code IS NULL ORDER BY id");
+             PreparedStatement upd = connection.prepareStatement(
+                     "UPDATE evidence SET scan_code=? WHERE id=?");
+             ResultSet rs = sel.executeQuery()) {
+            int currentYearDefault = java.time.LocalDate.now().getYear() % 100;
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String barcode = rs.getString("barcode");
+                // Pull the year from the existing barcode prefix if it looks like YYYY-...; else use current year
+                int yy = currentYearDefault;
+                if (barcode != null && barcode.length() >= 4) {
+                    try { yy = Integer.parseInt(barcode.substring(0, 4)) % 100; } catch (NumberFormatException ignored) {}
+                }
+                String yyKey = String.format("%02d", yy);
+                int next = nextByYear.getOrDefault(yyKey, 0) + 1;
+                nextByYear.put(yyKey, next);
+                String scan = yyKey + "-" + String.format("%05d", next);
+                upd.setString(1, scan);
+                upd.setInt(2, id);
+                upd.executeUpdate();
+            }
+        } catch (SQLException ignored) {}
     }
 
     private void ensureMetaTable() throws SQLException {
@@ -260,13 +341,16 @@ public class DatabaseManager {
     }
 
     public static boolean hasConfigFile() {
-        return Files.exists(Paths.get(CONFIG_FILE));
+        return Files.exists(INSTALLED_CONFIG_FILE) || Files.exists(LEGACY_CONFIG_FILE);
     }
 
     /** Persist a single key/value into the saved db.properties config file. */
     public static synchronized void setProperty(String key, String value) throws Exception {
-        Files.createDirectories(Paths.get(DB_DIR));
-        Path path = Paths.get(CONFIG_FILE);
+        Path path = resolveWriteConfigFile();
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
         Properties props = new Properties();
         if (Files.exists(path)) {
             try (InputStream in = Files.newInputStream(path)) {
@@ -281,6 +365,43 @@ public class DatabaseManager {
         try (OutputStream out = Files.newOutputStream(path,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             props.store(out, "Evidence Harbor database configuration");
+        }
+    }
+
+    private static Path resolveReadConfigFile() {
+        if (Files.exists(INSTALLED_CONFIG_FILE)) {
+            return INSTALLED_CONFIG_FILE;
+        }
+        if (Files.exists(LEGACY_CONFIG_FILE)) {
+            return LEGACY_CONFIG_FILE;
+        }
+        return INSTALLED_CONFIG_FILE;
+    }
+
+    private static Path resolveWriteConfigFile() {
+        if (isPathWritable(INSTALLED_CONFIG_FILE)) {
+            return INSTALLED_CONFIG_FILE;
+        }
+        return LEGACY_CONFIG_FILE;
+    }
+
+    private static boolean isPathWritable(Path path) {
+        try {
+            Path parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            if (Files.exists(path)) {
+                return Files.isWritable(path);
+            }
+            try (OutputStream out = Files.newOutputStream(path,
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+                // probe write access
+            }
+            Files.deleteIfExists(path);
+            return true;
+        } catch (IOException ignored) {
+            return false;
         }
     }
 

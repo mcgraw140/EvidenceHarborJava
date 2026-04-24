@@ -3,6 +3,7 @@ package com.evidenceharbor.domain;
 public class Evidence {
     private int id;
     private String barcode;
+    private String scanCode;
     private int caseId;
     private int collectedByOfficerId;
     private int collectedFromPersonId;
@@ -103,6 +104,8 @@ public class Evidence {
     public void setId(int id) { this.id = id; }
     public String getBarcode() { return barcode; }
     public void setBarcode(String s) { this.barcode = s; }
+    public String getScanCode() { return scanCode; }
+    public void setScanCode(String s) { this.scanCode = s; }
     public int getCaseId() { return caseId; }
     public void setCaseId(int id) { this.caseId = id; }
     public int getCollectedByOfficerId() { return collectedByOfficerId; }

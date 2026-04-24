@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS narcotics_types (
 CREATE TABLE IF NOT EXISTS evidence (
     id INT AUTO_INCREMENT PRIMARY KEY,
     barcode VARCHAR(255) NOT NULL UNIQUE,
+    scan_code VARCHAR(20) UNIQUE,
     case_id INT NOT NULL,
     collected_by_officer_id INT,
     collected_from_person_id INT,

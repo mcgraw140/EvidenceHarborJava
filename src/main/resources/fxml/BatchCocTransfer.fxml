@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.evidenceharbor.ui.inventory.BatchCocTransferController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="18">
+                <padding><Insets top="14" right="24" bottom="14" left="24"/></padding>
+                <Label text="Evidence Harbor" styleClass="brand-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="main-module-tabs" spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Evidence" styleClass="nav-tab active" onAction="#onCases"/>
+                    <Button text="Impound" styleClass="nav-tab" onAction="#onImpound"/>
+                    <Button fx:id="navAdminTab" text="Admin" styleClass="nav-tab" onAction="#onAdmin"/>
+                </HBox>
+            </HBox>
+            <HBox styleClass="module-nav" alignment="CENTER_LEFT" spacing="20">
+                <padding><Insets top="8" right="24" bottom="8" left="24"/></padding>
+                <Button text="Dashboard" styleClass="nav-tab" onAction="#onEvidenceDashboard"/>
+                <Button text="Cases" styleClass="nav-tab" onAction="#onCases"/>
+                <Button text="Inventory" styleClass="nav-tab active" onAction="#onInventory"/>
+                <Button text="Dropbox Check-in" styleClass="nav-tab" onAction="#onDropbox"/>
+                <Button text="Reports" styleClass="nav-tab" onAction="#onReports"/>
+                <Button text="People" styleClass="nav-tab" onAction="#onPeople"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+            <HBox spacing="12">
+                <Button text="◀  Back to Inventory" styleClass="btn-secondary" onAction="#onBack"/>
+                <Button text="⌂  Dashboard" styleClass="btn-secondary" onAction="#onDashboard"/>
+            </HBox>
+
+            <Label text="Batch Chain of Custody Transfer" styleClass="page-title"/>
+            <Label text="Scan or type a barcode and press Enter to add items to the batch. Then set the transfer details and Apply to All."
+                   styleClass="muted-text" wrapText="true"/>
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Scan Barcode:" styleClass="label-key"/>
+                <TextField fx:id="scanField" promptText="Scan or type barcode, then press Enter" prefWidth="320"/>
+                <Button text="Add" styleClass="btn-primary" onAction="#onAddScan"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="countLabel" styleClass="subtitle"/>
+                <Button text="Remove Selected" styleClass="btn-secondary" onAction="#onRemoveSelected"/>
+                <Button text="Clear All" styleClass="btn-secondary" onAction="#onClearAll"/>
+            </HBox>
+
+            <VBox styleClass="card" spacing="0" VBox.vgrow="ALWAYS">
+                <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                <TableView fx:id="batchTable" styleClass="data-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colBarcode" text="BARCODE" prefWidth="170"/>
+                        <TableColumn fx:id="colCase" text="CASE #" prefWidth="130"/>
+                        <TableColumn fx:id="colDescription" text="DESCRIPTION" prefWidth="240"/>
+                        <TableColumn fx:id="colType" text="TYPE" prefWidth="120"/>
+                        <TableColumn fx:id="colStatus" text="STATUS" prefWidth="130"/>
+                        <TableColumn fx:id="colFrom" text="FROM LOCATION" prefWidth="160"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <VBox styleClass="card" spacing="10">
+                <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                <Label text="Transfer Details" styleClass="section-title"/>
+                <GridPane hgap="14" vgap="10">
+                    <columnConstraints>
+                        <ColumnConstraints prefWidth="140"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints prefWidth="140"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Action *" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <ComboBox fx:id="actionCombo" prefWidth="280" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                    <Label text="Performed By" styleClass="label-key" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                    <ComboBox fx:id="performedByCombo" promptText="Select officer" prefWidth="280" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+
+                    <Label fx:id="toLocationLabel" text="To Location" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <ComboBox fx:id="toLocationCombo" prefWidth="280" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                    <Label fx:id="toPersonLabel" text="To Person" styleClass="label-key" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                    <TextField fx:id="toPersonField" promptText="Recipient name" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+
+                    <Label text="Reason" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <TextField fx:id="reasonField" promptText="Brief reason (applied to all)" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="3"/>
+
+                    <Label text="Notes" styleClass="label-key" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                    <TextArea fx:id="notesArea" prefRowCount="2" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="3"/>
+                </GridPane>
+            </VBox>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="🖨 Print Barcode Labels" styleClass="btn-secondary" onAction="#onPrintLabels"/>
+                <Button text="🖨 Print CoC Sheet" styleClass="btn-secondary" onAction="#onPrintSheet"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Apply Transfer to All" styleClass="btn-primary" onAction="#onApply"/>
+            </HBox>
+        </VBox>
+    </center>
+    <bottom><fx:include source="DbStatusBar.fxml"/></bottom>
+</BorderPane>

@@ -35,6 +35,7 @@ public class InventoryController implements Initializable {
 
     @FXML private TextField searchField;
     @FXML private TableView<Evidence> inventoryTable;
+    @FXML private TableColumn<Evidence, String> colScan;
     @FXML private TableColumn<Evidence, String> colBarcode;
     @FXML private TableColumn<Evidence, String> colCase;
     @FXML private TableColumn<Evidence, String> colDescription;
@@ -54,6 +55,7 @@ public class InventoryController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        colScan.setCellValueFactory(cd -> new SimpleStringProperty(nullSafe(cd.getValue().getScanCode())));
         colBarcode.setCellValueFactory(cd -> new SimpleStringProperty(nullSafe(cd.getValue().getBarcode())));
         colCase.setCellValueFactory(cd -> new SimpleStringProperty(caseNumberById.getOrDefault(cd.getValue().getCaseId(), String.valueOf(cd.getValue().getCaseId()))));
         colDescription.setCellValueFactory(cd -> new SimpleStringProperty(nullSafe(cd.getValue().getDescription())));
@@ -139,7 +141,8 @@ public class InventoryController implements Initializable {
     }
 
     private boolean matchesSearch(Evidence e, String q) {
-        return nullSafe(e.getBarcode()).toLowerCase().contains(q)
+        return nullSafe(e.getScanCode()).toLowerCase().contains(q)
+            || nullSafe(e.getBarcode()).toLowerCase().contains(q)
                 || nullSafe(e.getDescription()).toLowerCase().contains(q)
                 || nullSafe(e.getEvidenceType()).toLowerCase().contains(q)
                 || nullSafe(e.getStorageLocation()).toLowerCase().contains(q)
@@ -200,6 +203,8 @@ public class InventoryController implements Initializable {
         javafx.stage.Window w = inventoryTable.getScene() != null ? inventoryTable.getScene().getWindow() : null;
         com.evidenceharbor.util.PrintSheetUtil.printTable(w, title, inventoryTable);
     }
+
+    @FXML private void onBatchTransfer() { Navigator.get().showBatchCocTransfer(); }
 
     @FXML private void onCases()         { Navigator.get().showCaseList(); }
     @FXML private void onInventory()     { }

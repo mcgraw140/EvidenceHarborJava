@@ -141,17 +141,20 @@
                     </ScrollPane>
                 </Tab>
 
-                <!-- ── TAILSCALE TAB ── -->
-                <Tab text="Tailscale VPN">
+                <!-- ── CONNECTIVITY TAB (TAILSCALE + DATABASE) ── -->
+                <Tab text="Connectivity">
                     <ScrollPane fitToWidth="true" styleClass="card">
                         <VBox spacing="18">
                             <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
 
-                            <Label text="Tailscale VPN" styleClass="section-header"/>
-                            <Label text="Tailscale creates a secure private network between all agency machines. Once connected, use your Tailscale IP as the database host to reach a remote MariaDB server."
+                            <Label text="Tailscale VPN + MariaDB Connection" styleClass="section-header"/>
+                            <Label text="Set up VPN and database access together on one page. For local installs, use 127.0.0.1. For remote installs, connect Tailscale and use the server's Tailscale IP as the database host."
                                    styleClass="subtitle" wrapText="true"/>
 
-                            <!-- Status row -->
+                            <Separator/>
+
+                            <Label text="Tailscale VPN" styleClass="section-header"/>
+
                             <HBox spacing="10" alignment="CENTER_LEFT">
                                 <Label fx:id="tsStatusDot" text="●" style="-fx-font-size:20px; -fx-font-weight:bold; -fx-text-fill:#f59e0b;"/>
                                 <VBox spacing="2">
@@ -160,9 +163,6 @@
                                 </VBox>
                             </HBox>
 
-                            <Separator/>
-
-                            <!-- Install section (shown when not installed) -->
                             <VBox fx:id="tsInstallBox" spacing="10">
                                 <Label text="Tailscale Not Installed" styleClass="section-header"/>
                                 <Label text="The bundled installer (tailscale-setup-1.96.3.exe) will be run silently."
@@ -172,7 +172,6 @@
                                 </HBox>
                             </VBox>
 
-                            <!-- Connect section (shown when installed) -->
                             <VBox fx:id="tsConnectBox" spacing="14">
                                 <Label text="Authentication" styleClass="section-header"/>
                                 <Label text="Paste an Auth Key from the Tailscale admin console to join your agency network automatically. Leave blank to connect using the browser login flow."
@@ -192,33 +191,15 @@
                                     <Button text="Connect / Up" styleClass="btn-primary" onAction="#onTailscaleConnect"/>
                                     <Button text="Disconnect / Down" styleClass="btn-secondary" onAction="#onTailscaleDisconnect"/>
                                     <Button text="Refresh Status" styleClass="btn-secondary" onAction="#onTailscaleRefresh"/>
-                                </HBox>
-
-                                <Separator/>
-
-                                <Label text="Use Tailscale IP as Database Host" styleClass="section-header"/>
-                                <Label text="After connecting, click below to copy your Tailscale IP into the Database Connection settings."
-                                       styleClass="subtitle" wrapText="true"/>
-                                <HBox spacing="12">
                                     <Button text="Use My Tailscale IP as DB Host" styleClass="btn-secondary" onAction="#onUseTailscaleIpAsDbHost"/>
                                 </HBox>
                             </VBox>
 
-                            <Separator/>
-
                             <Label text="Tailscale Output" styleClass="section-header"/>
-                            <TextArea fx:id="tsLogArea" editable="false" wrapText="true" prefRowCount="10"
+                            <TextArea fx:id="tsLogArea" editable="false" wrapText="true" prefRowCount="7"
                                       style="-fx-control-inner-background:#101827; -fx-text-fill:#dbeafe; -fx-border-color:#2d4059;"/>
 
-                        </VBox>
-                    </ScrollPane>
-                </Tab>
-
-                <!-- ── DATABASE CONNECTION TAB ── -->
-                <Tab text="Database Connection">
-                    <ScrollPane fitToWidth="true" styleClass="card">
-                        <VBox spacing="18">
-                            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+                            <Separator/>
 
                             <Label text="MariaDB Connection" styleClass="section-header"/>
 
@@ -285,6 +266,51 @@
                             <Label text="Connection Log" styleClass="section-header"/>
                             <TextArea fx:id="dbLogArea" editable="false" wrapText="true" prefRowCount="8"
                                       style="-fx-control-inner-background:#101827; -fx-text-fill:#dbeafe; -fx-border-color:#2d4059;"/>
+
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- ── LABEL PRINTER TAB ── -->
+                <Tab text="Label Printer">
+                    <ScrollPane fitToWidth="true" styleClass="card">
+                        <VBox spacing="18">
+                            <padding><Insets top="24" right="32" bottom="24" left="32"/></padding>
+
+                            <Label text="Label Printer Calibration" styleClass="section-header"/>
+                            <Label text="Print a calibration grid to check that the declared label size matches your actual label stock. The grid shows dots every 20 dots, tick labels every 50 dots, corner L-markers, and a center crosshair. If the grid is cut off or printed in the wrong area, measure the last fully-visible tick to find the real printable dimensions."
+                                   styleClass="subtitle" wrapText="true"/>
+
+                            <GridPane hgap="16" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="160" prefWidth="180" hgrow="NEVER"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Label text="Printer" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <ComboBox fx:id="labelPrinterCombo" prefWidth="400"
+                                          GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                <Label text="Label Size" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <ComboBox fx:id="labelSizeCombo" prefWidth="400"
+                                          GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                <Label text="Custom Width (dots)" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="labelCustomWidthField" promptText="e.g. 406 (2 inch @ 203 dpi)"
+                                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                <Label text="Custom Height (dots)" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="field-label"/>
+                                <TextField fx:id="labelCustomHeightField" promptText="e.g. 203 (1 inch @ 203 dpi)"
+                                           GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                            </GridPane>
+
+                            <Label text="Tip: at 203 dpi (standard Zebra desktop) → 1 inch = 203 dots. Common sizes: 2×1 (406×203), 3×1 (609×203), 4×2 (812×406), 4×3 (812×609), 4×6 (812×1218)."
+                                   styleClass="subtitle" wrapText="true"/>
+
+                            <HBox spacing="12" alignment="CENTER_LEFT">
+                                <Button text="Refresh Printers" styleClass="btn-secondary" onAction="#onRefreshLabelPrinters"/>
+                                <Button text="Print Calibration Grid" styleClass="btn-primary" onAction="#onPrintCalibrationLabel"/>
+                            </HBox>
 
                         </VBox>
                     </ScrollPane>

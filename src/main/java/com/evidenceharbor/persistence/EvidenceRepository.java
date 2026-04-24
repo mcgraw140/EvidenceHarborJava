@@ -33,6 +33,21 @@ public class EvidenceRepository {
         return list;
     }
 
+    public Evidence findByBarcode(String barcode) throws SQLException {
+        if (barcode == null || barcode.isBlank()) return null;
+        String trimmed = barcode.trim();
+        // Scanners return the short scan_code; the UI may pass the long human-readable barcode
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT * FROM evidence WHERE scan_code=? OR barcode=? LIMIT 1")) {
+            ps.setString(1, trimmed);
+            ps.setString(2, trimmed);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return map(rs);
+            }
+        }
+        return null;
+    }
+
     public String generateBarcode(String evidenceType) throws SQLException {
         // Title-case the type, strip non-alphanumeric, cap at 12 chars
         String cleaned = evidenceType == null ? "Unknown" : evidenceType.replaceAll("[^A-Za-z0-9]", "");
@@ -55,11 +70,32 @@ public class EvidenceRepository {
         }
     }
 
+    /** Short scanner-friendly code in YY-NNNNN format (e.g. 26-00001). */
+    public String generateScanCode() throws SQLException {
+        String yy = String.format("%02d", LocalDate.now().getYear() % 100);
+        String prefix = yy + "-";
+        try (PreparedStatement ps = conn().prepareStatement(
+                "SELECT scan_code FROM evidence WHERE scan_code LIKE ? ORDER BY scan_code DESC LIMIT 1")) {
+            ps.setString(1, prefix + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                int next = 1;
+                if (rs.next()) {
+                    String[] parts = rs.getString("scan_code").split("-");
+                    try { next = Integer.parseInt(parts[parts.length - 1]) + 1; } catch (NumberFormatException ignored) {}
+                }
+                return prefix + String.format("%05d", next);
+            }
+        }
+    }
+
     public Evidence save(Evidence e) throws SQLException {
         if (e.getBarcode() == null || e.getBarcode().isBlank()) {
             e.setBarcode(generateBarcode(e.getEvidenceType()));
         }
-        String sql = "INSERT INTO evidence (barcode,case_id,collected_by_officer_id,collected_from_person_id," +
+        if (e.getScanCode() == null || e.getScanCode().isBlank()) {
+            e.setScanCode(generateScanCode());
+        }
+        String sql = "INSERT INTO evidence (barcode,scan_code,case_id,collected_by_officer_id,collected_from_person_id," +
                 "collection_date,specific_location,address,city,state,zip,evidence_type,description,status,storage_location," +
                 "ammo_caliber,ammo_quantity,ammo_grain_weight,ammo_bullet_type,ammo_brand," +
                 "bio_sample_type,bio_collection_method,bio_storage_temp,bio_suspect_name,bio_dna_analysis_requested," +
@@ -71,7 +107,7 @@ public class EvidenceRepository {
                 "narc_drug_type,narc_net_weight,narc_form,narc_packaging,narc_field_test_performed,narc_field_test_result," +
                 "vehicle_body_type,vehicle_make,vehicle_model,vehicle_year,vehicle_color,vehicle_vin,vehicle_license_plate,vehicle_license_state,vehicle_reported_stolen,vehicle_impounded," +
                 "weapon_type,weapon_make,weapon_model,weapon_serial_number,weapon_length,weapon_reported_stolen) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?," +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," +
                 "?,?,?,?,?," +
                 "?,?,?,?,?," +
                 "?,?,?,?," +
@@ -85,6 +121,7 @@ public class EvidenceRepository {
         try (PreparedStatement ps = conn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             int i = 1;
             ps.setString(i++, e.getBarcode());
+            ps.setString(i++, e.getScanCode());
             ps.setInt(i++, e.getCaseId());
             if (e.getCollectedByOfficerId() > 0) ps.setInt(i++, e.getCollectedByOfficerId()); else ps.setNull(i++, Types.INTEGER);
             if (e.getCollectedFromPersonId() > 0) ps.setInt(i++, e.getCollectedFromPersonId()); else ps.setNull(i++, Types.INTEGER);
@@ -183,6 +220,7 @@ public class EvidenceRepository {
         Evidence e = new Evidence();
         e.setId(rs.getInt("id"));
         e.setBarcode(rs.getString("barcode"));
+        e.setScanCode(rs.getString("scan_code"));
         e.setCaseId(rs.getInt("case_id"));
         int collectedBy = rs.getInt("collected_by_officer_id");
         if (!rs.wasNull()) e.setCollectedByOfficerId(collectedBy);
