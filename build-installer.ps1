@@ -1,210 +1,339 @@
+<#
+    build-installer.ps1
+
+    Builds a professional Windows installer (setup.exe) for Evidence Harbor using
+    the JDK's `jpackage` tool. The resulting installer behaves like any normal
+    commercial Windows application:
+
+      * Real setup wizard (welcome, license, install-dir chooser, progress, finish)
+      * Application icon baked in
+      * Desktop and Start Menu shortcuts (user-toggleable at install time)
+      * Registered in Add/Remove Programs, with its own uninstaller
+      * Per-version upgrade UUID so future installers upgrade in place
+      * Bundled JRE (no separate Java install required on target PCs)
+
+    Prerequisites on the build machine:
+      * JDK 21+ on PATH (jpackage.exe)
+      * Maven on PATH
+      * WiX Toolset 3.11+ on PATH (candle.exe / light.exe)
+            Install via:  winget install --id WiXToolset.WiXToolset
+            or download:  https://github.com/wixtoolset/wix3/releases
+
+    Usage:
+        .\build-installer.ps1                # uses version from pom.xml
+        .\build-installer.ps1 -Version 1.2.3
+        .\build-installer.ps1 -Type msi      # produce .msi instead of .exe
+        .\build-installer.ps1 -SkipBundle    # skip the USB bundle folder
+#>
+
+[CmdletBinding()]
 param(
-    [string]$VersionOverride = ""
+    [Alias('VersionOverride')]
+    [string]$Version = "",
+
+    [ValidateSet('exe','msi')]
+    [string]$Type = 'exe',
+
+    [switch]$SkipBundle
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $repoRoot
 
+function Write-Step($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
+function Write-Ok  ($msg) { Write-Host "    $msg" -ForegroundColor Green }
+function Write-Warn2($msg){ Write-Host "    $msg" -ForegroundColor Yellow }
+
+# -------------------------------------------------------------------------
+# Convert a PNG to a multi-resolution .ico file (pure PowerShell, no deps).
+# -------------------------------------------------------------------------
+function Convert-PngToIco {
+    param(
+        [Parameter(Mandatory)] [string]$PngPath,
+        [Parameter(Mandatory)] [string]$IconPath
+    )
+    Add-Type -AssemblyName System.Drawing
+
+    $sizes = @(256, 128, 64, 48, 32, 16)
+    $src   = [System.Drawing.Image]::FromFile((Resolve-Path $PngPath))
+    $pngs  = @{}
+    try {
+        foreach ($s in $sizes) {
+            $bmp = New-Object System.Drawing.Bitmap($s, $s, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+            $g   = [System.Drawing.Graphics]::FromImage($bmp)
+            try {
+                $g.InterpolationMode  = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                $g.SmoothingMode      = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+                $g.PixelOffsetMode    = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+                $g.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+                $g.Clear([System.Drawing.Color]::Transparent)
+                $g.DrawImage($src, 0, 0, $s, $s)
+            } finally { $g.Dispose() }
+
+            $ms = New-Object System.IO.MemoryStream
+            $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+            $pngs[$s] = $ms.ToArray()
+            $ms.Dispose()
+            $bmp.Dispose()
+        }
+    } finally { $src.Dispose() }
+
+    if (Test-Path $IconPath) { Remove-Item $IconPath -Force }
+    $fs = [System.IO.File]::Create($IconPath)
+    $bw = New-Object System.IO.BinaryWriter($fs)
+    try {
+        # ICONDIR
+        $bw.Write([UInt16]0)                # reserved
+        $bw.Write([UInt16]1)                # type = icon
+        $bw.Write([UInt16]$sizes.Count)     # image count
+
+        $offset = 6 + (16 * $sizes.Count)
+        foreach ($s in $sizes) {
+            $bytes = $pngs[$s]
+            $w = if ($s -ge 256) { 0 } else { [byte]$s }
+            $h = if ($s -ge 256) { 0 } else { [byte]$s }
+            $bw.Write([byte]$w)
+            $bw.Write([byte]$h)
+            $bw.Write([byte]0)              # color count
+            $bw.Write([byte]0)              # reserved
+            $bw.Write([UInt16]1)            # color planes
+            $bw.Write([UInt16]32)           # bpp
+            $bw.Write([UInt32]$bytes.Length)
+            $bw.Write([UInt32]$offset)
+            $offset += $bytes.Length
+        }
+        foreach ($s in $sizes) { $bw.Write($pngs[$s]) }
+    } finally {
+        $bw.Flush(); $bw.Dispose(); $fs.Dispose()
+    }
+}
+
 try {
+    # ---------------------------------------------------------------------
+    # 0. Prereq checks
+    # ---------------------------------------------------------------------
+    Write-Step "Checking build prerequisites"
+
     if (-not (Get-Command mvn -ErrorAction SilentlyContinue)) {
-        throw "Maven (mvn) is not available on PATH."
+        throw "Maven (mvn) is not on PATH. Install Maven and try again."
     }
     if (-not (Get-Command jpackage -ErrorAction SilentlyContinue)) {
-        throw "jpackage is not available on PATH. Install JDK 21 and ensure jpackage is available."
+        throw "jpackage is not on PATH. Install JDK 21 and make sure JAVA_HOME\bin is on PATH."
     }
 
-    [xml]$pom = Get-Content (Join-Path $repoRoot "pom.xml")
-    $version = if ($VersionOverride -and $VersionOverride.Trim().Length -gt 0) {
-        $VersionOverride.Trim()
-    } else {
-        $pom.project.version
-    }
-
-    Write-Host "Building shaded JAR..." -ForegroundColor Cyan
-    & mvn -q clean package
-
-    $jarName = "evidence-harbor-$version.jar"
-    $jarPath = Join-Path $repoRoot (Join-Path "target" $jarName)
-    if (-not (Test-Path $jarPath)) {
-        $jarCandidate = Get-ChildItem (Join-Path $repoRoot "target") -Filter "evidence-harbor-*.jar" |
-            Where-Object { $_.Name -notlike "original-*" } |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-        if (-not $jarCandidate) {
-            throw "Could not find packaged application jar in target/."
+    $wixFound = $false
+    if (Get-Command candle.exe -ErrorAction SilentlyContinue) { $wixFound = $true }
+    if (-not $wixFound) {
+        $pf86 = ${env:ProgramFiles(x86)}
+        foreach ($v in @('v3.14','v3.11','v3.10')) {
+            $wixBin = Join-Path $pf86 "WiX Toolset $v\bin"
+            if (Test-Path (Join-Path $wixBin 'candle.exe')) {
+                $env:Path = "$wixBin;$env:Path"
+                $wixFound = $true
+                break
+            }
         }
-        $jarName = $jarCandidate.Name
-        $jarPath = $jarCandidate.FullName
+    }
+    if (-not $wixFound) {
+        throw @"
+WiX Toolset 3.x was not found. jpackage requires WiX to build Windows installers.
+
+Install it one of these ways, then re-run this script:
+
+  winget install --id WiXToolset.WiXToolset
+  choco install wixtoolset
+  Download: https://github.com/wixtoolset/wix3/releases  (wix311-binaries.zip)
+
+If you already installed it, make sure the 'bin' folder (containing candle.exe
+and light.exe) is on your PATH.
+"@
+    }
+    Write-Ok "Maven, jpackage, and WiX Toolset detected."
+
+    # ---------------------------------------------------------------------
+    # 1. Resolve version
+    # ---------------------------------------------------------------------
+    [xml]$pom = Get-Content (Join-Path $repoRoot "pom.xml")
+    if ($Version -and $Version.Trim().Length -gt 0) {
+        $appVersion = $Version.Trim()
+    } else {
+        $appVersion = $pom.project.version
+    }
+    # jpackage requires numeric version (N[.N[.N]]); strip -SNAPSHOT etc.
+    $appVersion = ($appVersion -replace '[^\d\.]','').Trim('.')
+    if (-not $appVersion) { $appVersion = '1.0.0' }
+    Write-Ok "Building version $appVersion"
+
+    # ---------------------------------------------------------------------
+    # 2. Build the shaded JAR
+    # ---------------------------------------------------------------------
+    Write-Step "Building shaded JAR (mvn clean package)"
+    & mvn -q clean package
+    if ($LASTEXITCODE -ne 0) { throw "Maven build failed." }
+
+    $jarCandidate = Get-ChildItem (Join-Path $repoRoot "target") -Filter "evidence-harbor-*.jar" |
+        Where-Object { $_.Name -notlike "original-*" } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+    if (-not $jarCandidate) { throw "Could not find packaged application jar in target/." }
+    $jarName = $jarCandidate.Name
+    Write-Ok "Using jar: $jarName"
+
+    # Strip any stray files from target\ so jpackage --input folder only holds jars
+    $inputDir = Join-Path $repoRoot "target\installer-input"
+    Remove-Item $inputDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path $inputDir | Out-Null
+    Copy-Item $jarCandidate.FullName -Destination $inputDir -Force
+
+    # ---------------------------------------------------------------------
+    # 3. Prepare icon + license + build dir
+    # ---------------------------------------------------------------------
+    Write-Step "Preparing installer assets"
+
+    $buildDir = Join-Path $repoRoot "target\installer-build"
+    Remove-Item $buildDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path $buildDir | Out-Null
+
+    $iconPath = Join-Path $buildDir "EvidenceHarbor.ico"
+    $existingIco = Join-Path $repoRoot "src\main\EvidenceHarbor.ico"
+    if (Test-Path $existingIco) {
+        Copy-Item $existingIco $iconPath -Force
+        Write-Ok "Using existing icon: $existingIco"
+    } else {
+        $pngIcon = Join-Path $repoRoot "src\main\ICON 2.png"
+        if (-not (Test-Path $pngIcon)) {
+            $pngIcon = Get-ChildItem (Join-Path $repoRoot "src\main") -Filter "*.png" -Recurse -ErrorAction SilentlyContinue |
+                Sort-Object Length -Descending | Select-Object -First 1 | ForEach-Object FullName
+        }
+        if ($pngIcon -and (Test-Path $pngIcon)) {
+            Write-Ok "Converting $pngIcon -> EvidenceHarbor.ico"
+            Convert-PngToIco -PngPath $pngIcon -IconPath $iconPath
+        } else {
+            Write-Warn2 "No icon source found (src\main\ICON 2.png). Installer will use jpackage default."
+            $iconPath = $null
+        }
     }
 
-    $distRoot = Join-Path $repoRoot "dist"
-    $appImageDest = Join-Path $distRoot "app-image"
-    $usbBundleDir = Join-Path $distRoot "EvidenceHarbor-Installer"
-
-    Remove-Item $appImageDest -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item $usbBundleDir -Recurse -Force -ErrorAction SilentlyContinue
-    New-Item -ItemType Directory -Path $appImageDest | Out-Null
-    New-Item -ItemType Directory -Path $usbBundleDir | Out-Null
-
-    Write-Host "Creating application image with jpackage..." -ForegroundColor Cyan
-    & jpackage --type app-image `
-        --name "Evidence Harbor" `
-        --input (Join-Path $repoRoot "target") `
-        --dest $appImageDest `
-        --main-jar $jarName `
-        --main-class com.evidenceharbor.app.MainApp `
-        --vendor "Evidence Harbor" `
-        --app-version $version
-
-    $imageDir = Join-Path $appImageDest "Evidence Harbor"
-    if (-not (Test-Path $imageDir)) {
-        throw "jpackage did not produce expected app image folder: $imageDir"
+    # License file for the installer wizard
+    $licenseSrc = Join-Path $repoRoot "LICENSE"
+    $licenseForInstaller = $null
+    if (Test-Path $licenseSrc) {
+        $licenseForInstaller = Join-Path $buildDir "LICENSE.txt"
+        Copy-Item $licenseSrc $licenseForInstaller -Force
     }
 
-    Copy-Item $imageDir -Destination (Join-Path $usbBundleDir "Evidence Harbor") -Recurse -Force
+    # ---------------------------------------------------------------------
+    # 4. Run jpackage
+    # ---------------------------------------------------------------------
+    $outDir = Join-Path $repoRoot "dist"
+    Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
-    $installTheseDir = Join-Path $repoRoot "Install These"
-    if (Test-Path $installTheseDir) {
-        Copy-Item $installTheseDir -Destination (Join-Path $usbBundleDir "Install These") -Recurse -Force
+    # Stable UUID so future installers upgrade in place instead of installing
+    # side-by-side. DO NOT change this value between releases.
+    $upgradeUuid = '6e6f2b8e-7d3b-4b2d-9a2f-0e7c0b1e9a01'
+
+    $jpackageArgs = @(
+        '--type',          $Type
+        '--name',          'Evidence Harbor'
+        '--app-version',   $appVersion
+        '--vendor',        'Evidence Harbor'
+        '--description',   'Law-enforcement evidence management, impound tracking, and quartermaster workflows.'
+        '--copyright',     "Copyright (c) $((Get-Date).Year) Evidence Harbor"
+        '--input',         $inputDir
+        '--dest',          $outDir
+        '--main-jar',      $jarName
+        '--main-class',    'com.evidenceharbor.app.Launcher'
+        '--java-options',  '-Dfile.encoding=UTF-8'
+        '--win-dir-chooser'
+        '--win-menu'
+        '--win-menu-group','Evidence Harbor'
+        '--win-shortcut'
+        '--win-shortcut-prompt'
+        '--win-upgrade-uuid', $upgradeUuid
+    )
+    if ($iconPath)             { $jpackageArgs += @('--icon',         $iconPath) }
+    if ($licenseForInstaller)  { $jpackageArgs += @('--license-file', $licenseForInstaller) }
+
+    Write-Step "Running jpackage (this can take a minute or two)"
+    & jpackage @jpackageArgs
+    if ($LASTEXITCODE -ne 0) { throw "jpackage failed with exit code $LASTEXITCODE." }
+
+    $installer = Get-ChildItem $outDir -Filter "Evidence Harbor-*.$Type" |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $installer) { throw "jpackage did not produce an installer in $outDir." }
+
+    $finalName    = "EvidenceHarbor-Setup-$appVersion.$Type"
+    $finalInstaller = Join-Path $outDir $finalName
+    Remove-Item $finalInstaller -Force -ErrorAction SilentlyContinue
+    Move-Item $installer.FullName $finalInstaller -Force
+    Write-Ok "Installer built: $finalInstaller"
+
+    # ---------------------------------------------------------------------
+    # 5. Optional USB bundle (installer + MariaDB/Tailscale prereqs)
+    # ---------------------------------------------------------------------
+    if (-not $SkipBundle) {
+        Write-Step "Building USB bundle folder"
+
+        $bundleDir = Join-Path $outDir "EvidenceHarbor-Installer-$appVersion"
+        Remove-Item $bundleDir -Recurse -Force -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Path $bundleDir | Out-Null
+
+        Copy-Item $finalInstaller -Destination (Join-Path $bundleDir $finalName) -Force
+
+        $installThese = Join-Path $repoRoot "Install These"
+        if (Test-Path $installThese) {
+            Copy-Item $installThese -Destination (Join-Path $bundleDir "Install These") -Recurse -Force
+        }
+
+        $repoDbProps   = Join-Path $repoRoot "db.properties"
+        $repoDbExample = Join-Path $repoRoot "db.properties.example"
+        if (Test-Path $repoDbExample) {
+            Copy-Item $repoDbExample -Destination (Join-Path $bundleDir "db.properties.example") -Force
+        }
+        if (Test-Path $repoDbProps) {
+            Copy-Item $repoDbProps -Destination (Join-Path $bundleDir "db.properties") -Force
+        }
+
+        $readme = @"
+Evidence Harbor $appVersion - Installer Bundle
+==============================================
+
+To install on a workstation:
+
+  1. Double-click  $finalName
+  2. Follow the setup wizard (license, install folder, shortcuts).
+  3. On first launch, enter your MariaDB server details.
+
+Optional dependencies (for the database server / remote sites):
+
+  Install These\mariadb-*.msi       - Install on the machine that will host the DB
+  Install These\tailscale-setup-*.exe - Optional VPN for multi-site deployments
+
+Pre-seeding database config:
+
+  Drop a customized db.properties into %USERPROFILE%\EvidenceHarbor\
+  before first launch to skip the setup wizard. An example is included.
+
+Uninstalling:
+
+  Use Windows "Settings > Apps" or "Add or Remove Programs" and remove
+  "Evidence Harbor" like any other application.
+"@
+        Set-Content -Path (Join-Path $bundleDir "README.txt") -Value $readme -Encoding ASCII
+        Write-Ok "Bundle: $bundleDir"
     }
 
-    $repoDbProps = Join-Path $repoRoot "db.properties"
-    $repoDbExample = Join-Path $repoRoot "db.properties.example"
-    if (Test-Path $repoDbProps) {
-        Copy-Item $repoDbProps -Destination (Join-Path $usbBundleDir "db.properties") -Force
-    } elseif (Test-Path $repoDbExample) {
-        Copy-Item $repoDbExample -Destination (Join-Path $usbBundleDir "db.properties") -Force
-        Write-Host "No db.properties found — using db.properties.example as default config." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "================================================================" -ForegroundColor Green
+    Write-Host " DONE - Professional installer ready." -ForegroundColor Green
+    Write-Host " Installer: $finalInstaller" -ForegroundColor Green
+    if (-not $SkipBundle) {
+        Write-Host " Bundle:    $(Join-Path $outDir "EvidenceHarbor-Installer-$appVersion")" -ForegroundColor Green
     }
-    if (Test-Path $repoDbExample) {
-        Copy-Item $repoDbExample -Destination (Join-Path $usbBundleDir "db.properties.example") -Force
-    }
-
-    @'
-param(
-    [string]$InstallDir = "$env:ProgramFiles\Evidence Harbor"
-)
-
-$ErrorActionPreference = "Stop"
-
-$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    $args = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" -InstallDir `"$InstallDir`""
-    Start-Process powershell -Verb RunAs -ArgumentList $args
-    exit
-}
-
-$packageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sourceDir = Join-Path $packageRoot "Evidence Harbor"
-if (-not (Test-Path $sourceDir)) {
-    throw "Installer payload folder not found: $sourceDir"
-}
-
-if (Test-Path $InstallDir) {
-    Remove-Item $InstallDir -Recurse -Force
-}
-New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-Copy-Item (Join-Path $sourceDir "*") -Destination $InstallDir -Recurse -Force
-
-$dbProps = Join-Path $packageRoot "db.properties"
-if (Test-Path $dbProps) {
-    Copy-Item $dbProps -Destination (Join-Path $InstallDir "db.properties") -Force
-}
-
-$exePath = Join-Path $InstallDir "Evidence Harbor.exe"
-if (-not (Test-Path $exePath)) {
-    throw "Expected executable not found after install: $exePath"
-}
-
-$desktop = [Environment]::GetFolderPath("Desktop")
-$startMenu = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs"
-$shortcutTargets = @(
-    Join-Path $desktop "Evidence Harbor.lnk",
-    Join-Path $startMenu "Evidence Harbor.lnk"
-)
-
-$wsh = New-Object -ComObject WScript.Shell
-foreach ($shortcutPath in $shortcutTargets) {
-    $shortcut = $wsh.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = $exePath
-    $shortcut.WorkingDirectory = $InstallDir
-    $shortcut.IconLocation = "$exePath,0"
-    $shortcut.Save()
-}
-
-Write-Host "Installed Evidence Harbor to: $InstallDir" -ForegroundColor Green
-Write-Host "Shortcuts created on Desktop and Start Menu." -ForegroundColor Green
-Read-Host "Press Enter to exit"
-'@ | Set-Content -Path (Join-Path $usbBundleDir "Install-EvidenceHarbor.ps1") -Encoding UTF8
-
-    @'
-param(
-    [string]$InstallDir = "$env:ProgramFiles\Evidence Harbor"
-)
-
-$ErrorActionPreference = "Stop"
-
-$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    $args = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" -InstallDir `"$InstallDir`""
-    Start-Process powershell -Verb RunAs -ArgumentList $args
-    exit
-}
-
-if (Test-Path $InstallDir) {
-    Remove-Item $InstallDir -Recurse -Force
-}
-
-$desktop = [Environment]::GetFolderPath("Desktop")
-$startMenu = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs"
-$shortcutTargets = @(
-    Join-Path $desktop "Evidence Harbor.lnk",
-    Join-Path $startMenu "Evidence Harbor.lnk"
-)
-foreach ($shortcutPath in $shortcutTargets) {
-    if (Test-Path $shortcutPath) {
-        Remove-Item $shortcutPath -Force
-    }
-}
-
-Write-Host "Evidence Harbor removed from: $InstallDir" -ForegroundColor Yellow
-Read-Host "Press Enter to exit"
-'@ | Set-Content -Path (Join-Path $usbBundleDir "Uninstall-EvidenceHarbor.ps1") -Encoding UTF8
-
-    @'
-@echo off
-set SCRIPT_DIR=%~dp0
-powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%Install-EvidenceHarbor.ps1"
-'@ | Set-Content -Path (Join-Path $usbBundleDir "Install-EvidenceHarbor.bat") -Encoding ASCII
-
-    @'
-@echo off
-set SCRIPT_DIR=%~dp0
-powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%Uninstall-EvidenceHarbor.ps1"
-'@ | Set-Content -Path (Join-Path $usbBundleDir "Uninstall-EvidenceHarbor.bat") -Encoding ASCII
-
-    @'
-Evidence Harbor USB Installer Bundle
-
-1) Copy this entire folder to a USB drive.
-2) On each target PC, open this folder and run Install-EvidenceHarbor.bat as Administrator.
-3) This installs Evidence Harbor to Program Files and creates Desktop/Start Menu shortcuts.
-
-Included dependencies:
-- Install These\mariadb-12.2.2-winx64.msi
-- Install These\tailscale-setup-1.96.3.exe
-
-Optional:
-- Edit db.properties before install to set your host/user/password.
-- db.properties.example shows the default format if you need to recreate it.
-'@ | Set-Content -Path (Join-Path $usbBundleDir "README.txt") -Encoding ASCII
-
-    Write-Host "" 
-    Write-Host "Installer bundle created:" -ForegroundColor Green
-    Write-Host $usbBundleDir -ForegroundColor Green
-    Write-Host "Copy this folder to USB and run Install-EvidenceHarbor.bat on target PCs." -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
 }
 finally {
     Pop-Location
