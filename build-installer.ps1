@@ -71,8 +71,15 @@ try {
     }
 
     $repoDbProps = Join-Path $repoRoot "db.properties"
+    $repoDbExample = Join-Path $repoRoot "db.properties.example"
     if (Test-Path $repoDbProps) {
         Copy-Item $repoDbProps -Destination (Join-Path $usbBundleDir "db.properties") -Force
+    } elseif (Test-Path $repoDbExample) {
+        Copy-Item $repoDbExample -Destination (Join-Path $usbBundleDir "db.properties") -Force
+        Write-Host "No db.properties found — using db.properties.example as default config." -ForegroundColor Yellow
+    }
+    if (Test-Path $repoDbExample) {
+        Copy-Item $repoDbExample -Destination (Join-Path $usbBundleDir "db.properties.example") -Force
     }
 
     @'
@@ -190,7 +197,8 @@ Included dependencies:
 - Install These\tailscale-setup-1.96.3.exe
 
 Optional:
-- Edit db.properties before install to set default host/user/password.
+- Edit db.properties before install to set your host/user/password.
+- db.properties.example shows the default format if you need to recreate it.
 '@ | Set-Content -Path (Join-Path $usbBundleDir "README.txt") -Encoding ASCII
 
     Write-Host "" 
