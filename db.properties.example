@@ -1,0 +1,8 @@
+# Evidence Harbor - Database Connection Config
+# Copy this file to db.properties and fill in your values.
+
+mariadb.host=127.0.0.1
+mariadb.port=3306
+mariadb.database=evidence_harbor
+mariadb.user=root
+mariadb.password=
