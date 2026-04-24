@@ -261,6 +261,32 @@ and light.exe) is on your PATH.
     & jpackage @jpackageArgs
     if ($LASTEXITCODE -ne 0) { throw "jpackage failed with exit code $LASTEXITCODE." }
 
+    # --------------------------------------------------------------------
+    # Sanity check: confirm the shaded jar's manifest Main-Class is the
+    # Launcher (not MainApp). If MainApp is used, the JVM's JavaFX module
+    # check fires at startup and the installed app fails with
+    # "JavaFX runtime components are missing".
+    # --------------------------------------------------------------------
+    $manifestJar = $jarCandidate.FullName
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($manifestJar)
+    try {
+        $entry = $zip.GetEntry('META-INF/MANIFEST.MF')
+        if ($entry) {
+            $sr = New-Object System.IO.StreamReader($entry.Open())
+            $manifestText = $sr.ReadToEnd(); $sr.Dispose()
+            if ($manifestText -match 'Main-Class:\s*(\S+)') {
+                $jarMain = $Matches[1]
+                if ($jarMain -ne 'com.evidenceharbor.app.Launcher') {
+                    throw "Shaded jar Main-Class is '$jarMain' (expected 'com.evidenceharbor.app.Launcher'). " +
+                          "This will cause 'JavaFX runtime components are missing' at launch. " +
+                          "Check maven-shade-plugin's ManifestResourceTransformer in pom.xml."
+                }
+                Write-Ok "Jar manifest Main-Class: $jarMain"
+            }
+        }
+    } finally { $zip.Dispose() }
+
     $installer = Get-ChildItem $outDir -Filter "Evidence Harbor-*.$Type" |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if (-not $installer) { throw "jpackage did not produce an installer in $outDir." }
@@ -282,6 +308,16 @@ and light.exe) is on your PATH.
         New-Item -ItemType Directory -Path $bundleDir | Out-Null
 
         Copy-Item $finalInstaller -Destination (Join-Path $bundleDir $finalName) -Force
+
+        # Ship the standalone uninstaller scripts alongside the installer.
+        $uninstallPs1 = Join-Path $repoRoot "uninstall.ps1"
+        $uninstallBat = Join-Path $repoRoot "uninstall.bat"
+        if (Test-Path $uninstallPs1) {
+            Copy-Item $uninstallPs1 -Destination (Join-Path $bundleDir "uninstall.ps1") -Force
+        }
+        if (Test-Path $uninstallBat) {
+            Copy-Item $uninstallBat -Destination (Join-Path $bundleDir "uninstall.bat") -Force
+        }
 
         $installThese = Join-Path $repoRoot "Install These"
         if (Test-Path $installThese) {
@@ -321,6 +357,11 @@ Uninstalling:
 
   Use Windows "Settings > Apps" or "Add or Remove Programs" and remove
   "Evidence Harbor" like any other application.
+
+  Or run  uninstall.bat  from this bundle for a scripted/silent removal:
+      uninstall.bat            (prompts before removing)
+      uninstall.bat -Force     (no prompt)
+      uninstall.bat -Quiet     (no UI, scripted rollouts)
 "@
         Set-Content -Path (Join-Path $bundleDir "README.txt") -Value $readme -Encoding ASCII
         Write-Ok "Bundle: $bundleDir"
