@@ -1,6 +1,6 @@
 # Evidence Harbor (Java)
 
-Evidence Harbor is a JavaFX desktop application for law enforcement evidence management, impound tracking, and quartermaster workflows. It is free to use, actively developed, and designed for any police department needing a lightweight on-premises solution.
+Evidence Harbor is a JavaFX desktop application for law enforcement evidence management, impound workflows. It is free to use, actively developed, and designed for any police department needing a lightweight on-premises solution.
 
 ## License
 
