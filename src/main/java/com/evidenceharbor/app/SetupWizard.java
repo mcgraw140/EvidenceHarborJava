@@ -9,6 +9,7 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -65,8 +66,13 @@ public class SetupWizard {
         // Step indicator
         stepLabel.setStyle("-fx-font-size:12px; -fx-text-fill:#64748b;");
 
-        Label brand = new Label("Evidence Harbor v" + AppVersion.current());
+        Label brand = new Label("Evidence Harbor");
         brand.getStyleClass().add("brand-title");
+        Label version = new Label("v" + AppVersion.current());
+        version.getStyleClass().add("brand-version");
+        brand.setGraphic(version);
+        brand.setContentDisplay(ContentDisplay.RIGHT);
+        brand.setGraphicTextGap(8);
 
         // Status row
         statusLabel.setStyle("-fx-font-size:13px; -fx-text-fill:#94a3b8; -fx-wrap-text:true;");

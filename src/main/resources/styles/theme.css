@@ -58,6 +58,12 @@
     -fx-font-weight: bold;
 }
 
+.brand-version {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
 .nav-tab {
     -fx-background-color: transparent;
     -fx-text-fill: #f8fafc;

@@ -9,6 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
@@ -213,17 +214,20 @@ public class Navigator {
     }
 
     private void applyBrandVersionText(Parent root) {
-        String branded = "Evidence Harbor v" + AppVersion.current();
-        walkAndApply(root, branded);
+        walkAndApply(root);
     }
 
-    private void walkAndApply(Node node, String branded) {
+    private void walkAndApply(Node node) {
         if (node instanceof Label l && "Evidence Harbor".equals(l.getText())) {
-            l.setText(branded);
+            Label version = new Label("v" + AppVersion.current());
+            version.getStyleClass().add("brand-version");
+            l.setGraphic(version);
+            l.setContentDisplay(ContentDisplay.RIGHT);
+            l.setGraphicTextGap(8);
         }
         if (node instanceof Parent p) {
             for (Node child : p.getChildrenUnmodifiable()) {
-                walkAndApply(child, branded);
+                walkAndApply(child);
             }
         }
     }

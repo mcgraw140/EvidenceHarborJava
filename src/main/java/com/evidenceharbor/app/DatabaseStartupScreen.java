@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextArea;
@@ -48,8 +49,13 @@ public class DatabaseStartupScreen {
         statusIcon.setStyle("-fx-text-fill:#f59e0b; -fx-font-size:18px; -fx-font-weight:bold;");
         statusText.setStyle("-fx-text-fill:#e2e8f0; -fx-font-size:14px; -fx-font-weight:bold;");
 
-        Label title = new Label("Evidence Harbor v" + AppVersion.current());
+        Label title = new Label("Evidence Harbor");
         title.getStyleClass().add("brand-title");
+        Label version = new Label("v" + AppVersion.current());
+        version.getStyleClass().add("brand-version");
+        title.setGraphic(version);
+        title.setContentDisplay(ContentDisplay.RIGHT);
+        title.setGraphicTextGap(8);
 
         Label subtitle = new Label("Database connection is required before the software can be used.");
         subtitle.getStyleClass().add("subtitle");

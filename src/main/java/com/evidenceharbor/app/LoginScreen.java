@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
@@ -29,8 +30,13 @@ public class LoginScreen {
     }
 
     public void show() {
-        Label brand = new Label("Evidence Harbor v" + AppVersion.current());
+        Label brand = new Label("Evidence Harbor");
         brand.getStyleClass().add("brand-title");
+        Label version = new Label("v" + AppVersion.current());
+        version.getStyleClass().add("brand-version");
+        brand.setGraphic(version);
+        brand.setContentDisplay(ContentDisplay.RIGHT);
+        brand.setGraphicTextGap(8);
 
         Label heading = new Label("Sign In");
         heading.setStyle("-fx-font-size:20px; -fx-font-weight:bold; -fx-text-fill:#dbeafe;");
