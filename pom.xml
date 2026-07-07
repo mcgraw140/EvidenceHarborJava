@@ -6,7 +6,7 @@
 
     <groupId>com.evidenceharbor</groupId>
     <artifactId>evidence-harbor</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -68,6 +68,11 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.evidenceharbor.app.Launcher</mainClass>
+                                    <manifestEntries>
+                                        <Implementation-Title>Evidence Harbor</Implementation-Title>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <Implementation-Vendor>Evidence Harbor</Implementation-Vendor>
+                                    </manifestEntries>
                                 </transformer>
                             </transformers>
                             <createDependencyReducedPom>false</createDependencyReducedPom>

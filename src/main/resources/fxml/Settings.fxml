@@ -28,6 +28,8 @@
                 <Button fx:id="navAuditTrailBtn" text="Audit Trail" styleClass="nav-tab" onAction="#onAuditTrail"/>
                 <Button text="Bank Ledger" styleClass="nav-tab" onAction="#onBankAccountLedger"/>
                 <Button fx:id="navSettingsBtn" text="Settings" styleClass="nav-tab active" onAction="#onSettings"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Check for Updates" styleClass="btn-secondary" onAction="#onCheckForUpdates"/>
             </HBox>
         </VBox>
     </top>

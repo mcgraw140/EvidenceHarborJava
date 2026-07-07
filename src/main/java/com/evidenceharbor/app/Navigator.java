@@ -1,8 +1,10 @@
 package com.evidenceharbor.app;
 
 import com.evidenceharbor.domain.Case;
+import com.evidenceharbor.domain.Evidence;
 import com.evidenceharbor.ui.cases.CaseDetailController;
 import com.evidenceharbor.ui.evidence.AddEvidenceController;
+import com.evidenceharbor.persistence.CaseRepository;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -164,6 +166,23 @@ public class Navigator {
             ctrl.initForCase(c);
             applyScene(root);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void showEditEvidence(Evidence evidence) {
+        if (evidence == null) return;
+        try {
+            Case c = new CaseRepository().findById(evidence.getCaseId());
+            if (c == null) throw new IllegalStateException("Could not load case #" + evidence.getCaseId());
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AddEvidence.fxml"));
+            Parent root = loader.load();
+            AddEvidenceController ctrl = loader.getController();
+            ctrl.initForEdit(c, evidence);
+            applyScene(root);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

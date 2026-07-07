@@ -17,7 +17,10 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setOnShown(ev -> signalSplashDismiss());
+        primaryStage.setOnShown(ev -> {
+            signalSplashDismiss();
+            UpdateService.checkAsync();
+        });
         new SetupWizard(primaryStage).show();
     }
 

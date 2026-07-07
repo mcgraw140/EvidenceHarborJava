@@ -1,5 +1,6 @@
 package com.evidenceharbor.ui.settings;
 
+import com.evidenceharbor.app.UpdateService;
 import com.evidenceharbor.app.NavHelper;
 import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.AgencySettings;
@@ -496,6 +497,7 @@ public class SettingsController implements Initializable {
     @FXML private void onEvidenceAudit()         { Navigator.get().showEvidenceAudit(); }
     @FXML private void onBankAccountLedger()     { Navigator.get().showBankAccountLedger(); }
     @FXML private void onImpound()       { Navigator.get().showImpoundLot(); }
+    @FXML private void onCheckForUpdates() { UpdateService.checkInteractive(); }
 
     // ─────────────────────── LABEL PRINTER TAB ──────────────────────────
 

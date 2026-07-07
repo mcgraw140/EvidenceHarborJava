@@ -216,6 +216,104 @@ public class EvidenceRepository {
         return e;
     }
 
+    public Evidence update(Evidence e) throws SQLException {
+        String sql = "UPDATE evidence SET barcode=?, scan_code=?, case_id=?, collected_by_officer_id=?, collected_from_person_id=?, " +
+                "collection_date=?, specific_location=?, address=?, city=?, state=?, zip=?, evidence_type=?, description=?, status=?, storage_location=?, " +
+                "ammo_caliber=?, ammo_quantity=?, ammo_grain_weight=?, ammo_bullet_type=?, ammo_brand=?, " +
+                "bio_sample_type=?, bio_collection_method=?, bio_storage_temp=?, bio_suspect_name=?, bio_dna_analysis_requested=?, " +
+                "currency_amount=?, currency_denominations=?, currency_serial_numbers=?, currency_suspected_counterfeit=?, " +
+                "elec_device_type=?, elec_make=?, elec_model=?, elec_serial_number=?, elec_password_protected=?, elec_data_extraction_requested=?, elec_device_username=?, elec_device_password=?, " +
+                "firearm_make=?, firearm_model=?, firearm_serial_number=?, firearm_type=?, firearm_caliber=?, firearm_reported_stolen=?, firearm_loaded_when_recovered=?, " +
+                "jewelry_type=?, jewelry_material=?, jewelry_estimated_value=?, jewelry_engraving_or_id=?, " +
+                "narc_equip_type=?, narc_equip_description=?, narc_equip_suspected_residue=?, narc_equip_field_test_kit_used=?, " +
+                "narc_drug_type=?, narc_net_weight=?, narc_form=?, narc_packaging=?, narc_field_test_performed=?, narc_field_test_result=?, " +
+                "vehicle_body_type=?, vehicle_make=?, vehicle_model=?, vehicle_year=?, vehicle_color=?, vehicle_vin=?, vehicle_license_plate=?, vehicle_license_state=?, vehicle_reported_stolen=?, vehicle_impounded=?, " +
+                "weapon_type=?, weapon_make=?, weapon_model=?, weapon_serial_number=?, weapon_length=?, weapon_reported_stolen=? WHERE id=?";
+        Evidence before = findById(e.getId());
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            int i = 1;
+            ps.setString(i++, e.getBarcode());
+            ps.setString(i++, e.getScanCode());
+            ps.setInt(i++, e.getCaseId());
+            if (e.getCollectedByOfficerId() > 0) ps.setInt(i++, e.getCollectedByOfficerId()); else ps.setNull(i++, Types.INTEGER);
+            if (e.getCollectedFromPersonId() > 0) ps.setInt(i++, e.getCollectedFromPersonId()); else ps.setNull(i++, Types.INTEGER);
+            ps.setString(i++, e.getCollectionDate());
+            ps.setString(i++, e.getSpecificLocation());
+            ps.setString(i++, e.getAddress());
+            ps.setString(i++, e.getCity());
+            ps.setString(i++, e.getState());
+            ps.setString(i++, e.getZip());
+            ps.setString(i++, e.getEvidenceType());
+            ps.setString(i++, e.getDescription());
+            ps.setString(i++, e.getStatus() != null ? e.getStatus() : "In Custody");
+            ps.setString(i++, e.getStorageLocation());
+            ps.setString(i++, e.getAmmoCallber());
+            ps.setString(i++, e.getAmmoQuantity());
+            ps.setString(i++, e.getAmmoGrainWeight());
+            ps.setString(i++, e.getAmmoBulletType());
+            ps.setString(i++, e.getAmmoBrand());
+            ps.setString(i++, e.getBioSampleType());
+            ps.setString(i++, e.getBioCollectionMethod());
+            ps.setString(i++, e.getBioStorageTemp());
+            ps.setString(i++, e.getBioSuspectName());
+            ps.setInt(i++, e.isBioDnaAnalysisRequested() ? 1 : 0);
+            ps.setString(i++, e.getCurrencyAmount());
+            ps.setString(i++, e.getCurrencyDenominations());
+            ps.setString(i++, e.getCurrencySerialNumbers());
+            ps.setInt(i++, e.isCurrencySuspectedCounterfeit() ? 1 : 0);
+            ps.setString(i++, e.getElecDeviceType());
+            ps.setString(i++, e.getElecMake());
+            ps.setString(i++, e.getElecModel());
+            ps.setString(i++, e.getElecSerialNumber());
+            ps.setInt(i++, e.isElecPasswordProtected() ? 1 : 0);
+            ps.setInt(i++, e.isElecDataExtractionRequested() ? 1 : 0);
+            ps.setString(i++, e.getElecDeviceUsername());
+            ps.setString(i++, e.getElecDevicePassword());
+            ps.setString(i++, e.getFirearmMake());
+            ps.setString(i++, e.getFirearmModel());
+            ps.setString(i++, e.getFirearmSerialNumber());
+            ps.setString(i++, e.getFirearmType());
+            ps.setString(i++, e.getFirearmCaliber());
+            ps.setInt(i++, e.isFirearmReportedStolen() ? 1 : 0);
+            ps.setInt(i++, e.isFirearmLoadedWhenRecovered() ? 1 : 0);
+            ps.setString(i++, e.getJewelryType());
+            ps.setString(i++, e.getJewelryMaterial());
+            ps.setString(i++, e.getJewelryEstimatedValue());
+            ps.setString(i++, e.getJewelryEngravingOrId());
+            ps.setString(i++, e.getNarcEquipType());
+            ps.setString(i++, e.getNarcEquipDescription());
+            ps.setString(i++, e.getNarcEquipSuspectedResidue());
+            ps.setInt(i++, e.isNarcEquipFieldTestKitUsed() ? 1 : 0);
+            ps.setString(i++, e.getNarcDrugType());
+            ps.setString(i++, e.getNarcNetWeight());
+            ps.setString(i++, e.getNarcForm());
+            ps.setString(i++, e.getNarcPackaging());
+            ps.setInt(i++, e.isNarcFieldTestPerformed() ? 1 : 0);
+            ps.setString(i++, e.getNarcFieldTestResult());
+            ps.setString(i++, e.getVehicleBodyType());
+            ps.setString(i++, e.getVehicleMake());
+            ps.setString(i++, e.getVehicleModel());
+            ps.setString(i++, e.getVehicleYear());
+            ps.setString(i++, e.getVehicleColor());
+            ps.setString(i++, e.getVehicleVin());
+            ps.setString(i++, e.getVehicleLicensePlate());
+            ps.setString(i++, e.getVehicleLicenseState());
+            ps.setInt(i++, e.isVehicleReportedStolen() ? 1 : 0);
+            ps.setInt(i++, e.isVehicleImpounded() ? 1 : 0);
+            ps.setString(i++, e.getWeaponType());
+            ps.setString(i++, e.getWeaponMake());
+            ps.setString(i++, e.getWeaponModel());
+            ps.setString(i++, e.getWeaponSerialNumber());
+            ps.setString(i++, e.getWeaponLength());
+            ps.setInt(i++, e.isWeaponReportedStolen() ? 1 : 0);
+            ps.setInt(i, e.getId());
+            ps.executeUpdate();
+        }
+        AuditLogger.log("Evidence", "UPDATE", "Evidence", String.valueOf(e.getId()),
+                "Updated " + nz(e.getEvidenceType()) + " — barcode " + nz(e.getBarcode()));
+        return e;
+    }
+
     private Evidence map(ResultSet rs) throws SQLException {
         Evidence e = new Evidence();
         e.setId(rs.getInt("id"));

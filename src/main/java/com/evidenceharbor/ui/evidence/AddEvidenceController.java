@@ -27,6 +27,9 @@ public class AddEvidenceController implements Initializable {
     @FXML private Button navReportsBtn;
     @FXML private Button navDropboxBtn;
 
+    @FXML private Label formTitle;
+    @FXML private Button saveButton;
+
     @FXML private Label breadcrumbCase;
     @FXML private Label caseNumberLabel;
     @FXML private DatePicker collectionDate;
@@ -57,6 +60,7 @@ public class AddEvidenceController implements Initializable {
     private final LookupRepository lookupRepo = new LookupRepository();
     /** Approved dropbox locations come from the intake_locations lookup. */
     private List<String> dropboxLocations = List.of();
+    private Evidence editEvidence;
 
     // Dynamic field references
     // Ammunition
@@ -82,6 +86,8 @@ public class AddEvidenceController implements Initializable {
     private TextField firearmModelField;
     private TextField firearmSerialField;
     private ComboBox<String> firearmCaliberCombo;
+    private CheckBox firearmReportedStolenCheck;
+    private CheckBox firearmLoadedWhenRecoveredCheck;
 
     // Jewelry
     private TextField jewelryMakeField;
@@ -138,6 +144,7 @@ public class AddEvidenceController implements Initializable {
     }
 
     public void initForCase(Case c) {
+        this.editEvidence = null;
         this.currentCase = c;
         breadcrumbCase.setText("Case #" + c.getCaseNumber());
         caseNumberLabel.setText("Case #" + c.getCaseNumber());
@@ -168,6 +175,150 @@ public class AddEvidenceController implements Initializable {
         } catch (Exception e) { showError(e); }
     }
 
+    public void initForEdit(Case c, Evidence existing) {
+        this.currentCase = c;
+        this.editEvidence = existing;
+        breadcrumbCase.setText("Case #" + c.getCaseNumber());
+        caseNumberLabel.setText("Case #" + c.getCaseNumber());
+        updateFormMode(true);
+
+        try {
+            collectedByCombo.setItems(FXCollections.observableArrayList(officerRepo.findAll()));
+
+            List<Person> casePersons = (c.getPersons() == null) ? List.of()
+                    : c.getPersons().stream()
+                            .map(cp -> cp.getPerson())
+                            .filter(p -> p != null)
+                            .distinct()
+                            .collect(Collectors.toList());
+            collectedFromPersonCombo.setItems(FXCollections.observableArrayList(casePersons));
+            if (casePersons.isEmpty()) {
+                collectedFromPersonCombo.setPromptText("No persons associated with this case");
+                collectedFromPersonCombo.setDisable(true);
+            }
+
+            fillFromEvidence(existing);
+        } catch (Exception e) { showError(e); }
+    }
+
+    private void updateFormMode(boolean editMode) {
+        if (formTitle != null) {
+            formTitle.setText(editMode ? "Edit Evidence" : "Add Evidence");
+        }
+        if (saveButton != null) {
+            saveButton.setText(editMode ? "Save Changes" : "Save Evidence");
+        }
+        if (statusCombo != null) {
+            statusCombo.setDisable(!editMode);
+            statusCombo.setEditable(editMode);
+        }
+        if (storageLocationCombo != null) {
+            storageLocationCombo.setEditable(editMode);
+        }
+    }
+
+    private void fillFromEvidence(Evidence ev) {
+        if (ev == null) return;
+        if (ev.getCollectionDate() != null && !ev.getCollectionDate().isBlank()) {
+            try { collectionDate.setValue(LocalDate.parse(ev.getCollectionDate())); }
+            catch (Exception ignored) { collectionDate.setValue(LocalDate.now()); }
+        }
+        if (ev.getCollectedByOfficerId() > 0) {
+            try {
+                Officer off = officerRepo.findById(ev.getCollectedByOfficerId());
+                if (off != null) {
+                    collectedByCombo.getItems().stream()
+                            .filter(o -> o.getId() == off.getId())
+                            .findFirst().ifPresent(collectedByCombo.getSelectionModel()::select);
+                }
+            } catch (Exception ignored) {}
+        }
+        if (ev.getCollectedFromPersonId() > 0) {
+            collectedFromPersonCheck.setSelected(true);
+            onCollectedFromPersonToggle();
+            try {
+                Person p = personRepo.findById(ev.getCollectedFromPersonId());
+                if (p != null) {
+                    collectedFromPersonCombo.getItems().stream()
+                            .filter(x -> x.getId() == p.getId())
+                            .findFirst().ifPresent(collectedFromPersonCombo.getSelectionModel()::select);
+                }
+            } catch (Exception ignored) {}
+        } else {
+            collectedFromPersonCheck.setSelected(false);
+            onCollectedFromPersonToggle();
+        }
+
+        specificLocationField.setText(nz(ev.getSpecificLocation()));
+        addressField.setText(nz(ev.getAddress()));
+        cityField.setText(nz(ev.getCity()));
+        stateField.setText(nz(ev.getState()));
+        zipField.setText(nz(ev.getZip()));
+        evidenceTypeCombo.setValue(nz(ev.getEvidenceType()));
+        descriptionField.setText(nz(ev.getDescription()));
+        statusCombo.setValue(nz(ev.getStatus()));
+        storageLocationCombo.setValue(nz(ev.getStorageLocation()));
+
+        onEvidenceTypeChanged();
+
+        switch (nz(ev.getEvidenceType())) {
+            case "Ammunition" -> {
+                if (caliberCombo != null) caliberCombo.setValue(nz(ev.getAmmoCallber()));
+                if (quantityField != null) quantityField.setText(nz(ev.getAmmoQuantity()));
+            }
+            case "Biological / DNA" -> {
+                if (bioSourceCombo != null) bioSourceCombo.setValue(nz(ev.getBioSampleType()));
+            }
+            case "Currency" -> {
+                if (currencyAmountField != null) currencyAmountField.setText(nz(ev.getCurrencyAmount()));
+            }
+            case "Electronics" -> {
+                if (electronicTypeCombo != null) electronicTypeCombo.setValue(nz(ev.getElecDeviceType()));
+                if (electronicMakeField != null) electronicMakeField.setText(nz(ev.getElecMake()));
+                if (electronicModelField != null) electronicModelField.setText(nz(ev.getElecModel()));
+                if (electronicSerialField != null) electronicSerialField.setText(nz(ev.getElecSerialNumber()));
+                if (electronicUsernameField != null) electronicUsernameField.setText(nz(ev.getElecDeviceUsername()));
+                if (electronicPasswordField != null) electronicPasswordField.setText(nz(ev.getElecDevicePassword()));
+            }
+            case "Firearm" -> {
+                if (firearmMakeField != null) firearmMakeField.setText(nz(ev.getFirearmMake()));
+                if (firearmModelField != null) firearmModelField.setText(nz(ev.getFirearmModel()));
+                if (firearmSerialField != null) firearmSerialField.setText(nz(ev.getFirearmSerialNumber()));
+                if (firearmCaliberCombo != null) firearmCaliberCombo.setValue(nz(ev.getFirearmCaliber()));
+                if (firearmReportedStolenCheck != null) firearmReportedStolenCheck.setSelected(ev.isFirearmReportedStolen());
+                if (firearmLoadedWhenRecoveredCheck != null) firearmLoadedWhenRecoveredCheck.setSelected(ev.isFirearmLoadedWhenRecovered());
+            }
+            case "Jewelry" -> {
+                if (jewelryMakeField != null) jewelryMakeField.setText(nz(ev.getJewelryMaterial()));
+                if (jewelryModelField != null) jewelryModelField.setText(nz(ev.getJewelryType()));
+                if (jewelrySerialField != null) jewelrySerialField.setText(nz(ev.getJewelryEngravingOrId()));
+            }
+            case "Narcotic Equipment" -> {
+                if (narcEquipMakeField != null) narcEquipMakeField.setText(nz(ev.getNarcEquipType()));
+                if (narcEquipModelField != null) narcEquipModelField.setText(nz(ev.getNarcEquipDescription()));
+                if (narcEquipSerialField != null) narcEquipSerialField.setText(nz(ev.getNarcEquipSuspectedResidue()));
+            }
+            case "Narcotics" -> {
+                if (narcoticDrugTypeCombo != null) narcoticDrugTypeCombo.setValue(nz(ev.getNarcDrugType()));
+                if (narcoticUnitTypeCombo != null) narcoticUnitTypeCombo.setValue(nz(ev.getNarcForm()));
+                if (narcoticUnitNumberField != null) narcoticUnitNumberField.setText(nz(ev.getNarcNetWeight()));
+            }
+            case "Vehicle" -> {
+                if (vehicleMakeField != null) vehicleMakeField.setText(nz(ev.getVehicleMake()));
+                if (vehicleModelField != null) vehicleModelField.setText(nz(ev.getVehicleModel()));
+                if (vehicleYearField != null) vehicleYearField.setText(nz(ev.getVehicleYear()));
+                if (vehicleLicensePlateField != null) vehicleLicensePlateField.setText(nz(ev.getVehicleLicensePlate()));
+                if (vehicleVinField != null) vehicleVinField.setText(nz(ev.getVehicleVin()));
+            }
+            case "Weapon" -> {
+                if (weaponTypeCombo != null) weaponTypeCombo.setValue(nz(ev.getWeaponType()));
+                if (weaponMakeField != null) weaponMakeField.setText(nz(ev.getWeaponMake()));
+                if (weaponModelField != null) weaponModelField.setText(nz(ev.getWeaponModel()));
+                if (weaponSerialField != null) weaponSerialField.setText(nz(ev.getWeaponSerialNumber()));
+            }
+        }
+    }
+
     @FXML
     private void onCollectedFromPersonToggle() {
         boolean show = collectedFromPersonCheck.isSelected();
@@ -185,7 +336,9 @@ public class AddEvidenceController implements Initializable {
         String type = evidenceTypeCombo.getValue();
         if (type == null) return;
 
-        statusCombo.setValue("In Dropbox");
+        if (editEvidence == null) {
+            statusCombo.setValue("In Dropbox");
+        }
 
         switch (type) {
             case "Ammunition"         -> buildAmmunitionPanel();
@@ -196,6 +349,7 @@ public class AddEvidenceController implements Initializable {
             case "Jewelry"            -> buildJewelryPanel();
             case "Narcotic Equipment" -> buildNarcEquipPanel();
             case "Narcotics"          -> buildNarcoticsPanel();
+            case "Vehicle"            -> buildVehiclePanel();
             case "Weapon"             -> buildWeaponPanel();
         }
     }
@@ -252,6 +406,10 @@ public class AddEvidenceController implements Initializable {
 
         addRow(g, 0, "Make",     firearmMakeField,    "Model",    firearmModelField);
         addRow(g, 1, "Serial #", firearmSerialField,  "Caliber",  firearmCaliberCombo);
+        firearmReportedStolenCheck = new CheckBox("Reported Stolen");
+        firearmLoadedWhenRecoveredCheck = new CheckBox("Loaded When Recovered");
+        HBox yesNoRow = new HBox(24, firearmReportedStolenCheck, firearmLoadedWhenRecoveredCheck);
+        g.add(yesNoRow, 0, 2, 2, 1);
         dynamicPanel.getChildren().add(g);
     }
 
@@ -324,12 +482,12 @@ public class AddEvidenceController implements Initializable {
     private void onSave() {
         String type = evidenceTypeCombo.getValue();
         if (type == null) { Dialogs.warn("Evidence type required", "Please select an evidence type."); return; }
-        if ("Vehicle".equals(type)) {
+        if ("Vehicle".equals(type) && editEvidence == null) {
             Dialogs.warn("Wrong screen",
                     "Vehicles must be entered from the separate Impound Vehicle screen.");
             return;
         }
-        String storageLocation = storageLocationCombo.getValue();
+        String storageLocation = comboText(storageLocationCombo);
         if (storageLocation == null || storageLocation.isBlank()) {
             if (dropboxLocations.isEmpty()) {
                 Dialogs.warn("No drop box locations configured",
@@ -340,12 +498,12 @@ public class AddEvidenceController implements Initializable {
             return;
         }
 
-        Evidence ev = new Evidence();
+        Evidence ev = editEvidence != null ? editEvidence : new Evidence();
         ev.setCaseId(currentCase.getId());
         ev.setEvidenceType(type);
         ev.setDescription(descriptionField.getText().trim());
         ev.setStorageLocation(storageLocation);
-        ev.setStatus("In Dropbox");
+        ev.setStatus(editEvidence == null ? "In Dropbox" : comboText(statusCombo));
 
         LocalDate date = collectionDate.getValue();
         ev.setCollectionDate(date != null ? date.toString() : LocalDate.now().toString());
@@ -365,8 +523,18 @@ public class AddEvidenceController implements Initializable {
 
         populateTypeFields(ev, type);
 
+        if (editEvidence != null) {
+            ev.setBarcode(editEvidence.getBarcode());
+            ev.setScanCode(editEvidence.getScanCode());
+        }
+
         try {
-            evidenceRepo.save(ev);
+            if (editEvidence == null) {
+                evidenceRepo.save(ev);
+            } else {
+                ev.setId(editEvidence.getId());
+                evidenceRepo.update(ev);
+            }
             Navigator.get().showCaseDetail(currentCase);
         } catch (Exception e) { showError(e); }
     }
@@ -396,6 +564,8 @@ public class AddEvidenceController implements Initializable {
                 if (firearmModelField != null) ev.setFirearmModel(firearmModelField.getText());
                 if (firearmSerialField != null) ev.setFirearmSerialNumber(firearmSerialField.getText());
                 if (firearmCaliberCombo != null) ev.setFirearmCaliber(firearmCaliberCombo.getValue());
+                if (firearmReportedStolenCheck != null) ev.setFirearmReportedStolen(firearmReportedStolenCheck.isSelected());
+                if (firearmLoadedWhenRecoveredCheck != null) ev.setFirearmLoadedWhenRecovered(firearmLoadedWhenRecoveredCheck.isSelected());
             }
             case "Jewelry" -> {
                 if (jewelryMakeField != null) ev.setJewelryMaterial(jewelryMakeField.getText());
@@ -489,6 +659,17 @@ public class AddEvidenceController implements Initializable {
     private void showError(Exception e) {
         e.printStackTrace();
         Dialogs.error(e);
+    }
+
+    private String comboText(ComboBox<String> combo) {
+        if (combo == null) return null;
+        String value = combo.getValue();
+        if (value != null && !value.isBlank()) return value.trim();
+        return combo.getEditor() == null ? null : combo.getEditor().getText();
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s;
     }
 
 }

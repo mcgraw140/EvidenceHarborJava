@@ -227,7 +227,7 @@ and light.exe) is on your PATH.
     # ---------------------------------------------------------------------
     # 4. Run jpackage
     # ---------------------------------------------------------------------
-    $outDir = Join-Path $repoRoot "dist"
+    $outDir = Join-Path $repoRoot ("dist\" + $appVersion)
     Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
@@ -293,8 +293,13 @@ and light.exe) is on your PATH.
 
     $finalName    = "EvidenceHarbor-Setup-$appVersion.$Type"
     $finalInstaller = Join-Path $outDir $finalName
+    if ($installer.FullName -ne $finalInstaller -and (Test-Path $finalInstaller)) {
+        Remove-Item $finalInstaller -Force
+    }
     Remove-Item $finalInstaller -Force -ErrorAction SilentlyContinue
-    Move-Item $installer.FullName $finalInstaller -Force
+    if ($installer.FullName -ne $finalInstaller) {
+        Move-Item $installer.FullName $finalInstaller -Force
+    }
     Write-Ok "Installer built: $finalInstaller"
 
     # ---------------------------------------------------------------------

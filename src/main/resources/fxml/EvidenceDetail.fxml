@@ -33,6 +33,7 @@
                         <Region HBox.hgrow="ALWAYS"/>
                         <Label fx:id="labelStatusBadge" styleClass="subtitle"
                                style="-fx-font-weight: bold; -fx-padding: 6 14 6 14; -fx-background-radius: 6; -fx-font-size: 14;"/>
+                           <Button fx:id="editEvidenceButton" text="Edit Evidence" styleClass="btn-secondary" onAction="#onEditEvidence"/>
                         <Button text="🖨 Print Evidence Sheet" styleClass="btn-primary" onAction="#onPrint"/>
                         <Button text="🏷 Print Barcode Label" styleClass="btn-primary" onAction="#onPrintLabel"/>
                         <Button text="Add Transfer / CoC Entry" styleClass="btn-secondary" onAction="#onAddTransfer"/>

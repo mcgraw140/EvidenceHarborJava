@@ -48,7 +48,7 @@
                 <!-- Header card -->
                 <VBox styleClass="card" spacing="12">
                     <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-                    <Label text="Add Evidence" styleClass="case-title"/>
+                    <Label fx:id="formTitle" text="Add Evidence" styleClass="case-title"/>
 
                     <GridPane hgap="24" vgap="12">
                         <columnConstraints>
@@ -169,7 +169,7 @@
                 <!-- Action buttons -->
                 <HBox spacing="12" alignment="CENTER_RIGHT">
                     <Button text="Cancel" styleClass="btn-secondary" onAction="#onBack"/>
-                    <Button text="Save Evidence" styleClass="btn-primary" onAction="#onSave"/>
+                    <Button fx:id="saveButton" text="Save Evidence" styleClass="btn-primary" onAction="#onSave"/>
                 </HBox>
 
             </VBox>

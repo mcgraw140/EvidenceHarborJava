@@ -1,5 +1,7 @@
 package com.evidenceharbor.ui.inventory;
 
+import com.evidenceharbor.app.SessionManager;
+import com.evidenceharbor.app.Navigator;
 import com.evidenceharbor.domain.ChainOfCustody;
 import com.evidenceharbor.domain.Evidence;
 import com.evidenceharbor.domain.Officer;
@@ -51,6 +53,7 @@ public class EvidenceDetailController implements Initializable {
     @FXML private Label labelBarcode;
     @FXML private Label labelStatusBadge;
     @FXML private Canvas barcodeCanvas;
+    @FXML private Button editEvidenceButton;
 
     @FXML private Label infoCase;
     @FXML private Label infoType;
@@ -96,6 +99,11 @@ public class EvidenceDetailController implements Initializable {
         cocColTo.setCellValueFactory(cd -> new SimpleStringProperty(ns(cd.getValue().getToLocation())));
         cocColToPerson.setCellValueFactory(cd -> new SimpleStringProperty(ns(cd.getValue().getToPerson())));
         cocColNotes.setCellValueFactory(cd -> new SimpleStringProperty(ns(cd.getValue().getNotes())));
+        if (editEvidenceButton != null) {
+            boolean canEdit = SessionManager.isAdmin() || SessionManager.can("can_edit_all_evidence");
+            editEvidenceButton.setVisible(canEdit);
+            editEvidenceButton.setManaged(canEdit);
+        }
     }
 
     public void setEvidence(Evidence e, String caseNumber) {
@@ -132,6 +140,12 @@ public class EvidenceDetailController implements Initializable {
         infoStateZip.setText((st + " " + zip).trim());
 
         buildTypeDetails();
+    }
+
+    @FXML
+    private void onEditEvidence() {
+        if (evidence == null) return;
+        Navigator.get().showEditEvidence(evidence);
     }
 
     private String resolveOfficerName(int id) {
