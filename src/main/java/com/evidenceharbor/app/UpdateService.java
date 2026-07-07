@@ -214,6 +214,12 @@ public final class UpdateService {
                     "This looks like a development run — updates only work on installed builds.");
             return;
         }
+        if (!Files.isWritable(runningJar)) {
+            Dialogs.error("Update failed",
+                "The app install folder is not writable.\n"
+                    + "Please reinstall to a user-writable location, then retry updates.");
+            return;
+        }
 
         Path tempDir;
         try {
@@ -331,8 +337,9 @@ public final class UpdateService {
         String script = buildUpdaterScript(runningJar, newJar, relaunchTarget, bat);
         Files.writeString(bat, script);
 
+        String batPath = bat.toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c",
-                "start", "\"\"", "/min", bat.toAbsolutePath().toString());
+            "start \"\" /min \"" + batPath + "\"");
         pb.redirectErrorStream(true);
         pb.start();
 
