@@ -334,12 +334,13 @@ public final class UpdateService {
         Path relaunchTarget = findRelaunchTarget(runningJar);
 
         Path bat = Files.createTempFile("eh-update-", ".bat");
-        String script = buildUpdaterScript(runningJar, newJar, relaunchTarget, bat);
+        Path log = Files.createTempFile("eh-update-", ".log");
+        String script = buildUpdaterScript(runningJar, newJar, relaunchTarget, bat, log);
         Files.writeString(bat, script);
 
-        String batPath = bat.toAbsolutePath().toString();
-        ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c",
-            "start \"\" /min \"" + batPath + "\"");
+        // Run the updater script directly (no nested `start`) to avoid quoting edge cases.
+        String batPath = "\"" + bat.toAbsolutePath() + "\"";
+        ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", batPath);
         pb.redirectErrorStream(true);
         pb.start();
 
@@ -370,7 +371,7 @@ public final class UpdateService {
         return runningJar; // last resort — will be re-launched via javaw
     }
 
-    private static String buildUpdaterScript(Path runningJar, Path newJar, Path relaunchTarget, Path self) {
+        private static String buildUpdaterScript(Path runningJar, Path newJar, Path relaunchTarget, Path self, Path log) {
         String q = "\"";
         String relaunchCmd = relaunchTarget.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".exe")
                 ? "start \"\" " + q + relaunchTarget + q
@@ -381,21 +382,29 @@ public final class UpdateService {
                 "setlocal",
                 "set " + q + "SRC=" + newJar + q,
                 "set " + q + "DST=" + runningJar + q,
+            "set " + q + "LOG=" + log.toAbsolutePath() + q,
+            "echo [%date% %time%] updater started > " + q + "%LOG%" + q,
+            "echo SRC=%SRC% >> " + q + "%LOG%" + q,
+            "echo DST=%DST% >> " + q + "%LOG%" + q,
                 "set /a TRIES=0",
                 ":loop",
                 "if %TRIES% GEQ 60 goto giveup",
                 "copy /y " + q + "%SRC%" + q + " " + q + "%DST%" + q + " >nul 2>&1",
                 "if not errorlevel 1 goto ok",
+            "echo [%date% %time%] copy attempt %TRIES% failed >> " + q + "%LOG%" + q,
                 "set /a TRIES+=1",
                 "timeout /t 1 /nobreak >nul",
                 "goto loop",
                 ":ok",
+            "echo [%date% %time%] copy succeeded >> " + q + "%LOG%" + q,
                 "del " + q + "%SRC%" + q + " >nul 2>&1",
                 relaunchCmd,
                 "goto done",
                 ":giveup",
+            "echo [%date% %time%] giveup after %TRIES% attempts >> " + q + "%LOG%" + q,
                 "echo Update failed - could not replace " + q + "%DST%" + q + ".",
                 "echo The new build is at " + q + "%SRC%" + q + ".",
+            "echo Log: " + q + "%LOG%" + q + ".",
                 "pause",
                 ":done",
                 "del " + q + self.toAbsolutePath() + q + " >nul 2>&1",
