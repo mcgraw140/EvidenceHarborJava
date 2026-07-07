@@ -2,6 +2,7 @@ package com.evidenceharbor.ui.inventory;
 
 import com.evidenceharbor.app.SessionManager;
 import com.evidenceharbor.app.Navigator;
+import com.evidenceharbor.util.Dialogs;
 import com.evidenceharbor.domain.ChainOfCustody;
 import com.evidenceharbor.domain.Evidence;
 import com.evidenceharbor.domain.Officer;
@@ -145,7 +146,14 @@ public class EvidenceDetailController implements Initializable {
     @FXML
     private void onEditEvidence() {
         if (evidence == null) return;
-        Navigator.get().showEditEvidence(evidence);
+        Navigator nav = Navigator.get();
+        if (nav == null) {
+            Dialogs.error("Edit unavailable", "Navigation is not initialized.");
+            return;
+        }
+        Stage dialog = (Stage) labelBarcode.getScene().getWindow();
+        dialog.close();
+        nav.showEditEvidence(evidence);
     }
 
     private String resolveOfficerName(int id) {
