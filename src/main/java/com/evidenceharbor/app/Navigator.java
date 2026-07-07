@@ -6,8 +6,10 @@ import com.evidenceharbor.ui.cases.CaseDetailController;
 import com.evidenceharbor.ui.evidence.AddEvidenceController;
 import com.evidenceharbor.persistence.CaseRepository;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -20,7 +22,7 @@ public class Navigator {
     public Navigator(Stage stage) {
         this.stage = stage;
         instance = this;
-        stage.setTitle("Evidence Harbor");
+        stage.setTitle("Evidence Harbor v" + AppVersion.current());
         stage.setWidth(1280);
         stage.setHeight(780);
         stage.setMinWidth(900);
@@ -197,6 +199,7 @@ public class Navigator {
     }
 
     private void applyScene(Parent root) {
+        applyBrandVersionText(root);
         Scene scene = stage.getScene();
         if (scene == null) {
             scene = new Scene(root);
@@ -207,5 +210,21 @@ public class Navigator {
         scene.getStylesheets().clear();
         scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
         stage.show();
+    }
+
+    private void applyBrandVersionText(Parent root) {
+        String branded = "Evidence Harbor v" + AppVersion.current();
+        walkAndApply(root, branded);
+    }
+
+    private void walkAndApply(Node node, String branded) {
+        if (node instanceof Label l && "Evidence Harbor".equals(l.getText())) {
+            l.setText(branded);
+        }
+        if (node instanceof Parent p) {
+            for (Node child : p.getChildrenUnmodifiable()) {
+                walkAndApply(child, branded);
+            }
+        }
     }
 }

@@ -28,7 +28,7 @@ public class FirstTimeSetupScreen {
     }
 
     public void show() {
-        Label brand = new Label("Evidence Harbor");
+        Label brand = new Label("Evidence Harbor v" + AppVersion.current());
         brand.getStyleClass().add("brand-title");
 
         Label heading = new Label("First-Time Setup");
@@ -58,7 +58,7 @@ public class FirstTimeSetupScreen {
         Scene scene = new Scene(root, 640, 560);
         scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
 
-        stage.setTitle("Evidence Harbor — First-Time Setup");
+        stage.setTitle("Evidence Harbor v" + AppVersion.current() + " — First-Time Setup");
         stage.setScene(scene);
         stage.show();
     }

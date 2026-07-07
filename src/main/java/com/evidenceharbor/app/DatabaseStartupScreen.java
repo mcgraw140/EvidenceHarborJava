@@ -48,7 +48,7 @@ public class DatabaseStartupScreen {
         statusIcon.setStyle("-fx-text-fill:#f59e0b; -fx-font-size:18px; -fx-font-weight:bold;");
         statusText.setStyle("-fx-text-fill:#e2e8f0; -fx-font-size:14px; -fx-font-weight:bold;");
 
-        Label title = new Label("Evidence Harbor");
+        Label title = new Label("Evidence Harbor v" + AppVersion.current());
         title.getStyleClass().add("brand-title");
 
         Label subtitle = new Label("Database connection is required before the software can be used.");
@@ -109,7 +109,7 @@ public class DatabaseStartupScreen {
         Scene scene = new Scene(root, 860, 640);
         scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
 
-        stage.setTitle("Evidence Harbor — Database Startup");
+        stage.setTitle("Evidence Harbor v" + AppVersion.current() + " — Database Startup");
         stage.setScene(scene);
         stage.show();
 

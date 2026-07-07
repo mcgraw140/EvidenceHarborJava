@@ -65,7 +65,7 @@ public class SetupWizard {
         // Step indicator
         stepLabel.setStyle("-fx-font-size:12px; -fx-text-fill:#64748b;");
 
-        Label brand = new Label("Evidence Harbor");
+        Label brand = new Label("Evidence Harbor v" + AppVersion.current());
         brand.getStyleClass().add("brand-title");
 
         // Status row
@@ -93,7 +93,7 @@ public class SetupWizard {
         Scene scene = new Scene(root, 680, 580);
         scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
 
-        stage.setTitle("Evidence Harbor — Setup");
+        stage.setTitle("Evidence Harbor v" + AppVersion.current() + " — Setup");
         stage.setScene(scene);
         stage.show();
 

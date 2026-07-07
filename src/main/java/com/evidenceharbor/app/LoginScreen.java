@@ -29,7 +29,7 @@ public class LoginScreen {
     }
 
     public void show() {
-        Label brand = new Label("Evidence Harbor");
+        Label brand = new Label("Evidence Harbor v" + AppVersion.current());
         brand.getStyleClass().add("brand-title");
 
         Label heading = new Label("Sign In");
@@ -60,7 +60,7 @@ public class LoginScreen {
         Scene scene = new Scene(root, 560, 440);
         scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
 
-        stage.setTitle("Evidence Harbor — Sign In");
+        stage.setTitle("Evidence Harbor v" + AppVersion.current() + " — Sign In");
         stage.setScene(scene);
         stage.show();
     }
