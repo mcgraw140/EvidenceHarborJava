@@ -221,6 +221,7 @@ public class Navigator {
         if (node instanceof Label l && "Evidence Harbor".equals(l.getText())) {
             Label version = new Label("v" + AppVersion.current());
             version.getStyleClass().add("brand-version");
+            version.setStyle("-fx-text-fill:#22c55e;");
             l.setGraphic(version);
             l.setContentDisplay(ContentDisplay.RIGHT);
             l.setGraphicTextGap(8);

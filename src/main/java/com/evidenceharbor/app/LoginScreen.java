@@ -34,6 +34,7 @@ public class LoginScreen {
         brand.getStyleClass().add("brand-title");
         Label version = new Label("v" + AppVersion.current());
         version.getStyleClass().add("brand-version");
+        version.setStyle("-fx-text-fill:#22c55e;");
         brand.setGraphic(version);
         brand.setContentDisplay(ContentDisplay.RIGHT);
         brand.setGraphicTextGap(8);

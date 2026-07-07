@@ -53,6 +53,7 @@ public class DatabaseStartupScreen {
         title.getStyleClass().add("brand-title");
         Label version = new Label("v" + AppVersion.current());
         version.getStyleClass().add("brand-version");
+        version.setStyle("-fx-text-fill:#22c55e;");
         title.setGraphic(version);
         title.setContentDisplay(ContentDisplay.RIGHT);
         title.setGraphicTextGap(8);
