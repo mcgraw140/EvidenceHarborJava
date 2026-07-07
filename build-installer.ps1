@@ -248,6 +248,7 @@ and light.exe) is on your PATH.
         '--main-class',    'com.evidenceharbor.app.Launcher'
         '--java-options',  '-Dfile.encoding=UTF-8'
         '--win-dir-chooser'
+        '--win-per-user-install'
         '--win-menu'
         '--win-menu-group','Evidence Harbor'
         '--win-shortcut'
