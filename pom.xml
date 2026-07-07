@@ -6,7 +6,7 @@
 
     <groupId>com.evidenceharbor</groupId>
     <artifactId>evidence-harbor</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>jar</packaging>
 
     <properties>

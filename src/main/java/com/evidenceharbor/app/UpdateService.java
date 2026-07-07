@@ -144,10 +144,10 @@ public final class UpdateService {
 
         String jarUrl = null;
         Pattern assets = Pattern.compile(
-                "\"name\"\\s*:\\s*\"([^\"]+\\.jar)\"[^\\}]*?\"browser_download_url\"\\s*:\\s*\"([^\"]+)\"",
-                Pattern.DOTALL);
+            "\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.jar)\"",
+            Pattern.DOTALL);
         Matcher m = assets.matcher(json);
-        if (m.find()) jarUrl = m.group(2);
+        if (m.find()) jarUrl = m.group(1);
         if (jarUrl == null) return Optional.empty();
 
         Release r = new Release();
